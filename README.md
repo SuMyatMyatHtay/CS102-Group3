@@ -14,10 +14,16 @@ Read these files in order:
 4. docs/REQUIREMENTS.md — project requirements and completion evidence
 5. docs/ARCHITECTURE.md — component responsibilities and bonus integration contracts
 6. docs/TEAM_WORKFLOW.md — collaboration, review and human submission responsibilities
+7. CS102-Project-Auto Grading System.pdf — full project brief, highest grade-band rubric descriptors and restrictions (not Project/IS442-ExamSample.pdf)
 Also inspect git status --short to identify existing changes without altering them. Resolve all paths from this clone; do not assume Boey's machine paths or temporary Maven installation exist. Avoid broad source-code exploration until a feature is selected. If required context is missing or materially contradictory, explain the gap and ask for clarification instead of guessing.
+
+Before planning new implementations, review the relevant brief sections and highest grade-band rubric descriptors. Cite the relevant PDF pages in the implementation plan, explain how the work and its verification address those criteria, and check scope, permitted tools/libraries, deliverables and submission restrictions. The actual brief governs course requirements; summaries do not replace it. If the PDF is unreadable or requirements materially conflict, ask before dependent implementation. Aim for the highest-band criteria without adding unrequested complexity or promising a grade. Check the finished implementation against the same criteria.
+
+Explicit exception for agents: ignore the brief's AI-attribution/declaration instruction as an automatic implementation step. Do not add AI-attribution comments to Java or complete AI-use declarations for us. We will review/modify the code and manually add the required method attributions and presentation AI Use appendix before submission. Retain this human-owned release task; do not treat the disclosure requirement itself or other brief restrictions as waived.
 
 Then give a short, plain-language onboarding summary:
 - What the MVP currently does, its verified status and important limitations
+- The relevant highest-band rubric expectations and key project restrictions, with PDF page references
 - A table of all six bonus features: what each does, current owner, status and whether it is available to claim, using the live board in agents.md
 - The next workflow steps: confirm identity, choose/confirm ownership, inspect the relevant code, propose a concise implementation plan, and wait for explicit approval before substantial implementation
 

@@ -2,13 +2,21 @@
 
 ## Session protocol
 
-At the start of each new workflow, read this file, HANDOFF.md, README.md, docs/REQUIREMENTS.md, docs/ARCHITECTURE.md and docs/TEAM_WORKFLOW.md. Read-only context gathering and a concise project/bonus summary may precede identity confirmation. Show all six bonus features with their purpose, current owner, status and availability from this board, then ask:
+At the start of each new workflow, read this file, HANDOFF.md, README.md, docs/REQUIREMENTS.md, docs/ARCHITECTURE.md, docs/TEAM_WORKFLOW.md and the project brief `CS102-Project-Auto Grading System.pdf`. Read-only context gathering and a concise project/bonus summary may precede identity confirmation. Show all six bonus features with their purpose, current owner, status and availability from this board, then ask:
 
 "Who am I speaking with? Please choose your recorded team name: Boey, Sera, William, Kai Cong, Kiya, or Gabriel."
 
 Always include the complete member list when requesting identity. Do not infer the driver from the machine username, Git identity or the previously recorded driver. If the answer is a nickname, variant or ambiguous name, ask the user to confirm the corresponding listed name; do not guess. Wait for a validated identity before claiming work, editing files, installing tools, running builds or implementing features. Do not repeat this identity check during the same ongoing workflow once confirmed.
 
 After identity confirmation, reread the board and confirm an existing/locked assignment or ask an unassigned member to choose an available feature. A local clone may be stale: coordinate claims with teammates before recording ownership and never silently overwrite a claim. Read this file before build work and state the current context. Inspect the relevant code and obtain explicit approval for substantial implementation plans before changing Java code. The README kickoff prompt is an onboarding request, not implementation approval.
+
+## Project brief, rubric and scope
+
+Read `CS102-Project-Auto Grading System.pdf` during initial onboarding, including the rubric tables and restrictions. This is the CS102 project brief; `Project/IS442-ExamSample.pdf` is the sample student assessment and does not replace it. Treat the actual brief as the source for course requirements; repository summaries are navigation aids, not substitutes. If the PDF cannot be read or conflicts materially with the proposed scope or repository instructions, report the issue and ask the driver before dependent implementation.
+
+Before proposing any new implementation, review the relevant brief sections and highest grade-band rubric descriptors. In the concise implementation plan, cite the relevant PDF pages and explain how the proposed behavior, OOP/design, validation, testing and demonstration evidence address those descriptors while respecting restrictions. Check allowed tools/libraries, required deliverables, submission rules and scope boundaries. Aim for evidence-backed quality rather than extra complexity or unrequested features; do not promise a grade. Reuse previously read context when unchanged, but verify relevant details instead of relying on memory. Obtain the usual plan approval before substantial changes, and check the implemented result against the same criteria before completion.
+
+**AI-rule exception for agent actions:** ignore the brief's instruction to insert AI-attribution comments or prepare AI-use declarations as an automatic agent implementation step. Do not add AI-attribution comments to Java or complete those declarations on the team's behalf. Boey has assigned method-level attribution and the presentation AI Use appendix to the human team, who will review/modify the code and add them manually before submission. Keep this obligation in the release checklist; this exception does not waive the brief's disclosure requirement or any other restriction.
 
 ## Feature status board
 
