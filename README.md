@@ -37,30 +37,100 @@ A Java application being built to prepare and grade student submissions against 
 
 **Current stage: core MVP DONE; Boey confirmed a successful clean build and grading run on 2026-10-10.** The command prepares submissions, compiles each part, runs the 20 instructor cases separately with deadlines, and exports real scores. The accepted foundation remains intact. Bonus implementations remain TODO and require individual claims, approved plans and their own build confirmations.
 
-## Quick start
+## Setup, build and run
 
-Use a JDK supporting Java 17 or later and Apache Maven. In the repository root:
+### 1. Install the prerequisites
+
+Each teammate needs Git, a **full JDK 17 or later** (including `javac`) and **Apache Maven 3.9.x** on their own computer. An editor such as VS Code or IntelliJ is optional; the terminal commands below are sufficient. This repository does not include a Maven wrapper.
+
+Install the JDK and Maven using your operating system's installer or package manager. Set `JAVA_HOME` to the JDK installation directory, and add the JDK's `bin` and Maven's `bin` directories to `PATH`. On Windows, configure these through Environment Variables and reopen your terminal. On macOS/Linux, use your shell configuration or the package manager's setup instructions.
+
+Open Terminal on macOS/Linux or PowerShell on Windows and check:
+
+```sh
+git --version
+java -version
+javac -version
+mvn -version
+```
+
+All four commands must work. `mvn -version` should report Java 17 or later and the intended JDK installation. The verified development environment used JDK 25 and Maven 3.9.9, with application compilation targeting Java 17. A separate Java 17 runtime and Windows run have not yet been verified.
+
+### 2. Clone and open the repository
+
+```sh
+git clone https://github.com/boeyboeyboeyboey/CS102-Group3.git
+cd CS102-Group3
+```
+
+Open this folder in your editor/agent and use the kickoff prompt at the top of this README. Run all commands below from this repository root, where `pom.xml` and `config.properties` are located. Keep the supplied `Project` directory intact; it contains the sample submissions, roster, fixtures and support classes.
+
+If you already cloned the repository, inspect local changes before updating:
+
+```sh
+git status
+git pull --ff-only
+```
+
+If Git reports divergent branches or conflicting local changes, coordinate with the team before proceeding; do not discard work or force-push to resolve it.
+
+### 3. Build and run the automated checks
 
 ```sh
 mvn clean verify
+```
+
+This removes the previous `target` output, compiles the application, runs the tests and builds `target/auto-grading-system-1.0-SNAPSHOT.jar`. The first build downloads Maven plugins/test dependencies and needs internet access. No separate application libraries need to be downloaded manually.
+
+Wait for **BUILD SUCCESS** before running the application. The accepted MVP baseline has **48 tests, zero failures/errors/skips**; the count may increase as features are added. Messages about deliberately broken archives, missing files or timeouts during tests are expected when the final test summary passes. Detailed test reports are in `target/surefire-reports`.
+
+### 4. Grade the supplied sample submissions
+
+```sh
 java -jar target/auto-grading-system-1.0-SNAPSHOT.jar config.properties
 ```
 
-The first Maven build downloads build/test dependencies and needs network access. The application itself currently uses only Java standard-library dependencies. To show usage without processing submissions:
+The default configuration processes the six supplied archives. Expected totals for the accepted MVP are Chee **12**, David **10**, Fen **10**, Jing **0**, Ping **20**, and Xing **1** out of 20. David and Xing retain name-header review warnings. A completed run with those warnings is expected; check the reports rather than treating every warning as a build failure.
+
+The terminal prints the exact new `build/grading/run-*` directory containing:
+
+- `scorereport.csv`: scores in the required roster format
+- `cases.csv`: individual test statuses, marks and diagnostic output
+- `submissions.csv`: export/withholding decisions and preparation warnings
+
+Each run creates a fresh directory. `mvn clean` removes `target`, but does not remove old `build` workspaces or appended preparation logs. Supplied input files remain unchanged. See the execution policy below before using submissions outside the supplied sample.
+
+To display help without grading:
 
 ```sh
 java -jar target/auto-grading-system-1.0-SNAPSHOT.jar --help
 ```
 
-Maven is explicitly allowed by the project brief instead of its alternative compile.sh/run.sh layout. The application sources are under `src/main/java`; JUnit tests are under `src/test/java`. Supplied student sources are data, not application sources.
+When requesting feature completion, share the build summary and relevant run results so the clean-build confirmation can be recorded in `agents.md`.
 
-On the initial development machine only, a temporary Maven installation was downloaded. If `mvn` is unavailable, this command works while that temporary directory exists:
+### Common setup problems
+
+| Symptom | What to check |
+| --- | --- |
+| `java`, `javac` or `mvn` is not found | Install the missing prerequisite, check `JAVA_HOME`/`PATH`, and reopen the terminal; a JRE alone does not supply `javac` |
+| Maven reports an unsupported Java release or missing compiler | Check `mvn -version`; Maven must use a full JDK 17 or later |
+| Maven cannot download a plugin or dependency | Check internet/proxy access and retry the build once access is restored |
+| Maven cannot find `pom.xml` | Change directory to the cloned repository root |
+| `Unable to access jarfile` | Complete `mvn clean verify` successfully and run the exact JAR path from the repository root |
+| Missing configuration or input resources | Run from the root with `config.properties`, retain the supplied `Project` folder, and check configured paths; paths inside the properties file resolve relative to that file |
+| Jansi/native-access or Guava/Unsafe warnings | These appeared in the successful local JDK 25 build; use the final Maven test summary and BUILD SUCCESS/FAILURE to determine whether the build passed |
+
+Maven is explicitly permitted by the project brief. Use these Maven commands with the current `src/main/java` layout; old instructions referring to `compile.sh`, `run.sh` or `src/autograder` belong to the replaced implementation.
+
+### Boey's temporary Maven installation
+
+This fallback is for Boey's existing machine only, while its temporary installation remains available:
 
 ```sh
 /tmp/apache-maven-3.9.9/bin/mvn -Dmaven.repo.local=/tmp/cs102-maven-repository clean verify
 ```
 
-Other team members should use their own Maven installation. The project does not depend on that temporary path.
+Teammates should install Maven locally and use `mvn clean verify`; their machines will not inherit Boey's `/tmp` paths.
 
 ## What the command does
 
