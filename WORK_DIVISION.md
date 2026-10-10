@@ -7,13 +7,13 @@ Updated 2026-10-10 after reconciling the September planning commits with the com
 | Feature | Owner | Goal | Existing contract in autograder.api |
 | --- | --- | --- | --- |
 | 1: Token-based plagiarism detection | Kiya | Compare normalized Java tokens and report similarity evidence without automatically accusing students | PlagiarismDetector.compare(submissions, assessment) returns similarity findings |
-| 2: Offline HTML dashboard | Unclaimed | Present cohort scores, filters and expandable diagnostics in a self-contained offline report | HtmlReportGenerator.generate(batch, outputDirectory) returns a report path |
+| 2: Offline HTML dashboard | Boey | Present cohort scores, filters and expandable diagnostics in a self-contained offline report | HtmlReportGenerator.generate(batch, outputDirectory) returns a report path |
 | 3: Starter-code comparison | Sera (locked) | Compare answers with starter files and report unchanged or minimally changed implementations | BoilerplateDetector.analyze(submission, starterDirectory) returns analysis findings |
 | 4: Parameterized test ingestion | William (locked) | Load additional varied inputs and expected outcomes through an approved case format | TestCaseProvider.load(assessment) returns case definitions |
 | 5: Markdown student feedback | Unclaimed | Explain scores and failure reasons in individual student reports | FeedbackGenerator.generate(grade, outputDirectory) returns a report path |
 | 6: ANSI terminal dashboard | Unclaimed | Display grading progress with a readable plain-text fallback | ProgressListener.onProgress(stage, item, completed, total) |
 
-Kiya's feature 1 assignment is preserved from the remote September work-division document. Available claims are 2, 5 and 6 for Boey, Kai Cong and Gabriel. Coordinate any reassignment rather than overwriting a teammate's claim.
+Kiya's feature 1 assignment is preserved from the remote September work-division document. Boey has claimed feature 2. Available claims are 5 and 6 for Kai Cong and Gabriel. Coordinate any reassignment rather than overwriting a teammate's claim.
 
 ## Implementation boundaries
 

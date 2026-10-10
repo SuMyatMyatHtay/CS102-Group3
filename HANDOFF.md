@@ -1,6 +1,8 @@
 # CS102 Auto Grading System — continuation handoff
 
-Updated 10 October 2026 (Asia/Tokyo).
+Updated 10 October 2026 (Asia/Tokyo), after Boey claimed feature 2.
+
+**Immediate continuation: core MVP DONE; feature 2 (offline HTML dashboard) claimed by Boey, status TODO. No HTML implementation or approved feature 2 implementation plan exists yet. Read the feature 2 continuation sections below after the project context.**
 
 ## Start here
 
@@ -119,7 +121,7 @@ The input snapshot is `/tmp/cs102-mvp-input-hashes.json`; temporary build/run lo
 
 ## Team and bonus status
 
-All six bonus implementations remain TODO. Sera owns feature 3 (boilerplate comparison) and William owns feature 4 (parameterized tests). Kiya owns feature 1 (token similarity), preserving the assignment in the remote work-division document. Features 2 (HTML), 5 (Markdown feedback), 6 (ANSI dashboard) remain unclaimed. Boey's bonus claim is pending. Shared MVP work was explicitly permitted while claims remain pending.
+All six bonus implementations remain TODO. Sera owns feature 3 (boilerplate comparison) and William owns feature 4 (parameterized tests). Kiya owns feature 1 (token similarity), preserving the assignment in the remote work-division document. Boey has claimed feature 2 (HTML). Features 5 (Markdown feedback) and 6 (ANSI dashboard) remain unclaimed. Shared MVP work was explicitly permitted while claims remain pending.
 
 Main agent retains architecture/integration. This implementation delegated adapters/provider/tests and process services/tests with non-overlapping ownership recorded in agents.md. Only main may spawn agents; no Astra subagents; at most two concurrent subagents. All delegated work is complete; no agents are actively editing.
 
@@ -131,6 +133,154 @@ Read README.md, docs/REQUIREMENTS.md, docs/ARCHITECTURE.md and docs/TEAM_WORKFLO
 
 ## Next action
 
-The core MVP is DONE following Boey's successful 48-test clean build and six-submission grading run on 2026-10-10. Do not ask for that confirmation again. Use the kickoff prompt at the start of README.md to onboard teammates, summarize current bonus ownership, and ask them to choose their canonical team name. Confirm or coordinate a feature claim, inspect the relevant code and obtain explicit approval for a substantial feature plan before implementation. No bonus has been marked DONE; no bonus architecture document is due yet. Do not automatically commit or push.
+Continue with feature 2 planning for Boey, not a rebuild of the accepted MVP. Read the continuation details below, inspect the narrow reporting/configuration integration surface and the relevant PDF rubric sections, then present a concise implementation plan for approval. The request to claim feature 2 and prepare this handoff was not approval to implement it. No bonus architecture document is due yet. No commit or push is requested for this claim/handoff task.
 
-- Boey requested explicit brief/rubric/scope guidance in the kickoff and agents.md. Agents leave AI attribution/declarations to the human team; the disclosure requirement remains a human-owned release gate.
+## 1. Latest human request and approval boundary
+
+Boey asked: “Lets do 2. Just mark it as claimed in the markdown files first, then create a detailed handoff document that details the full project context, what we have done, where we are at, next steps.” The goal is to move to a fresh chat before the current context fills.
+
+Actions completed for that request:
+
+- Recorded Boey as owner of feature 2 in agents.md, README.md, WORK_DIVISION.md, docs/REQUIREMENTS.md and docs/TEAM_WORKFLOW.md, and updated this handoff
+- Removed Boey from the list of people who still need a claim; only features 5 and 6 remain available for Kai Cong and Gabriel
+- Kept all six bonus statuses TODO, because no bonus implementation has started
+- Preserved Sera's feature 3 and William's feature 4 locks, and Kiya's feature 1 claim
+- Prepared this detailed continuation context without changing Java or running an unnecessary rebuild
+
+Do not interpret “Lets do 2” in isolation as permission to skip planning: Boey explicitly limited this turn to claiming and writing the handoff. Read-only inspection and a concrete plan are the next steps. Wait for explicit approval before implementing substantial feature 2 changes.
+
+## 2. Recommended prompt to paste into a new chat
+
+```text
+Continue this CS102 project from HANDOFF.md. I am Boey, and I have claimed feature 2: the offline HTML dashboard. The core MVP is DONE; my clean build passed 48 tests and the sample grading run succeeded. Read agents.md, HANDOFF.md, README.md, docs/REQUIREMENTS.md, docs/ARCHITECTURE.md, docs/TEAM_WORKFLOW.md, WORK_DIVISION.md, and the project brief CS102-Project-Auto Grading System.pdf. Inspect git status and the narrow reporting/configuration surface described in the handoff.
+
+Do not rebuild the MVP or start another bonus. First summarize the current state and propose a concise feature 2 implementation plan with relevant PDF rubric page references, reporting/withholding semantics, output configuration, offline behavior, safe rendering, and targeted verification. Wait for my explicit approval before implementing. Do not add AI-attribution comments or complete AI-use declarations; our human team will add the required declarations manually before submission. Do not commit or push unless I explicitly ask.
+```
+
+If the next message includes that explicit “I am Boey” identity, validate it against the team list rather than asking redundantly. Otherwise use the full list in the session identity prompt. Prior driver identity alone is not sufficient in a new workflow.
+
+## 3. GitHub synchronization and recent documentation history
+
+Repository: https://github.com/boeyboeyboeyboey/CS102-Group3
+
+Local checkout used in this conversation: `/Users/boey/Documents/SMU/2.1/cs102/group project/CS102-Group3`. A teammate's checkout will have a different absolute path; resolve paths relative to its root.
+
+Earlier in this chat the online repository still showed September code. Local main had two October MVP commits while remote main had two September planning commits. Those remote commits added/revised WORK_DIVISION.md and contained no Java changes relative to the common ancestor. A normal merge preserved both histories; no force push was used. Boey explicitly authorized publishing the correct code, and merge commit `6dccb4c` was pushed and verified against GitHub's main tip. This was task-specific permission, not perpetual permission to publish future work.
+
+Kiya's ownership of feature 1 was found in the remote planning document and preserved during reconciliation. The old proposals named obsolete interfaces and packages; WORK_DIVISION.md was rewritten to point at the actual current contracts and agents.md as the authoritative board. Do not restore the old source tree or outdated interfaces from the online history.
+
+At the start of this handoff task, local history was:
+
+- `db0f2f1` — added setup/build instructions to readme
+- `174e99c` — added more agentic scope management into markdown files for better workflow
+- `6dccb4c` — Merge remote planning history and reconcile bonus ownership
+
+`git status --short --branch` showed main aligned with the locally recorded origin/main and only `.DS_Store` modified before the claim edits. The live remote was not queried again for this handoff. The current claim/handoff edits are uncommitted local Markdown changes unless the human commits/pushes them afterward. Check actual Git status at continuation; do not assume this snapshot proves the current remote state.
+
+Never stage the unrelated `.DS_Store` modification as part of feature work. Preserve user edits. Do not reset or clean the checkout to simplify onboarding.
+
+## 4. Feature 2: established intent versus proposals
+
+Established intent: an offline HTML dashboard/report generated from real grading results, owned by Boey. It must fit the existing grader and remain usable without a running server or internet connection. It should explain results, including failures and review conditions, while preserving current grading and CSV behavior.
+
+WORK_DIVISION.md describes scores, filters and expandable diagnostics. Earlier proposals included cohort totals/average/median, simple score or pass-rate charts, search/sorting and expandable student details. These are useful candidates for the implementation plan, not a separately approved exhaustive UI specification. Do not invent a design preference, framework requirement, chart requirement or export policy on Boey's behalf. A small self-contained HTML/CSS/vanilla-JavaScript report is a plausible approach, but its exact implementation is still to be approved.
+
+This is an output artifact of the Java grading application, not a hosted website project. Do not turn it into an unrelated web service, add a server/framework solely for the dashboard, or publish student reports to external hosting. The application currently has no third-party runtime dependencies. Any proposed addition needs a clear justification and compliance with the brief's restrictions.
+
+## 5. Exact existing reporting surface to inspect
+
+Start with these files instead of exploring the entire repository:
+
+| File | Why it matters for feature 2 |
+| --- | --- |
+| src/main/java/autograder/api/HtmlReportGenerator.java | Existing public HTML extension contract |
+| src/main/java/autograder/model/BatchResult.java | Assessment, student grades, analysis findings and similarity findings |
+| src/main/java/autograder/model/StudentGrade.java | Submission, all case results, total and per-question score calculations |
+| src/main/java/autograder/model/SubmissionResult.java | Identity, preparation status, warnings, corrections and source/working locations |
+| src/main/java/autograder/model/TestCaseDefinition.java | Case/question identifiers and maximum marks |
+| src/main/java/autograder/model/TestCaseResult.java | Status, earned points, duration, bounded stdout/stderr |
+| src/main/java/autograder/model/AssessmentDefinition.java and QuestionDefinition.java | Names, ordering and configured maxima |
+| src/main/java/autograder/grading/GradingRun.java | Batch result plus output directory and explicit withheld-reason map |
+| src/main/java/autograder/grading/GradingPipeline.java | Creates grades, decides export eligibility, and writes existing CSV reports |
+| src/main/java/autograder/App.java | Coordinates preparation/grading and prints output paths |
+| src/main/java/autograder/config/ExecutionConfig.java | Current grading output/tool/deadline settings and path validation |
+| config.properties | External operational settings; there are no HTML settings yet |
+| src/test/java/autograder/grading/GradingPipelineTest.java | Meaningful eligibility, failure and CSV integration fixtures |
+
+The current interface is:
+
+```java
+Path generate(BatchResult batch, Path outputDirectory) throws IOException;
+```
+
+Its package is `autograder.api`. It is an interface only; there is no concrete HTML implementation, template/resource, dashboard test or CLI HTML invocation yet.
+
+`GradingRun` is a record containing `BatchResult batch`, `Path directory`, and `Map<SubmissionResult, String> withheld`. The map is copied when constructing the result. `GradingPipeline.grade(...)` builds it after processing submissions, calls its current private `writeReports(...)`, and returns it. `App` then prints scores or withholding reasons and the three CSV locations.
+
+`BatchResult` contains assessment/grades/findings/similarities but **does not contain the withheld map or roster rows for absent students**. The current pipeline populates findings/similarities with empty lists because those analysis bonuses do not exist yet. Do not display empty findings as evidence that plagiarism/starter analysis has run and found nothing.
+
+## 6. Important design issue: withheld versus graded scores
+
+Settle this in the plan before implementing the dashboard. The existing HTML interface receives only BatchResult, whereas export eligibility is held separately in GradingRun.withheld. A renderer using only total points or preparation status cannot reliably infer whether a score was exported.
+
+Examples:
+
+- David and Xing have REVIEW_REQUIRED preparation warnings but valid identities and graded/exported scores
+- Duplicate submissions can contain valid-looking identities and usable files but must both be withheld
+- Infrastructure I/O errors can occur after some cases have earned marks; the computed partial score is retained for diagnostics but the student's export is withheld
+- Unresolved identity or failed preparation produces NOT_RUN records and no final exported grade
+- A roster student with no submission may not appear in BatchResult at all; the CSV writer preserves that template row
+
+Therefore do not equate REVIEW_REQUIRED with withheld, zero with not graded, or a computed partial total with an accepted final score. Do not compute class averages that silently include withheld partial totals as official grades. Decide and label the cohort/eligible-submission denominator explicitly. If showing roster-wide absence, obtain that data deliberately rather than inventing absent rows from BatchResult.
+
+The plan must propose how to pass enough reporting context to the HTML implementation while coordinating shared-contract changes. Possible approaches involve enriching shared reporting data or explicitly supplying run-level eligibility, but none is approved yet. Do not casually break the interface or rederive a conflicting eligibility policy in the renderer. Existing CSV schema and withholding behavior must remain intact.
+
+## 7. Safe, truthful and useful HTML output
+
+Acceptance considerations for the plan and tests:
+
+- Open the saved report directly using file:// with networking unavailable; no CDN assets, external fonts, server-only imports or fetch calls that require a web server
+- Render student names, archive names, source paths, warnings, corrections and stdout/stderr as untrusted text; escape HTML and attributes and avoid injecting strings into executable JavaScript
+- Prefer safe DOM text insertion for dynamic labels; if JSON is embedded inside a script element, handle script-closing sequences and context-specific escaping properly
+- Test text containing `<script>`, `</script>`, quotes, ampersands, angle brackets and multiline diagnostics, verifying it displays as text and cannot execute
+- Preserve every relevant case status: PASSED, FAILED, TIMED_OUT, COMPILE_ERROR, RUNTIME_ERROR, NOT_RUN
+- Show configured point maxima and decimal scores accurately; do not hardcode the supplied assessment's totals throughout the renderer
+- Avoid presenting review-required identities or withheld grades as clean final results
+- Use existing diagnostic records; do not rerun grading just to generate HTML
+- Do not invent expected/actual outputs or assertion inputs that are not stored in TestCaseResult. Current adapters generally record only status and output/exception diagnostics, not a structured assertion comparison
+- Generated timestamps, grading duration, truncation labels and summary counts should be supported by actual data. Summing case durations can overcount a compilation duration copied into multiple COMPILE_ERROR records
+- Consider empty results, long names, no diagnostics, duplicate submissions, missing identity and future nonempty analysis findings without claiming unavailable features
+- Keep any output path/enablement setting externalized and consistent with current protection of input files and unique run directories
+- Decide how an optional HTML-write failure affects the CLI result without losing existing grading/CSV evidence; do not silently swallow it
+- Prefer usable keyboard controls, readable status text rather than color alone, and a minimal representative responsive check
+
+These are planning/verification concerns, not permission to broaden feature 2 into unrelated analysis or reporting bonuses.
+
+## 8. Relevant verification strategy for the next implementation
+
+The current 48-test baseline and successful real run are accepted evidence. Do not rerun them merely to rediscover the same state before any code changes.
+
+After an approved implementation, first use focused tests for rendering/escaping, calculated summaries, export eligibility and generated-file behavior. Add a targeted integration check proving the CLI produces HTML from the completed run without changing CSV scores. If shared reporting contracts change, exercise directly affected consumers. A final clean Maven verification at integration is appropriate.
+
+Because this feature is visual/interactive, perform one targeted browser pass after deterministic checks: open the local HTML, verify it works offline, inspect key content and search/sort/expand behavior that was actually implemented, and check representative layout/console errors. Fix discovered issues and recheck only affected behavior. Delegate routine execution/browser checks when useful; do not spawn agents for tiny mechanical tasks or perform repetitive screenshots for reassurance.
+
+When done, report exact commands and observed evidence, mark feature 2 REVIEW and ask Boey for its clean-build/run confirmation. The previous MVP confirmation does not automatically cover new HTML code. Only after feature 2 confirmation may it be marked DONE and its required architecture document created, including actual OOP principles and Slide Deck Talking Points.
+
+## 9. Brief, rubric and AI disclosure instructions
+
+Boey explicitly asked teammate agents to read the full project brief PDF during onboarding and review relevant highest grade-band rubric descriptors/restrictions before each new implementation plan. Cite real page numbers from the PDF and explain how planned behavior and verification address the criteria. Check allowed dependencies, deliverables, submission requirements and scope. Repository summaries do not replace the source brief. If the PDF cannot be read or materially conflicts with the intended plan, ask before dependent implementation.
+
+The brief is `CS102-Project-Auto Grading System.pdf` in the repository root. The sample assessment PDF under Project is not the project brief. Do not assert a precise rubric quotation or page reference from memory; inspect the actual document in the next chat.
+
+Boey's explicit exception concerns what agents produce automatically: do not insert AI-attribution comments in Java or complete disclosure declarations on the human team's behalf. Humans will review/modify the code and manually add required method attributions and the presentation AI Use appendix before submission. Keep that requirement in the release checklist. It is not waived, and human editing does not remove it. All other brief restrictions still apply.
+
+## 10. Completion checklist for this handoff itself
+
+- Feature 2 is owned by Boey everywhere the ownership board is duplicated
+- Feature 2 stays TODO, not IN_PROGRESS or DONE
+- Only features 5 and 6 remain unclaimed
+- No HTML source code, shared interfaces, configuration or Maven files were changed by this claim/handoff request
+- No new build was needed for Markdown-only changes; check Markdown diffs and conflicting ownership text
+- No agents are actively editing; this small documentation task was handled directly
+- No commit/push performed for this task; the next human action may publish the claim so teammates see the updated availability
+- On resuming, inspect the real Git status and use the current live board instead of treating historical text as a lock
