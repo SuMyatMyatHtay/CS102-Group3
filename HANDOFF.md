@@ -1,8 +1,46 @@
 # CS102 Auto Grading System — continuation handoff
 
-Updated 10 October 2026 (Asia/Tokyo), after Boey claimed feature 2.
+Updated 10 October 2026 (Asia/Tokyo), after Boey accepted feature 2.
 
-**Immediate continuation: core MVP DONE; feature 2 (offline HTML dashboard) claimed by Boey, status TODO. No HTML implementation or approved feature 2 implementation plan exists yet. Read the feature 2 continuation sections below after the project context.**
+**Immediate continuation: core MVP DONE; feature 2 (offline HTML dashboard) owned by Boey, status DONE. Boey approved the original implementation plan, supplied a successful 59-test clean build and expected grading run, and accepted the displayed dashboard with “ok looks good” on 2026-10-10. The optional wow-factor extras are outside this scope.**
+
+## Latest feature 2 implementation context
+
+- Active branch is `offline-html-dashboard`; prior claim/onboarding Markdown changes were published by Boey to main
+- The original six-step plan is approved: explicit immutable reporting context, one self-contained HTML file, summaries/table/filter/sort/expansion, safe text rendering, external enablement/filename, targeted verification
+- Main integrated shared model/API/config, App and documentation; the renderer subagent completed report/html Java/resources/tests; the integration subagent completed GradingPipelineTest checks and routine verification; no agents are actively editing
+- `HtmlReportGenerator` now receives `GradingReportContext` containing the batch and copied authoritative withholding reasons; the prior BatchResult-only contract had no implementation or callers
+- HTML is generated after successful CSV export; averages/medians include exported submissions only and withheld totals are diagnostic
+- `grading.html.enabled=true` and `grading.html.file=dashboard.html` are in the supplied configuration; missing HTML settings in older files mean disabled generation
+- Enabled HTML-write failure returns nonzero while retaining completed CSVs and printing their locations
+- Use Java standard-library runtime code and inline styles/vanilla JavaScript; no server, network calls, hosted student reports or new runtime dependencies
+- Preparation warnings are separate from withholding; absent roster rows are outside the dashboard and empty analysis data is labelled unavailable
+- Human AI declarations remain a release task; no automatic AI attribution comments, commits or pushes
+- Focused verification passed 15 tests; one clean verify passed 59 tests, zero failures/errors/skips, on JDK 25 with Java 17 target
+- The packaged JAR produced scores Chee 12, David 10, Fen 10, Jing 0, Ping 20, Xing 1, with 120 case records and six submission records
+- Latest feature 2 output: `build/grading/run-15042814915555924988/{dashboard.html,scorereport.csv,cases.csv,submissions.csv}`; HTML is 107,347 bytes with inline CSS/JS and no external asset references
+- All 64 supplied files snapshotted in `/tmp/cs102-feature2-input-hashes.json` remained unchanged; targeted integration tests also compare all three CSVs byte-for-byte before/after HTML generation
+- Browser pass is unverified: isolated Playwright/system Chrome aborted with SIGABRT (direct headless exit 134); CUA rejected file:// because only http/https are allowed and explicitly prohibited workarounds; no further browser attempts were made
+- Logs: `/tmp/cs102-feature2-{targeted,verify,grading}.log`; these temporary files may disappear
+- Boey provided BUILD SUCCESS, 59 tests with zero failures/errors/skips and expected six scores on 2026-10-10; the human clean-build/run gate is satisfied. Latest human-run dashboard: `build/grading/run-1332949390012507172/dashboard.html`
+- Boey viewed the local dashboard and confirmed “ok looks good”; feature 2 is DONE and `offline_html_dashboard_architecture.md` contains implementation details, actual OOP principles and Slide Deck Talking Points
+- Automated browser checks remain unavailable; no network-disabled or narrow-viewport assertions were independently reported, so do not describe those as automated or separately observed checks
+- Next human action: review and commit the feature changes using the requested commit message; no agent commit or push is authorized. Preserve .DS_Store and human release-declaration responsibilities
+
+Feature 2 commands:
+
+```sh
+mvn clean verify
+java -jar target/auto-grading-system-1.0-SNAPSHOT.jar config.properties
+```
+
+Boey's current temporary Maven fallback:
+
+```sh
+/tmp/apache-maven-3.9.9/bin/mvn -Dmaven.repo.local=/tmp/cs102-maven-repository clean verify
+```
+
+The claim-only/planning sections below describe the earlier handoff. This latest section supersedes their statements that feature 2 has no approved plan or implementation.
 
 ## Start here
 
@@ -121,7 +159,7 @@ The input snapshot is `/tmp/cs102-mvp-input-hashes.json`; temporary build/run lo
 
 ## Team and bonus status
 
-All six bonus implementations remain TODO. Sera owns feature 3 (boilerplate comparison) and William owns feature 4 (parameterized tests). Kiya owns feature 1 (token similarity), preserving the assignment in the remote work-division document. Boey has claimed feature 2 (HTML). Features 5 (Markdown feedback) and 6 (ANSI dashboard) remain unclaimed. Shared MVP work was explicitly permitted while claims remain pending.
+Feature 2 is DONE after Boey's clean-build/run and displayed-dashboard acceptance; the other five bonuses remain TODO. Sera owns feature 3 (boilerplate comparison) and William owns feature 4 (parameterized tests). Kiya owns feature 1 (token similarity), preserving the assignment in the remote work-division document. Boey owns feature 2 (HTML). Features 5 (Markdown feedback) and 6 (ANSI dashboard) remain unclaimed.
 
 Main agent retains architecture/integration. This implementation delegated adapters/provider/tests and process services/tests with non-overlapping ownership recorded in agents.md. Only main may spawn agents; no Astra subagents; at most two concurrent subagents. All delegated work is complete; no agents are actively editing.
 
@@ -133,7 +171,7 @@ Read README.md, docs/REQUIREMENTS.md, docs/ARCHITECTURE.md and docs/TEAM_WORKFLO
 
 ## Next action
 
-Continue with feature 2 planning for Boey, not a rebuild of the accepted MVP. Read the continuation details below, inspect the narrow reporting/configuration integration surface and the relevant PDF rubric sections, then present a concise implementation plan for approval. The request to claim feature 2 and prepare this handoff was not approval to implement it. No bonus architecture document is due yet. No commit or push is requested for this claim/handoff task.
+Feature 2 is complete, accepted by Boey and documented in `offline_html_dashboard_architecture.md`. Provide the requested commit message; do not commit or push automatically. The numbered sections below retain the earlier claim/planning context and do not supersede the latest acceptance record.
 
 ## 1. Latest human request and approval boundary
 
@@ -207,13 +245,13 @@ Start with these files instead of exploring the entire repository:
 | config.properties | External operational settings; there are no HTML settings yet |
 | src/test/java/autograder/grading/GradingPipelineTest.java | Meaningful eligibility, failure and CSV integration fixtures |
 
-The current interface is:
+The HTML interface, updated through the approved feature 2 plan, is:
 
 ```java
-Path generate(BatchResult batch, Path outputDirectory) throws IOException;
+Path generate(GradingReportContext context, Path outputDirectory) throws IOException;
 ```
 
-Its package is `autograder.api`. It is an interface only; there is no concrete HTML implementation, template/resource, dashboard test or CLI HTML invocation yet.
+Its package is `autograder.api`. `autograder.report.html.OfflineHtmlReportGenerator` now implements it; `autograder/html` CSS/JavaScript resources are embedded in the report, renderer tests cover it, and App invokes it after the pipeline's CSV output succeeds.
 
 `GradingRun` is a record containing `BatchResult batch`, `Path directory`, and `Map<SubmissionResult, String> withheld`. The map is copied when constructing the result. `GradingPipeline.grade(...)` builds it after processing submissions, calls its current private `writeReports(...)`, and returns it. `App` then prints scores or withholding reasons and the three CSV locations.
 
@@ -221,7 +259,7 @@ Its package is `autograder.api`. It is an interface only; there is no concrete H
 
 ## 6. Important design issue: withheld versus graded scores
 
-Settle this in the plan before implementing the dashboard. The existing HTML interface receives only BatchResult, whereas export eligibility is held separately in GradingRun.withheld. A renderer using only total points or preparation status cannot reliably infer whether a score was exported.
+The approved plan resolved the earlier BatchResult-only contract gap with `GradingReportContext`: it contains the batch and copied `GradingRun.withheld` map. A renderer using only total points or preparation status cannot reliably infer whether a score was exported. The implementation now uses the actual run-level decisions.
 
 Examples:
 

@@ -2,12 +2,12 @@
 
 Updated 2026-10-10 after reconciling the September planning commits with the completed MVP. The original proposals remain available in Git history. This document describes the current integration points; algorithms and implementation details still require an approved feature plan.
 
-[agents.md](agents.md) is the authoritative ownership/status board. Start with the [README kickoff](README.md#start-here-teammate-agent-kickoff), confirm identity and coordinate claims before editing. The core MVP is DONE following Boey's successful 48-test build and grading run. All bonus implementations remain TODO.
+[agents.md](agents.md) is the authoritative ownership/status board. Start with the [README kickoff](README.md#start-here-teammate-agent-kickoff), confirm identity and coordinate claims before editing. The core MVP is DONE following Boey's successful 48-test build and grading run. Feature 2 is DONE after Boey's 59-test clean build/run and displayed-dashboard acceptance. The other bonuses remain TODO. See [the dashboard architecture](offline_html_dashboard_architecture.md).
 
 | Feature | Owner | Goal | Existing contract in autograder.api |
 | --- | --- | --- | --- |
 | 1: Token-based plagiarism detection | Kiya | Compare normalized Java tokens and report similarity evidence without automatically accusing students | PlagiarismDetector.compare(submissions, assessment) returns similarity findings |
-| 2: Offline HTML dashboard | Boey | Present cohort scores, filters and expandable diagnostics in a self-contained offline report | HtmlReportGenerator.generate(batch, outputDirectory) returns a report path |
+| 2: Offline HTML dashboard | Boey | Present exported-score summaries, filters and expandable diagnostics in a self-contained offline report | HtmlReportGenerator.generate(context, outputDirectory) returns a report path; context includes actual withholding reasons |
 | 3: Starter-code comparison | Sera (locked) | Compare answers with starter files and report unchanged or minimally changed implementations | BoilerplateDetector.analyze(submission, starterDirectory) returns analysis findings |
 | 4: Parameterized test ingestion | William (locked) | Load additional varied inputs and expected outcomes through an approved case format | TestCaseProvider.load(assessment) returns case definitions |
 | 5: Markdown student feedback | Unclaimed | Explain scores and failure reasons in individual student reports | FeedbackGenerator.generate(grade, outputDirectory) returns a report path |

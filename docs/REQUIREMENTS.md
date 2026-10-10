@@ -40,6 +40,16 @@ Bonus credit depends on usefulness, correctness, and design quality; there is no
 
 The contracts exist before implementations. Bonus code must consume common results rather than re-run grading independently. No bonus implementation begins before the core MVP is tested.
 
+## Feature 2 verification (DONE)
+
+Boey approved the original offline HTML plan on 2026-10-10. The implementation consumes the completed batch and authoritative withholding map, externalizes enablement/filename, uses focused Java rendering methods and inline local browser assets, and preserves recorded diagnostics. These address the brief's page 6 reporting bonus and highest code-band responsibilities/packages/configuration criteria; explicit status handling and edge-case tests support the application criteria on page 7.
+
+Focused tests passed 15/15; clean Maven verification passed 59 tests with zero failures/errors/skips. Coverage includes all case statuses, exported review warnings, withholding/partial scores, decimals, empty/all-withheld batches, duplicate and missing identities, roster/header differences, recorded analysis evidence, hostile text escaping, disabled generation and report-write failure with completed CSV preservation. Existing pipeline fixtures assert all three CSVs remain byte-identical after rendering.
+
+The packaged sample run produced all expected six scores, 120 case records, six submission records and `build/grading/run-15042814915555924988/dashboard.html`. All 64 snapshotted supplied files were unchanged. The HTML embeds its styles/scripts without external assets. Automated browser verification was unavailable: the agent browser tool rejected file:// navigation under security policy and isolated Chrome failed to launch. Boey's subsequent build/run and displayed-dashboard acceptance is recorded below. The page 1/page 7 demo/presentation evidence and human release declarations remain team tasks; no grade is promised.
+
+Boey supplied BUILD SUCCESS with 59 tests and zero failures/errors/skips plus all six expected grading scores on 2026-10-10, satisfying the human clean-build/run gate. His dashboard is `build/grading/run-1332949390012507172/dashboard.html`. He then viewed the local report and accepted it with “ok looks good”. Feature 2 is DONE; its implementation/OOP/presentation document is [offline_html_dashboard_architecture.md](../offline_html_dashboard_architecture.md). Automated browser checking remained blocked; specific network-disabled/narrow-viewport assertions were not separately reported and are not claimed. Do not repeat the accepted build request.
+
 ## Submission checklist
 
 - Build from a clean extraction using only the README commands on another team member's machine

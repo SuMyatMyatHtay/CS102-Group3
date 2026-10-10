@@ -35,7 +35,7 @@ After identity is confirmed, reread the feature board. For Sera or William, conf
 
 A Java application being built to prepare and grade student submissions against instructor tests, then fill the supplied CSV score sheet.
 
-**Current stage: core MVP DONE; Boey confirmed a successful clean build and grading run on 2026-10-10.** The command prepares submissions, compiles each part, runs the 20 instructor cases separately with deadlines, and exports real scores. The accepted foundation remains intact. Bonus implementations remain TODO and require individual claims, approved plans and their own build confirmations.
+**Current stage: core MVP and feature 2 DONE.** The command prepares submissions, compiles each part, runs the 20 instructor cases separately with deadlines, exports real scores and generates an optional offline HTML dashboard. Boey confirmed the 59-test clean build, sample run and displayed dashboard on 2026-10-10. Other bonuses remain TODO. See [the dashboard architecture](offline_html_dashboard_architecture.md) for its implementation and presentation talking points.
 
 ## Setup, build and run
 
@@ -82,7 +82,7 @@ mvn clean verify
 
 This removes the previous `target` output, compiles the application, runs the tests and builds `target/auto-grading-system-1.0-SNAPSHOT.jar`. The first build downloads Maven plugins/test dependencies and needs internet access. No separate application libraries need to be downloaded manually.
 
-Wait for **BUILD SUCCESS** before running the application. The accepted MVP baseline has **48 tests, zero failures/errors/skips**; the count may increase as features are added. Messages about deliberately broken archives, missing files or timeouts during tests are expected when the final test summary passes. Detailed test reports are in `target/surefire-reports`.
+Wait for **BUILD SUCCESS** before running the application. The current feature 2 build passed **59 tests, zero failures/errors/skips**; the accepted MVP baseline had 48 tests. Messages about deliberately broken archives, missing files or timeouts during tests are expected when the final test summary passes. Detailed test reports are in `target/surefire-reports`.
 
 ### 4. Grade the supplied sample submissions
 
@@ -97,6 +97,7 @@ The terminal prints the exact new `build/grading/run-*` directory containing:
 - `scorereport.csv`: scores in the required roster format
 - `cases.csv`: individual test statuses, marks and diagnostic output
 - `submissions.csv`: export/withholding decisions and preparation warnings
+- `dashboard.html`: self-contained offline dashboard when `grading.html.enabled=true`
 
 Each run creates a fresh directory. `mvn clean` removes `target`, but does not remove old `build` workspaces or appended preparation logs. Supplied input files remain unchanged. See the execution policy below before using submissions outside the supplied sample.
 
@@ -105,6 +106,18 @@ To display help without grading:
 ```sh
 java -jar target/auto-grading-system-1.0-SNAPSHOT.jar --help
 ```
+
+### Offline HTML dashboard
+
+Open the HTML file printed by the command directly in your browser. It contains its own styles and scripts and needs no server or internet connection. Search by name, username or archive, filter by export decision and warnings, sort by name or score, and expand a submission to see question marks, preparation corrections and per-case diagnostics.
+
+Summary averages and medians include only exported submissions and identify that denominator. The mean is rounded to four decimal places; individual marks and maxima retain their decimal values. WITHHELD scores are diagnostic totals, not final exported marks. Preparation status is shown separately: a REVIEW_REQUIRED name warning can coexist with an exported score. Rows use matched roster names/usernames and retain reported header values in details. The report covers received submissions, so absent roster rows remain outside the dashboard. Read the score CSV together with `submissions.csv` when examining unchanged template numerators.
+
+The supplied configuration enables the dashboard. To disable it, set `grading.html.enabled=false`. `grading.html.file` defaults to `dashboard.html` and accepts a simple `.html` filename using letters, digits, dots, underscores or hyphens. It is written inside the new grading run directory. Older configuration files without HTML settings keep generation disabled. Invalid settings fail before grading. If enabled HTML generation fails, the command returns nonzero and prints an error and the completed CSV locations; those CSVs remain usable.
+
+Case diagnostics contain recorded stdout/stderr, subject to the configured capture limit. They do not include structured expected/actual assertion values. Empty analysis lists mean analysis data was not supplied; they do not establish that plagiarism or starter comparison ran.
+
+For a demonstration, run the build and grading commands above, then open the printed HTML file directly in a browser. You can use `open -a Safari "<printed dashboard path>"` on macOS. Show the six expected scores, David/Xing's exported review warnings, search by username/archive, warning/export filters, both sort directions, and opening a submission and its stdout/stderr. Wide tables are intentionally scrollable. Boey accepted the displayed dashboard after confirming the clean build/run. Automated rendering/escaping and CSV-preservation tests passed; automated browser testing was unavailable because local-file navigation was blocked and isolated Chrome failed to launch. A network-disabled/narrow-window demonstration can be rehearsed by the team; no automated checks for those browser conditions are claimed.
 
 When requesting feature completion, share the build summary and relevant run results so the clean-build confirmation can be recorded in `agents.md`.
 
@@ -170,7 +183,7 @@ The process exits successfully when the grading batch and reports complete, even
 | `Project/IS442-ScoreSheet.csv` | Original class list and required report format |
 | `build/extracted` | Raw extraction workspaces created by runs |
 | `build/working` | Separate corrected working copies |
-| `build/grading/run-*` | Isolated compilation/case workspaces, scorereport.csv, cases.csv, submissions.csv |
+| `build/grading/run-*` | Isolated compilation/case workspaces, CSV reports and optional dashboard.html |
 | `build/submission-anomalies.log` | Problems found during preparation |
 | `build/submission-corrections.log` | Corrections made to working copies |
 | `target` | Maven-generated classes, test reports, and executable JAR |
@@ -185,6 +198,8 @@ All paths in this table are beneath `src/main/java/autograder/`.
 | --- | --- |
 | `App.java` | Starts the application and prints progress/results |
 | `config/AppConfig.java` / `ExecutionConfig.java` | Read preparation/grading settings and reject invalid combinations |
+| `config/HtmlReportConfig.java` | Validate optional HTML enablement and filename |
+| `report/html/OfflineHtmlReportGenerator.java` | Render the completed results and export decisions as one offline HTML file |
 | `grading/GradingPipeline.java` | Coordinates compilation, cases, score aggregation and reports |
 | `grading/InstructorTestCaseProvider.java` | Maps the supplied instructor cases to individual adapters |
 | `execution/StudentCompiler.java` | Compiles selected student sources and instructor adapter with supplied support classes |
@@ -245,7 +260,7 @@ The grading pipeline supplies scores only for eligible students after recording 
 | 5: Markdown feedback | FeedbackGenerator | Unclaimed |
 | 6: terminal dashboard | ProgressListener | Unclaimed |
 
-The interfaces exist so implementations share common inputs and outputs. The basic console implements progress reporting; the interactive ANSI dashboard has not been built. Bonus implementation begins only after the core MVP works end to end. Boey has claimed the HTML dashboard (feature 2). Kai Cong and Gabriel can claim features 5 and 6.
+The interfaces exist so implementations share common inputs and outputs. HTML reporting receives `GradingReportContext`, which carries completed batch results and explicit withholding reasons. The basic console implements progress reporting; the interactive ANSI dashboard has not been built. Boey owns the HTML dashboard (feature 2, DONE). Kai Cong and Gabriel can claim features 5 and 6.
 
 ## Latest verification
 

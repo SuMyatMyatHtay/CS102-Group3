@@ -23,7 +23,7 @@ Before proposing any new implementation, review the relevant brief sections and 
 | Feature | Owner | Status |
 | --- | --- | --- |
 | 1: Token-based plagiarism detection | Kiya | TODO |
-| 2: Offline HTML dashboard | Boey | TODO |
+| 2: Offline HTML dashboard | Boey | DONE |
 | 3: Starter code / boilerplate diff detector | Sera (locked) | TODO |
 | 4: Dynamic parameterized test ingestion | William (locked) | TODO |
 | 5: Markdown student feedback | Unclaimed | TODO |
@@ -33,7 +33,7 @@ Allowed statuses: TODO, IN_PROGRESS, REVIEW, DONE.
 
 ## Gatekeeper and ownership
 
-Boey has claimed feature 2 (offline HTML dashboard); implementation has not started. Available features: 5, 6. Ask unassigned members to claim an available feature before feature work. Only Sera may claim or implement feature 3; only William may claim or implement feature 4. No bonus implementation begins until the MVP is functional and tested.
+Boey owns feature 2 (offline HTML dashboard) and approved the original implementation plan on 2026-10-10. Available features: 5, 6. Ask unassigned members to claim an available feature before feature work. Only Sera may claim or implement feature 3; only William may claim or implement feature 4. No bonus implementation begins until the MVP is functional and tested.
 
 Keep shared configuration, domain models, interfaces, Maven setup, and pipeline integration coordinated by the main agent. Give each bonus implementation its own package after the interfaces are approved. Record file ownership before concurrent edits. Agents must reread this board before claiming work; this file alone does not provide a concurrent locking mechanism.
 
@@ -42,6 +42,19 @@ Keep shared configuration, domain models, interfaces, Maven setup, and pipeline 
 Move implemented features to REVIEW. Provide exact Maven commands for compilation and execution of the relevant feature, then explicitly request the user's confirmation of a clean build. Never mark DONE before that confirmation. On marking a bonus DONE, create <feature_name>_architecture.md with implementation details, actual OOP principles used, and Slide Deck Talking Points.
 
 ## Current Context
+
+- Feature 2: Boey approved the original six-step plan with “Ok lets implement the original plan”; optional heatmap, attention overview and score distribution are outside this implementation
+- Active branch: offline-html-dashboard; no commit or push is authorized for feature implementation
+- File ownership for feature 2: main integrated the reporting context/API, HTML configuration, App integration, their tests and shared documentation; renderer subagent completed autograder/report/html, autograder/html resources and renderer tests; integration subagent completed GradingPipelineTest HTML/CSV checks and targeted runtime verification; no agents are actively editing
+- Keep the existing CSV and withholding policy; HTML is generated afterward from the completed run and authoritative withheld map
+- Feature 2 completion gate satisfied: Boey supplied the clean build/run and accepted the displayed dashboard with “ok looks good” on 2026-10-10
+- Feature 2 architecture document: offline_html_dashboard_architecture.md (implementation, actual OOP principles and Slide Deck Talking Points)
+- Feature 2 verification: focused tests 15/15; clean verify 59 tests with zero failures/errors/skips; packaged grading run retained scores 12,10,10,0,20,1 and produced 120 case records plus dashboard.html
+- Feature 2 report: build/grading/run-15042814915555924988/dashboard.html; all 64 files in /tmp/cs102-feature2-input-hashes.json remained unchanged; git diff --check passed
+- Automated browser verification was unavailable: isolated Chrome aborted (SIGABRT), and CUA rejected file:// navigation under its browser security policy (http/https only; workarounds prohibited); Boey subsequently viewed and accepted the dashboard; no automated browser pass is claimed
+- Boey provided BUILD SUCCESS on 2026-10-10: 59 tests with zero failures/errors/skips and all six expected sample scores; the feature 2 human clean-build/run gate is satisfied
+- Boey's latest report: build/grading/run-1332949390012507172/dashboard.html
+- Next: Boey reviews and commits the feature on offline-html-dashboard; a requested commit message does not authorize the agent to commit or push. Other bonus ownership and human release declarations remain as recorded
 
 - Date: 2026-10-10 (Asia/Tokyo)
 - Validated driver: Boey; identity reconfirmed in this continuation
@@ -66,8 +79,8 @@ Move implemented features to REVIEW. Provide exact Maven commands for compilatio
 - Ownership: main integrated configuration, pipeline, CLI and docs; delegated adapters/provider/tests and process services/tests are complete; no agents actively editing
 - Original ZIPs, instructor tests, starter files and source score sheet remain unchanged
 - Do not add AI-attribution comments to Java; Boey retained that rule and humans own review/modification and brief-required declarations before submission
-- All six bonuses remain TODO; Kiya owns feature 1, Sera owns feature 3 and William feature 4; Boey owns feature 2; available features 5, 6
-- No bonus is DONE; no per-bonus architecture document is due
+- Feature 2 is DONE after Boey's clean-build/run and dashboard acceptance; other bonuses remain TODO; Kiya owns feature 1, Sera owns feature 3 and William feature 4; available features 5, 6
+- Feature 2 architecture document is complete; no other per-bonus architecture document is due
 - Maven is temporarily available at /tmp/apache-maven-3.9.9/bin/mvn with -Dmaven.repo.local=/tmp/cs102-maven-repository
 - Exact commands: mvn clean verify; java -jar target/auto-grading-system-1.0-SNAPSHOT.jar config.properties
 - Fallback build command: /tmp/apache-maven-3.9.9/bin/mvn -Dmaven.repo.local=/tmp/cs102-maven-repository clean verify
@@ -80,6 +93,6 @@ Move implemented features to REVIEW. Provide exact Maven commands for compilatio
 
 - Remote September work-division assignment preserved: Kiya owns feature 1; WORK_DIVISION.md now maps proposals to current contracts
 
-- Boey claimed feature 2 (offline HTML dashboard) on 2026-10-10; owner recorded, status TODO because implementation has not started
-- Current authorized work is claim documentation and continuation handoff only; feature 2 implementation plan still needs explicit approval
-- Next chat: read HANDOFF.md feature 2 continuation sections, confirm driver using the full member list, inspect the relevant reporting contracts and PDF rubric, then propose a concise plan
+- Boey claimed feature 2 (offline HTML dashboard) on 2026-10-10, approved the original implementation plan, supplied the clean build/run and accepted the displayed report; current status is DONE
+- Current authorized work is the original feature 2 implementation and verification; optional extras and publishing changes are outside this approval
+- On continuation, read the latest HANDOFF.md feature 2 section and board; confirm canonical identity only for a new workflow and preserve the completed feature's accepted scope

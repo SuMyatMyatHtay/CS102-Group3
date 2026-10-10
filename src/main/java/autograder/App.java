@@ -1,15 +1,20 @@
 package autograder;
 
+import autograder.api.HtmlReportGenerator;
 import autograder.config.AppConfig;
 import autograder.config.ExecutionConfig;
+import autograder.config.HtmlReportConfig;
 import autograder.grading.GradingPipeline;
 import autograder.grading.GradingRun;
+import autograder.model.GradingReportContext;
 import autograder.model.StudentGrade;
 import autograder.model.SubmissionResult;
 import autograder.model.SubmissionStatus;
+import autograder.report.html.OfflineHtmlReportGenerator;
 import autograder.submission.SubmissionProcessor;
 import autograder.ui.ConsoleProgressListener;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -37,6 +42,7 @@ public final class App {
         try {
             AppConfig config = AppConfig.load(Path.of(args[0]));
             ExecutionConfig execution = ExecutionConfig.load(Path.of(args[0]), config);
+            HtmlReportConfig html = HtmlReportConfig.load(Path.of(args[0]));
             GradingPipeline grading = new GradingPipeline(config, execution);
             grading.validateEnvironment();
             System.out.println("Preparing submissions for " + config.getAssessment().getName());
@@ -62,12 +68,30 @@ public final class App {
             System.out.println("Export decisions and review warnings: "
                     + run.directory().resolve("submissions.csv"));
             System.out.println("Withheld or absent students retain their original score-sheet rows");
-            return 0;
+            return generateHtmlReport(run, html, new OfflineHtmlReportGenerator(html.file()));
         } catch (Exception exception) {
             if (exception instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
             }
             System.err.println("could not complete grading: " + exception.getMessage());
+            return 1;
+        }
+    }
+
+    static int generateHtmlReport(GradingRun run, HtmlReportConfig config,
+                                 HtmlReportGenerator generator) {
+        if (!config.enabled()) {
+            return 0;
+        }
+        try {
+            Path report = generator.generate(new GradingReportContext(run.batch(), run.withheld()),
+                    run.directory());
+            System.out.println("HTML dashboard: " + report);
+            return 0;
+        } catch (IOException exception) {
+            System.err.println("could not write HTML dashboard " + run.directory().resolve(config.file())
+                    + ": " + exception.getMessage());
+            System.err.println("Grading and CSV exports are complete; reports remain in " + run.directory());
             return 1;
         }
     }
