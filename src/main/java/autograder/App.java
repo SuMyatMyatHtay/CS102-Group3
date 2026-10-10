@@ -1,6 +1,10 @@
 package autograder;
 
 import autograder.config.AppConfig;
+import autograder.config.ExecutionConfig;
+import autograder.grading.GradingPipeline;
+import autograder.grading.GradingRun;
+import autograder.model.StudentGrade;
 import autograder.model.SubmissionResult;
 import autograder.model.SubmissionStatus;
 import autograder.submission.SubmissionProcessor;
@@ -32,6 +36,9 @@ public final class App {
 
         try {
             AppConfig config = AppConfig.load(Path.of(args[0]));
+            ExecutionConfig execution = ExecutionConfig.load(Path.of(args[0]), config);
+            GradingPipeline grading = new GradingPipeline(config, execution);
+            grading.validateEnvironment();
             System.out.println("Preparing submissions for " + config.getAssessment().getName());
             SubmissionProcessor processor = new SubmissionProcessor(config,
                     new ConsoleProgressListener());
@@ -43,10 +50,24 @@ public final class App {
             printResults(results);
             System.out.println("Diagnostics: " + config.getAnomalyLog());
             System.out.println("Corrections: " + config.getCorrectionLog());
-            System.out.println("Preparation only: student code has not been run and no scores were exported");
+            GradingRun run = grading.grade(results);
+            for (StudentGrade grade : run.batch().getGrades()) {
+                String reason = run.withheld().get(grade.getSubmission());
+                System.out.println(grade.getSubmission().getIdentity().getLabel() + " | "
+                        + (reason == null ? "Score: " + grade.getTotalScore()
+                        : "WITHHELD: " + reason));
+            }
+            System.out.println("Score report: " + run.directory().resolve(execution.reportFile()));
+            System.out.println("Per-case diagnostics: " + run.directory().resolve("cases.csv"));
+            System.out.println("Export decisions and review warnings: "
+                    + run.directory().resolve("submissions.csv"));
+            System.out.println("Withheld or absent students retain their original score-sheet rows");
             return 0;
         } catch (Exception exception) {
-            System.err.println("could not run submission ingestion: " + exception.getMessage());
+            if (exception instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
+            System.err.println("could not complete grading: " + exception.getMessage());
             return 1;
         }
     }
@@ -83,6 +104,6 @@ public final class App {
 
     private static void printUsage() {
         System.out.println("Usage: java -jar <application.jar> <configuration.properties>");
-        System.out.println("Checks and prepares submission copies without executing student code");
+        System.out.println("Prepares, compiles and grades submissions using timed instructor cases");
     }
 }

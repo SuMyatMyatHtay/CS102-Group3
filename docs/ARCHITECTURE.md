@@ -1,8 +1,8 @@
-# Foundation architecture
+# Grading architecture
 
 ## What runs today
 
-The entry point loads an external properties file, reads the supplied class list, processes the submission ZIPs, checks ownership and required files, prepares corrected working copies where safe, and reports problems. It does not yet compile or execute student programs.
+The entry point loads an external properties file, reads the supplied class list, processes the submission ZIPs, checks ownership and required files, prepares corrected working copies where safe, and reports problems. It then compiles each part separately, executes individual instructor cases, aggregates marks and exports the score sheet with diagnostic reports.
 
 The archive and supplied inputs are evidence. Extraction output is a raw copy. Corrections belong in a separate working copy, with recorded reasons. Conflicting ownership must not be converted into a guessed grade. An extracted archive, a valid question, and a graded student are separate states.
 
@@ -19,7 +19,7 @@ The archive and supplied inputs are evidence. Extraction output is a raw copy. C
 - `WorkingCopyPreparer`: creates a canonical copy under the roster username and applies approved identity repairs
 - `CorrectionLog` / `AnomalyLog`: keep corrections separate from problems
 - `SubmissionResult`: shares the original/working locations, identity, status, problems, and corrections
-- `CsvCodec` / `CsvScoreReportWriter`: parse/write the supplied schema safely; the CLI does not invent grades to call the writer
+- `CsvCodec` / `CsvScoreReportWriter`: parse/write the supplied schema safely using the pipeline’s eligible computed scores
 - `ProgressListener` / `ConsoleProgressListener`: separate progress events from their presentation
 
 Small immutable data classes pass results between components. Lists exposed by result models cannot be modified by consumers. Composition keeps responsibilities separate. Interfaces allow later feature implementations to fit into the pipeline without changing its core responsibilities. Java class inheritance is not being added artificially; the supplied instructor tester classes themselves extend student question classes, which the later compilation design must respect.
@@ -35,25 +35,31 @@ Small immutable data classes pass results between components. Lists exposed by r
 | FeedbackGenerator | Student grading results and output directory | Feedback file path |
 | ProgressListener | Stage, item, completed count and total | Display update |
 
-These are Java contracts, not completed bonus implementations. Sera and William retain ownership of their implementation logic. Generation of runner source files will be agreed when the execution adapter is designed; a TestCaseDefinition describes the runner class and arguments to execute, not a general Java source parser.
+These are Java contracts, not completed bonus implementations. Sera and William retain ownership of their implementation logic. The current runners are explicit source resources; a TestCaseDefinition describes the runner class and arguments to execute, not a general Java source parser.
 
 ## Scoring foundation
 
 `TestCaseDefinition` names a globally unique test, question, runner class, arguments, and configured maximum points. `TestCaseResult` distinguishes pass, fail, timeout, compilation error, runtime error, and not-run. Only a passed case earns its configured points. `StudentGrade` sums recorded case scores using decimal arithmetic and rejects duplicate case identifiers. `BatchResult` groups assessment, grades and analysis findings for report features.
 
-These models do not prove execution correctness. The future executor must record every expected case, including skipped/unrunnable cases, validate case/question mappings against the assessment, and keep compilation errors from blocking independent questions. The report pipeline must check all expected cases before exporting final marks and must not choose between duplicate student submissions automatically.
+The pipeline records all expected cases, including NOT_RUN for withheld submissions and COMPILE_ERROR for each case in an uncompiled part. Unique roster matches with name warnings can be graded; unresolved identities, duplicate submissions, failed preparation and grading infrastructure failures withhold export. Omitted rows retain the template's numerator. A separate `submissions.csv` records the export decision and warnings; `cases.csv` preserves diagnostics. Scores use the existing decimal aggregation and CSV writer.
 
-## Decisions required for the next MVP stage
+## Execution design
 
-The supplied testers run multiple cases within one main method and print their total at the end. A timeout on the whole method is insufficient for fair continuation. Before implementing the execution stage, build a small adapter experiment preserving the supplied assertions and point values. Demonstrate a pass–loop–pass sequence that retains both available marks.
+`InstructorTestCaseProvider` validates the fixed five question IDs, original tester content and case counts, then supplies 20 definitions with configured weights. Five explicit Java adapter resources preserve the original inputs, expected values and comparisons. Original testers stay unchanged. This avoids a brittle Java-text splitter and the extra complexity of an AST rewriter. New or edited testers require reviewed adapters; this is not William's dynamic case feature.
 
-Prefer explicit, understandable case runners to brittle text rewriting of arbitrary Java. Evaluate reusable runner generation versus small documented adapters for these tester files, including maintenance and multi-assessment support. Preserve instructor originals and test equivalence against independently verified expected outcomes. William's later feature can generate additional configured cases through the same contract.
+`StudentCompiler` creates an isolated source/class workspace per part, copies only the selected answer and required companions, adds supplied support classes and the adapter, and launches javac with annotation processing disabled. Student compiled classes are never reused. A failed part leaves other questions and students independent.
 
-Run compilation/execution in separate processes with deadlines and bounded stdout/stderr. Clean up child processes after timeout/cancellation. A child JVM and timeout are not a security sandbox: state the supported trust boundary honestly and decide stronger isolation before claiming protection from deliberately hostile code.
+`CaseExecutor` creates a fresh directory and fixture copies per case and starts a new JVM. The adapter writes PASSED, FAILED or ERROR to a dedicated result file after evaluating the assertion. The parent requires a successful process exit and a valid result; printed text has no scoring authority. Missing/invalid results are runtime errors. Timeout takes precedence over any written result. Expected exceptions in Q2b still pass their corresponding cases; unexpected exceptions retain zero marks and runtime diagnostics.
+
+`ProcessRunner` closes stdin, drains both output pipes concurrently while limiting stored bytes, enforces the configured deadline, and attempts process/descendant cleanup. Interruptions propagate rather than being treated as student failures. `GradingPipeline` distinguishes infrastructure I/O errors from student test failures, preserves remaining case records and withholds affected exports.
+
+`ExecutionConfig` loads tool paths, compilation/case deadlines, output capture size, grading directory and report name. It rejects overlap with configured inputs and preparation outputs. Each grading run is a fresh directory so a previous report cannot be mistaken for this run's output.
+
+These processes are not a security sandbox. The supported setting is controlled course grading; hostile code can use the current account's privileges, tamper with files/protocol or launch children. Strong adversarial isolation must be supplied externally. Descendant cleanup is best effort where the OS permits enumeration and termination. Fixed adapters also intentionally reset student static state per case to make timeouts fair; a stateful answer can differ from the original tester's single-process run.
 
 ## Configuration and simplicity
 
-Externalize settings the instructor or team may change: paths, assessment identifiers, required files, case counts, marks, matching rules, extraction limits, and future execution limits. Language/protocol mechanics such as zero-based indexes, CSV quoting characters, and a success exit code are not configurable grading policy. Keep comments minimal, lowercase, and without full stops; agents must not add AI attribution comments.
+Externalize settings the instructor or team may change: paths, assessment identifiers, required files, case counts, marks, matching rules, extraction limits, and execution limits. Language/protocol mechanics such as zero-based indexes, CSV quoting characters, and a success exit code are not configurable grading policy. Keep comments minimal, lowercase, and without full stops; agents must not add AI attribution comments.
 
 ## Dependency choices
 

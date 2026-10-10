@@ -2,7 +2,13 @@
 
 ## Session protocol
 
-Ask "Who am I speaking with?" at the start of each new workflow. Validate the answer against Boey, Sera, William, Kai Cong, Kiya, and Gabriel. Read this file before build work and state the current context. Get approval for substantial implementation plans before changing Java code.
+At the start of each new workflow, read this file, HANDOFF.md, README.md, docs/REQUIREMENTS.md, docs/ARCHITECTURE.md and docs/TEAM_WORKFLOW.md. Read-only context gathering and a concise project/bonus summary may precede identity confirmation. Show all six bonus features with their purpose, current owner, status and availability from this board, then ask:
+
+"Who am I speaking with? Please choose your recorded team name: Boey, Sera, William, Kai Cong, Kiya, or Gabriel."
+
+Always include the complete member list when requesting identity. Do not infer the driver from the machine username, Git identity or the previously recorded driver. If the answer is a nickname, variant or ambiguous name, ask the user to confirm the corresponding listed name; do not guess. Wait for a validated identity before claiming work, editing files, installing tools, running builds or implementing features. Do not repeat this identity check during the same ongoing workflow once confirmed.
+
+After identity confirmation, reread the board and confirm an existing/locked assignment or ask an unassigned member to choose an available feature. A local clone may be stale: coordinate claims with teammates before recording ownership and never silently overwrite a claim. Read this file before build work and state the current context. Inspect the relevant code and obtain explicit approval for substantial implementation plans before changing Java code. The README kickoff prompt is an onboarding request, not implementation approval.
 
 ## Feature status board
 
@@ -30,24 +36,36 @@ Move implemented features to REVIEW. Provide exact Maven commands for compilatio
 ## Current Context
 
 - Date: 2026-10-10 (Asia/Tokyo)
-- Validated driver: Boey
-- Approved work: revise the foundation after reviewing the seven-page project brief; strengthen Step 1, add shared contracts and roster/CSV components, improve workflow and documentation
-- Foundation status: DONE (preparation foundation; Boey supplied successful build/run output); student compilation, per-case execution, end-to-end grading, and bonus implementations remain TODO
-- Ownership: delegated implementation complete; main agent reviewed and integrated all changes; no agents are actively editing
-- Original ZIPs, supplied testers, starter files, and source score sheet must remain unchanged
-- Do not generate AI attribution comments in Java code: Boey explicitly retained that rule on 2026-10-10
-- Human team will review/modify code, then manually add the brief-required method attributions and presentation AI-use declarations before submission
-- Human declaration completion is a release-checklist item, not permission for agents to add attribution comments
-- Bonus ownership remains unchanged; Boey's claim is pending, with 1, 2, 5, 6 available
-- No feature is DONE until the user confirms a clean Maven build
-- Maven is available temporarily at /tmp/apache-maven-3.9.9/bin/mvn with -Dmaven.repo.local=/tmp/cs102-maven-repository
-- Final verification: Maven clean verify passed with 30 tests, zero failures/errors; executable JAR processed all six supplied archives
-- Runtime results: 4 READY, 2 REVIEW_REQUIRED (David and Xing: name headers do not corroborate roster), 0 FAILED; 22 working-copy corrections in the final run
-- Original-input verification: all 63 recorded SHA256 checksums unchanged; student code has not been executed
-- Six bonus interfaces and shared assessment/test/result models exist; the CSV writer is component-tested but not connected to a grading pipeline
-- Missing Username is optional; required Name/Email headers may be filled in working copies only when strong identity evidence has one roster match
-- Read README.md and docs/REQUIREMENTS.md, docs/ARCHITECTURE.md, docs/TEAM_WORKFLOW.md for current behavior, evidence, remaining work, and human responsibilities
-- Exact verification commands: mvn clean verify; java -jar target/auto-grading-system-1.0-SNAPSHOT.jar config.properties
-- Next: propose the compiler/test-adapter implementation for approval, including fair per-case timeout handling before implementing student execution
-- No bonus has been marked DONE; no per-bonus architecture document is due yet
-- Boey supplied terminal output confirming BUILD SUCCESS, 30 tests with no failures/errors, and the expected six-submission preparation results on 2026-10-10; build-confirmation gate satisfied for the foundation only
+- Validated driver: Boey; identity reconfirmed in this continuation
+- Approved work: Boey approved the remaining MVP plan recorded in HANDOFF.md with “Approved lets go”
+- Foundation: DONE; Boey previously confirmed 30 tests and successful preparation run
+- Remaining MVP: DONE; Boey supplied BUILD SUCCESS, 48 tests with zero failures/errors/skips, and the expected six-submission grading output on 2026-10-10
+- Implemented: five explicit per-case instructor adapters, independent compilation, bounded per-case child processes, score aggregation, CSV export and per-case/export-decision diagnostics
+- Fixed adapters cover the supplied 20 cases; edited testers require reviewed adapters; original-content validation accepts line-ending differences
+- Missing answers/companions are compilation failures for that part only; timeouts preserve other case marks
+- Unresolved identities, duplicate submissions, unusable preparations and infrastructure errors withhold export; name warnings alone do not
+- Withheld/absent rows retain their template numerator; submissions.csv records decisions and warnings
+- Final verification: clean verify passed 48 tests, zero failures/errors; after final diagnostic/formatting fixes, affected execution tests passed 7/7 and the JAR was rebuilt
+- Real run: six archives graded; 120 case records, 20 per submission; all exported numerators reconcile with case points
+- Scores: Chee 12, David 10, Fen 10, Jing 0, Ping 20, Xing 1
+- Xing: Q2a missing-file case passes; four other Q2a cases time out due to a non-advancing scanner loop; remaining cases fail
+- groundtruth.txt remains internally inconsistent for Xing (components sum to 15, stated total 1); actual execution independently yields 1; references unchanged
+- Preparation still reports 4 READY, 2 REVIEW_REQUIRED (David/Xing name warnings), 0 FAILED; warnings retained in reports
+- All 67 supplied-file hashes from the new pre-implementation snapshot remain unchanged
+- Reports: build/grading/run-10952970798376735826/{scorereport,cases,submissions}.csv
+- No OS security sandbox is claimed; current-user privileges remain, descendant cleanup is best effort; stronger isolation must be external
+- Verification used JDK 25 with Java 17 compiler target; actual Java 17 runtime and Windows were not tested
+- Ownership: main integrated configuration, pipeline, CLI and docs; delegated adapters/provider/tests and process services/tests are complete; no agents actively editing
+- Original ZIPs, instructor tests, starter files and source score sheet remain unchanged
+- Do not add AI-attribution comments to Java; Boey retained that rule and humans own review/modification and brief-required declarations before submission
+- All six bonuses remain TODO; Sera owns feature 3 and William feature 4; Boey's bonus claim remains pending; available features 1, 2, 5, 6
+- No bonus is DONE; no per-bonus architecture document is due
+- Maven is temporarily available at /tmp/apache-maven-3.9.9/bin/mvn with -Dmaven.repo.local=/tmp/cs102-maven-repository
+- Exact commands: mvn clean verify; java -jar target/auto-grading-system-1.0-SNAPSHOT.jar config.properties
+- Fallback build command: /tmp/apache-maven-3.9.9/bin/mvn -Dmaven.repo.local=/tmp/cs102-maven-repository clean verify
+- Next: onboard teammates using the README kickoff, confirm canonical identity and bonus ownership, then seek approval for the selected feature plan; do not repeat the accepted MVP build-confirmation gate
+- Read HANDOFF.md, README.md, docs/REQUIREMENTS.md, docs/ARCHITECTURE.md and docs/TEAM_WORKFLOW.md for detailed behavior and responsibilities
+- No commit or push was requested; pre-existing unrelated .DS_Store change preserved
+
+- Documentation onboarding update approved by Boey: kickoff placed first in README; identity prompts list every group member; read-only context/summary may precede identity confirmation
+- Boey-confirmed run reports: build/grading/run-9005748573100915500/{scorereport,cases,submissions}.csv

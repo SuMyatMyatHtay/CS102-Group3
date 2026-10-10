@@ -1,0 +1,217 @@
+package autograder.grading;
+
+import autograder.config.AppConfig;
+import autograder.config.ExecutionConfig;
+import autograder.csv.CsvCodec;
+import autograder.model.StudentIdentity;
+import autograder.model.StudentRecord;
+import autograder.model.SubmissionResult;
+import autograder.model.SubmissionStatus;
+import autograder.model.TestStatus;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+class GradingPipelineTest {
+    private static final Path PROJECT_ROOT = Path.of("").toAbsolutePath().normalize();
+    private static final String LOOPING_Q1A = """
+            import java.util.ArrayList;
+            public class Q1a {
+                public static ArrayList<String> getIsogramWords(ArrayList<String> inputs) {
+                    if (inputs.contains("ellen")) { while (true) {} }
+                    ArrayList<String> result = new ArrayList<>();
+                    for (String word : inputs) {
+                        java.util.HashSet<Character> seen = new java.util.HashSet<>();
+                        boolean valid = true;
+                        for (char letter : word.toLowerCase().toCharArray()) {
+                            if (!Character.isLetter(letter) || !seen.add(letter)) { valid = false; break; }
+                        }
+                        if (valid) { result.add(word); }
+                    }
+                    return result;
+                }
+            }
+            """;
+    private static final String PASSING_Q1B = """
+            import java.util.ArrayList;
+            public class Q1b {
+                public static int getSumOfEvenIntegers(ArrayList<Object> inputs) {
+                    int sum = 0;
+                    for (Object value : inputs) {
+                        if (value instanceof Integer number && number % 2 == 0) { sum += number; }
+                    }
+                    return sum;
+                }
+            }
+            """;
+
+    @TempDir
+    Path temporaryDirectory;
+
+    @Test
+    void keepsPassLoopPassMarksAndIsolatesCompilationFailureToItsQuestion() throws Exception {
+        AppConfig app = AppConfig.load(PROJECT_ROOT.resolve("config.properties"));
+        Map<Path, byte[]> protectedInputs = snapshotInputs();
+        SubmissionResult looping = submission("looping", student("#01400001", "looping"), true, LOOPING_Q1A);
+        SubmissionResult broken = submission("broken", student("#01400002", "broken"), true,
+                "public class Q1a { broken }");
+
+        GradingRun run = new GradingPipeline(app, execution()).grade(List.of(looping, broken));
+
+        Map<String, TestStatus> loopingCases = statuses(run, "looping");
+        assertEquals(TestStatus.PASSED, loopingCases.get("Q1a-1"));
+        assertEquals(TestStatus.TIMED_OUT, loopingCases.get("Q1a-2"));
+        assertEquals(TestStatus.PASSED, loopingCases.get("Q1a-3"));
+        var loopingGrade = run.batch().getGrades().stream()
+                .filter(grade -> grade.getSubmission() == looping).findFirst().orElseThrow();
+        assertEquals(2.0, loopingGrade.getQuestionScore("Q1a"));
+        assertEquals(TestStatus.PASSED, loopingCases.get("Q1b-1"));
+        Map<String, TestStatus> brokenCases = statuses(run, "broken");
+        assertEquals(TestStatus.COMPILE_ERROR, brokenCases.get("Q1a-1"));
+        assertEquals(TestStatus.COMPILE_ERROR, brokenCases.get("Q1a-3"));
+        assertEquals(TestStatus.PASSED, brokenCases.get("Q1b-1"));
+        assertEquals(20, run.batch().getGrades().get(0).getTestResults().size());
+        assertEquals(20, run.batch().getGrades().get(1).getTestResults().size());
+
+        List<List<String>> submissionRows = CsvCodec.parse(
+                Files.readString(run.directory().resolve("submissions.csv")));
+        assertEquals(3, submissionRows.size());
+        List<List<String>> reportRows = CsvCodec.parse(
+                Files.readString(run.directory().resolve("grade-report.csv")));
+        int idColumn = reportRows.get(0).indexOf("OrgDefinedId");
+        int scoreColumn = reportRows.get(0).indexOf("Calculated Final Grade Numerator");
+        List<String> exportedLooping = reportRows.stream().filter(row -> row.get(idColumn).equals("#01400001"))
+                .findFirst().orElseThrow();
+        assertEquals(Double.toString(loopingGrade.getTotalScore()), exportedLooping.get(scoreColumn));
+        assertEquals("", protectedScore(reportRows, "#01400005"));
+        assertProtectedInputsUnchanged(protectedInputs);
+    }
+
+    @Test
+    void withholdsDuplicateAndUnresolvedIdentitiesAndRecordsMissingSourceAndRuntimeErrors() throws Exception {
+        AppConfig app = AppConfig.load(PROJECT_ROOT.resolve("config.properties"));
+        SubmissionResult duplicateA = submission("duplicate-a", student("#01400005", "duplicate-a"), true, null);
+        SubmissionResult duplicateB = submission("duplicate-b", student("#01400005", "duplicate-b"), true, null);
+        SubmissionResult unresolved = submission("unresolved", null, true, null);
+        SubmissionResult missing = submission("missing-source", student("#01400003", "missing"), false, null);
+        SubmissionResult runtime = submission("runtime", student("#01400004", "runtime"), true,
+                "public class Q1a { public static java.util.ArrayList<String> getIsogramWords("
+                        + "java.util.ArrayList<String> inputs) { System.exit(0); return inputs; } }");
+
+        GradingRun run = new GradingPipeline(app, execution()).grade(
+                List.of(duplicateA, duplicateB, unresolved, missing, runtime));
+
+        assertTrue(run.withheld().containsKey(duplicateA));
+        assertTrue(run.withheld().containsKey(duplicateB));
+        assertTrue(run.withheld().containsKey(unresolved));
+        for (var grade : run.batch().getGrades()) {
+            assertEquals(20, grade.getTestResults().size());
+        }
+        assertEquals(TestStatus.NOT_RUN, statuses(run, "duplicate-a").get("Q1a-1"));
+        assertEquals(TestStatus.COMPILE_ERROR, statuses(run, "missing").get("Q1a-1"));
+        assertEquals(TestStatus.RUNTIME_ERROR, statuses(run, "runtime").get("Q1a-1"));
+
+        List<List<String>> rows = CsvCodec.parse(Files.readString(run.directory().resolve("submissions.csv")));
+        assertEquals(6, rows.size());
+        long withheldRows = rows.stream().skip(1).filter(row -> row.get(2).equals("WITHHELD")).count();
+        assertEquals(3, withheldRows);
+        List<List<String>> reportRows = CsvCodec.parse(
+                Files.readString(run.directory().resolve("grade-report.csv")));
+        assertEquals(7, reportRows.size());
+        assertEquals("", protectedScore(reportRows, "#01400005"));
+    }
+
+    private ExecutionConfig execution() throws Exception {
+        Path output = temporaryDirectory.resolve("grading");
+        return new ExecutionConfig(output, "grade-report.csv",
+                Path.of(System.getProperty("java.home"), "bin", "java").toString(),
+                Path.of(System.getProperty("java.home"), "bin", "javac").toString(),
+                15000, 1000, 512);
+    }
+
+    private SubmissionResult submission(String archiveName, StudentRecord student,
+                                        boolean includeQ1a, String q1aSource) throws Exception {
+        Path root = temporaryDirectory.resolve(archiveName + "-working");
+        Files.createDirectories(root.resolve("Q1"));
+        Files.createDirectories(root.resolve("Q2"));
+        Files.createDirectories(root.resolve("Q3"));
+        if (includeQ1a) {
+            String source = q1aSource == null
+                    ? Files.readString(PROJECT_ROOT.resolve("Project/RenameToYourUsername/Q1/Q1a.java"))
+                    : q1aSource;
+            Files.writeString(root.resolve("Q1/Q1a.java"), source);
+        }
+        copyReference(root, "Q1/Q1b.java");
+        Files.writeString(root.resolve("Q1/Q1b.java"), PASSING_Q1B);
+        copyReference(root, "Q2/Q2a.java");
+        copyReference(root, "Q2/Q2b.java");
+        copyReference(root, "Q2/persons.txt");
+        copyReference(root, "Q2/students.txt");
+        copyReference(root, "Q3/Q3.java");
+        copyReference(root, "Q3/ShapeComparator.java");
+        Path archive = temporaryDirectory.resolve(archiveName + ".zip");
+        Files.write(archive, new byte[0]);
+        StudentIdentity identity = student == null
+                ? new StudentIdentity("", "", "", List.of(), List.of(), List.of(),
+                        null, "test", List.of())
+                : new StudentIdentity(student.getFirstName() + " " + student.getLastName(),
+                        student.getEmail(), student.getUsername(), List.of(), List.of(), List.of(),
+                        student, "test", List.of("test identity"));
+        return new SubmissionResult(archive, root, root, root, identity,
+                List.of("Q1", "Q2", "Q3"), List.of(), List.of(), SubmissionStatus.READY, true);
+    }
+
+    private void copyReference(Path root, String relative) throws Exception {
+        Path source = PROJECT_ROOT.resolve("Project/RenameToYourUsername").resolve(relative);
+        Path target = root.resolve(relative);
+        Files.createDirectories(target.getParent());
+        Files.copy(source, target);
+    }
+
+    private static StudentRecord student(String id, String username) {
+        return new StudentRecord(id, username, "Test", "Student", username + "@example.test");
+    }
+
+    private Map<Path, byte[]> snapshotInputs() throws Exception {
+        List<Path> paths = List.of(
+                PROJECT_ROOT.resolve("Project/Tester-Files/Q1aTester.java"),
+                PROJECT_ROOT.resolve("Project/Tester-Files/personstester.txt"),
+                PROJECT_ROOT.resolve("Project/RenameToYourUsername/Q3/Shape.class"),
+                PROJECT_ROOT.resolve("Project/IS442-ScoreSheet.csv"));
+        java.util.LinkedHashMap<Path, byte[]> snapshots = new java.util.LinkedHashMap<>();
+        for (Path path : paths) {
+            snapshots.put(path, Files.readAllBytes(path));
+        }
+        return snapshots;
+    }
+
+    private static void assertProtectedInputsUnchanged(Map<Path, byte[]> snapshots) throws Exception {
+        for (Map.Entry<Path, byte[]> entry : snapshots.entrySet()) {
+            assertTrue(java.util.Arrays.equals(entry.getValue(), Files.readAllBytes(entry.getKey())),
+                    "grading modified supplied input " + entry.getKey());
+        }
+    }
+
+    private static String protectedScore(List<List<String>> rows, String studentId) {
+        int idColumn = rows.get(0).indexOf("OrgDefinedId");
+        int scoreColumn = rows.get(0).indexOf("Calculated Final Grade Numerator");
+        return rows.stream().filter(row -> row.get(idColumn).equals(studentId))
+                .findFirst().orElseThrow().get(scoreColumn);
+    }
+
+    private static Map<String, TestStatus> statuses(GradingRun run, String username) {
+        return run.batch().getGrades().stream()
+                .filter(grade -> grade.getSubmission().getIdentity().getUsername().equals(username))
+                .findFirst().orElseThrow().getTestResults().stream()
+                .collect(Collectors.toMap(result -> result.getTestCase().getId(),
+                        result -> result.getStatus()));
+    }
+}

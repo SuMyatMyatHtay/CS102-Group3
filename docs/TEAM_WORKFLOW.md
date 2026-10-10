@@ -2,9 +2,9 @@
 
 ## Starting work
 
-Identify the human driver using agents.md. Read its Current Context and feature board. Sera owns feature 3 and William owns feature 4; those assignments are locked. Boey, Kai Cong, Kiya, and Gabriel must claim among 1, 2, 5, and 6 before bonus implementation. Shared MVP work can proceed while claims are pending.
+Use the kickoff prompt at the start of README.md. Read the six core context documents and summarize the MVP and live bonus board, then ask the driver to choose from Boey, Sera, William, Kai Cong, Kiya, and Gabriel. Confirm nickname/variant answers against the list; do not infer identity. Read-only onboarding may precede identity confirmation, but claims, edits, installs, builds and implementation must wait. Follow agents.md for the full session protocol. Sera owns feature 3 and William owns feature 4; those assignments are locked. Boey, Kai Cong, Kiya, and Gabriel must claim among 1, 2, 5, and 6 before bonus implementation. Shared MVP work can proceed while claims are pending.
 
-For substantial changes, present the intended behavior and affected files and wait for the driver's approval. Current approval covers the foundation revision, not an unreviewed implementation of the entire remaining grading engine. Keep supplied materials intact.
+For substantial changes, present the intended behavior and affected files and wait for the driver's approval. Boey approved the remaining MVP plan on 2026-10-10: explicit instructor adapters, isolated compilation, bounded per-case processes, scoring/CSV integration and verification. This does not authorize bonus implementation. Keep supplied materials intact.
 
 ## Avoiding conflicting edits
 

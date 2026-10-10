@@ -265,7 +265,7 @@ public final class AppConfig {
         return new AssessmentDefinition(assessment.getId(), assessment.getName(), questions);
     }
 
-    private static Path canonicalize(Path path) throws IOException {
+    static Path canonicalize(Path path) throws IOException {
         Path absolutePath = path.toAbsolutePath().normalize();
         Path existingPath = absolutePath;
         List<Path> missingNames = new ArrayList<>();
