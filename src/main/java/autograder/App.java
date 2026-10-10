@@ -1,15 +1,19 @@
 package autograder;
 
+import autograder.api.FeedbackGenerator;
 import autograder.config.AppConfig;
 import autograder.config.ExecutionConfig;
+import autograder.config.FeedbackConfig;
 import autograder.grading.GradingPipeline;
 import autograder.grading.GradingRun;
 import autograder.model.StudentGrade;
 import autograder.model.SubmissionResult;
 import autograder.model.SubmissionStatus;
+import autograder.report.feedback.MarkdownFeedbackGenerator;
 import autograder.submission.SubmissionProcessor;
 import autograder.ui.ConsoleProgressListener;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -37,6 +41,7 @@ public final class App {
         try {
             AppConfig config = AppConfig.load(Path.of(args[0]));
             ExecutionConfig execution = ExecutionConfig.load(Path.of(args[0]), config);
+            FeedbackConfig feedback = FeedbackConfig.load(Path.of(args[0]));
             GradingPipeline grading = new GradingPipeline(config, execution);
             grading.validateEnvironment();
             System.out.println("Preparing submissions for " + config.getAssessment().getName());
@@ -62,7 +67,9 @@ public final class App {
             System.out.println("Export decisions and review warnings: "
                     + run.directory().resolve("submissions.csv"));
             System.out.println("Withheld or absent students retain their original score-sheet rows");
-            return 0;
+            return generateFeedback(run, feedback, new MarkdownFeedbackGenerator(config.getAssessment(),
+                    execution.caseTimeoutMillis(), feedback.maxDiagnosticLines(), config.getRosterPrefix(),
+                    config.getRosterLastNamePlaceholder()));
         } catch (Exception exception) {
             if (exception instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
@@ -70,6 +77,32 @@ public final class App {
             System.err.println("could not complete grading: " + exception.getMessage());
             return 1;
         }
+    }
+
+    static int generateFeedback(GradingRun run, FeedbackConfig config, FeedbackGenerator generator) {
+        if (!config.enabled()) {
+            return 0;
+        }
+        Path directory = run.directory().resolve(config.directory());
+        int written = 0;
+        int failed = 0;
+        for (StudentGrade grade : run.batch().getGrades()) {
+            try {
+                generator.generate(grade, directory);
+                written++;
+            } catch (IOException | RuntimeException exception) {
+                failed++;
+                System.err.println("could not write feedback for "
+                        + grade.getSubmission().getArchivePath().getFileName() + ": " + exception.getMessage());
+            }
+        }
+        System.out.println("Student feedback: " + written + " Markdown files in " + directory);
+        if (failed > 0) {
+            System.err.println(failed + " feedback files could not be written; grading and CSV exports "
+                    + "are complete in " + run.directory());
+            return 1;
+        }
+        return 0;
     }
 
     private static void printResults(List<SubmissionResult> results) {

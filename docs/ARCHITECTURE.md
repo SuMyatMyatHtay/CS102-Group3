@@ -21,6 +21,7 @@ The archive and supplied inputs are evidence. Extraction output is a raw copy. C
 - `SubmissionResult`: shares the original/working locations, identity, status, problems, and corrections
 - `CsvCodec` / `CsvScoreReportWriter`: parse/write the supplied schema safely using the pipeline’s eligible computed scores
 - `ProgressListener` / `ConsoleProgressListener`: separate progress events from their presentation
+- `MarkdownFeedbackGenerator` / `FeedbackConfig` (feature 5, in review): write one Markdown feedback file per graded submission from recorded case results, preparation problems and corrections; a failed feedback file is reported without affecting grading or CSV exports
 
 Small immutable data classes pass results between components. Lists exposed by result models cannot be modified by consumers. Composition keeps responsibilities separate. Interfaces allow later feature implementations to fit into the pipeline without changing its core responsibilities. Java class inheritance is not being added artificially; the supplied instructor tester classes themselves extend student question classes, which the later compilation design must respect.
 
