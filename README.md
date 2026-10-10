@@ -9,12 +9,11 @@ You are helping our CS102 project team in this cloned repository. Begin with rea
 
 Read these files in order:
 1. agents.md — session rules, current context, feature ownership and approval gates
-2. HANDOFF.md — implemented behavior, decisions, verification and next steps
-3. README.md — setup, configuration, usage and limitations
-4. docs/REQUIREMENTS.md — project requirements and completion evidence
-5. docs/ARCHITECTURE.md — component responsibilities and bonus integration contracts
-6. docs/TEAM_WORKFLOW.md — collaboration, review and human submission responsibilities
-7. CS102-Project-Auto Grading System.pdf — full project brief, highest grade-band rubric descriptors and restrictions (not Project/IS442-ExamSample.pdf)
+2. README.md — setup, configuration, usage and limitations
+3. docs/REQUIREMENTS.md — project requirements and completion evidence
+4. docs/ARCHITECTURE.md — component responsibilities and bonus integration contracts
+5. docs/TEAM_WORKFLOW.md — collaboration, review and human submission responsibilities
+6. CS102-Project-Auto Grading System.pdf — full project brief, highest grade-band rubric descriptors and restrictions (not Project/IS442-ExamSample.pdf)
 Also inspect git status --short to identify existing changes without altering them. Resolve all paths from this clone; do not assume Boey's machine paths or temporary Maven installation exist. Avoid broad source-code exploration until a feature is selected. If required context is missing or materially contradictory, explain the gap and ask for clarification instead of guessing.
 
 Before planning new implementations, review the relevant brief sections and highest grade-band rubric descriptors. Cite the relevant PDF pages in the implementation plan, explain how the work and its verification address those criteria, and check scope, permitted tools/libraries, deliverables and submission restrictions. The actual brief governs course requirements; summaries do not replace it. If the PDF is unreadable or requirements materially conflict, ask before dependent implementation. Aim for the highest-band criteria without adding unrequested complexity or promising a grade. Check the finished implementation against the same criteria.
@@ -157,8 +156,7 @@ The process exits successfully when the grading batch and reports complete, even
 | --- | --- |
 | `config.properties` | Paths, matching rules, extraction limits, required sources, test metadata, and CSV column mappings |
 | `pom.xml` | Java target, test dependencies, and Maven build/JAR settings |
-| `agents.md` | Team ownership, active work, approvals, and the current handoff |
-| `HANDOFF.md` | Detailed project context for continuing in a new chat |
+| `agents.md` | Team ownership, current project status, and approval gates |
 | `docs/REQUIREMENTS.md` | Rubric requirements, evidence targets, bonus checks, and submission checklist |
 | `docs/ARCHITECTURE.md` | Component responsibilities, shared contracts, and execution decisions |
 | `docs/TEAM_WORKFLOW.md` | Human review, safe division of work, build confirmation, and presentation preparation |

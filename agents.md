@@ -2,7 +2,7 @@
 
 ## Session protocol
 
-At the start of each new workflow, read this file, HANDOFF.md, README.md, docs/REQUIREMENTS.md, docs/ARCHITECTURE.md, docs/TEAM_WORKFLOW.md and the project brief `CS102-Project-Auto Grading System.pdf`. Read-only context gathering and a concise project/bonus summary may precede identity confirmation. Show all six bonus features with their purpose, current owner, status and availability from this board, then ask:
+At the start of each new workflow, read this file, README.md, docs/REQUIREMENTS.md, docs/ARCHITECTURE.md, docs/TEAM_WORKFLOW.md and the project brief `CS102-Project-Auto Grading System.pdf`. Read-only context gathering and a concise project/bonus summary may precede identity confirmation. Show all six bonus features with their purpose, current owner, status and availability from this board, then ask:
 
 "Who am I speaking with? Please choose your recorded team name: Boey, Sera, William, Kai Cong, Kiya, or Gabriel."
 
@@ -45,7 +45,7 @@ Move implemented features to REVIEW. Provide exact Maven commands for compilatio
 
 - Date: 2026-10-10 (Asia/Tokyo)
 - Validated driver: Boey; identity reconfirmed in this continuation
-- Approved work: Boey approved the remaining MVP plan recorded in HANDOFF.md with “Approved lets go”
+- Approved work: Boey approved the remaining MVP plan with “Approved lets go”; the accepted MVP behavior and verification are summarized in README.md and the project docs
 - Foundation: DONE; Boey previously confirmed 30 tests and successful preparation run
 - Remaining MVP: DONE; Boey supplied BUILD SUCCESS, 48 tests with zero failures/errors/skips, and the expected six-submission grading output on 2026-10-10
 - Implemented: five explicit per-case instructor adapters, independent compilation, bounded per-case child processes, score aggregation, CSV export and per-case/export-decision diagnostics
@@ -72,7 +72,7 @@ Move implemented features to REVIEW. Provide exact Maven commands for compilatio
 - Exact commands: mvn clean verify; java -jar target/auto-grading-system-1.0-SNAPSHOT.jar config.properties
 - Fallback build command: /tmp/apache-maven-3.9.9/bin/mvn -Dmaven.repo.local=/tmp/cs102-maven-repository clean verify
 - Next: onboard teammates using the README kickoff, confirm canonical identity and bonus ownership, then seek approval for the selected feature plan; do not repeat the accepted MVP build-confirmation gate
-- Read HANDOFF.md, README.md, docs/REQUIREMENTS.md, docs/ARCHITECTURE.md and docs/TEAM_WORKFLOW.md for detailed behavior and responsibilities
+- Read README.md, docs/REQUIREMENTS.md, docs/ARCHITECTURE.md and docs/TEAM_WORKFLOW.md for detailed behavior and responsibilities
 - Boey approved reconciling remote history and publishing the current code on 2026-10-10; pre-existing unrelated .DS_Store change preserved
 
 - Documentation onboarding update approved by Boey: kickoff placed first in README; identity prompts list every group member; read-only context/summary may precede identity confirmation
@@ -82,4 +82,4 @@ Move implemented features to REVIEW. Provide exact Maven commands for compilatio
 
 - Boey claimed feature 2 (offline HTML dashboard) on 2026-10-10; owner recorded, status TODO because implementation has not started
 - Current authorized work is claim documentation and continuation handoff only; feature 2 implementation plan still needs explicit approval
-- Next chat: read HANDOFF.md feature 2 continuation sections, confirm driver using the full member list, inspect the relevant reporting contracts and PDF rubric, then propose a concise plan
+- Next chat: read this board, README.md and the project docs; confirm the driver using the full member list, inspect relevant reporting contracts and the PDF rubric, then propose a concise feature 2 plan for approval
