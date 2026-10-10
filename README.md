@@ -162,14 +162,14 @@ The grading pipeline supplies scores only for eligible students after recording 
 
 | Feature | Java interface | Owner |
 | --- | --- | --- |
-| 1: token-based similarity | PlagiarismDetector | Unclaimed |
+| 1: token-based similarity | PlagiarismDetector | Kiya |
 | 2: offline HTML report | HtmlReportGenerator | Unclaimed |
 | 3: starter-code comparison | BoilerplateDetector | Sera, locked |
 | 4: parameterized test cases | TestCaseProvider | William, locked |
 | 5: Markdown feedback | FeedbackGenerator | Unclaimed |
 | 6: terminal dashboard | ProgressListener | Unclaimed |
 
-The interfaces exist so implementations share common inputs and outputs. The basic console implements progress reporting; the interactive ANSI dashboard has not been built. Bonus implementation begins only after the core MVP works end to end. Boey, Kai Cong, Kiya, and Gabriel still need to claim the available features.
+The interfaces exist so implementations share common inputs and outputs. The basic console implements progress reporting; the interactive ANSI dashboard has not been built. Bonus implementation begins only after the core MVP works end to end. Boey, Kai Cong, and Gabriel still need to claim the available features.
 
 ## Latest verification
 

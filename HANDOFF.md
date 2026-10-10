@@ -119,7 +119,7 @@ The input snapshot is `/tmp/cs102-mvp-input-hashes.json`; temporary build/run lo
 
 ## Team and bonus status
 
-All six bonus implementations remain TODO. Sera owns feature 3 (boilerplate comparison) and William owns feature 4 (parameterized tests). Features 1 (token similarity), 2 (HTML), 5 (Markdown feedback), 6 (ANSI dashboard) remain unclaimed. Boey's bonus claim is pending. Shared MVP work was explicitly permitted while claims remain pending.
+All six bonus implementations remain TODO. Sera owns feature 3 (boilerplate comparison) and William owns feature 4 (parameterized tests). Kiya owns feature 1 (token similarity), preserving the assignment in the remote work-division document. Features 2 (HTML), 5 (Markdown feedback), 6 (ANSI dashboard) remain unclaimed. Boey's bonus claim is pending. Shared MVP work was explicitly permitted while claims remain pending.
 
 Main agent retains architecture/integration. This implementation delegated adapters/provider/tests and process services/tests with non-overlapping ownership recorded in agents.md. Only main may spawn agents; no Astra subagents; at most two concurrent subagents. All delegated work is complete; no agents are actively editing.
 
