@@ -76,6 +76,39 @@ tbody tr:last-child td { border-bottom: 0; }
 .decision.withheld { border-color: #9a4d18; background: #fff1e6; color: #71350e; }
 .diagnostic-score { background: #fffaf4; }
 .diagnostic-label { display: block; color: #71350e; font-size: .74rem; }
+.credit-legend { margin: 0 0 12px; padding: 12px; border: 1px solid #d6dfe5; border-radius: 8px; background: #f8fafb; color: #263d4e; font-size: .84rem; }
+.credit-legend ul { display: flex; flex-wrap: wrap; gap: 8px 16px; margin: 8px 0; padding: 0; list-style: none; }
+.credit-legend li { display: inline-flex; align-items: center; gap: 6px; }
+.credit-legend p { margin: 6px 0 0; color: #405160; }
+.credit-swatch { width: 18px; height: 18px; border: 1px solid #627b8c; border-radius: 3px; }
+.question-score-cell { min-width: 155px; white-space: normal; padding: 0; }
+.question-score-link { display: block; min-height: 100%; padding: 9px 10px; color: #142d3e; text-decoration-thickness: 1px; text-underline-offset: 2px; }
+.question-score-link:hover { color: #142d3e; }
+.question-score-value, .credit-band-label, .question-status-counts, .question-evidence-note { display: block; }
+.question-score-value { font-size: .98rem; font-weight: 750; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.credit-band-label { margin-top: 2px; font-size: .76rem; font-weight: 650; }
+.question-status-counts { margin-top: 3px; color: #263d4e; font-size: .72rem; line-height: 1.4; }
+.question-evidence-note { margin-top: 3px; color: #574319; font-size: .72rem; line-height: 1.4; }
+.question-score-cell .question-status-counts,
+.question-score-cell .question-evidence-note,
+.question-score-cell .diagnostic-label { color: #142d3e; }
+.credit-band-zero { background: #f1f6fa; }
+.credit-band-low { background: #e0edf6; }
+.credit-band-quarter { background: #c9dfef; }
+.credit-band-half { background: #afd0e7; }
+.credit-band-three-quarter { background: #8dbbdb; }
+.credit-band-full { background: #6fa6cf; }
+.credit-band-neutral { background: #f1f3f5; }
+.credit-swatch.credit-band-zero, .credit-swatch.credit-band-low,
+.credit-swatch.credit-band-quarter, .credit-swatch.credit-band-half,
+.credit-swatch.credit-band-three-quarter, .credit-swatch.credit-band-full { display: inline-block; }
+.question-group { margin: 14px 0; padding: 12px; border: 1px solid #dce5e9; border-radius: 7px; background: #f8fafb; }
+.question-group-title { margin: 0 0 6px; color: #263d4e; font-size: .98rem; }
+.question-group-title:focus { outline: 3px solid #0b4668; outline-offset: 3px; border-radius: 2px; }
+.question-evidence { margin-bottom: 4px; color: #405160; font-size: .82rem; }
+.question-group > p { margin-bottom: 5px; }
+.other-cases > h4 { margin: 0 0 8px; color: #263d4e; }
+.question-score-link:focus-visible { outline: 3px solid #0b4668; outline-offset: -3px; }
 .details-link { white-space: nowrap; }
 .detail-row > td { padding: 0; background: #f8fafb; }
 .detail-row details { padding: 10px 12px; }

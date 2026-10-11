@@ -80,6 +80,10 @@ class GradingPipelineTest {
         assertTrue(html.contains("EXPORTED"));
         assertTrue(html.contains("TIMED_OUT"));
         assertTrue(html.contains("COMPILE_ERROR"));
+        assertTrue(html.contains("href=\"#submission-1-question-1\""));
+        assertTrue(html.contains("id=\"submission-1-question-1\""));
+        assertTrue(html.contains("href=\"#submission-2-question-1\""));
+        assertTrue(html.contains("id=\"submission-2-question-1\""));
         assertTrue(java.util.Arrays.equals(scoreCsv,
                 Files.readAllBytes(run.directory().resolve("grade-report.csv"))));
         assertTrue(java.util.Arrays.equals(casesCsv,
@@ -145,6 +149,10 @@ class GradingPipelineTest {
         assertTrue(html.contains("COMPILE_ERROR"));
         assertTrue(html.contains("runtime.zip"));
         assertTrue(html.contains("RUNTIME_ERROR"));
+        for (int ordinal = 1; ordinal <= 3; ordinal++) {
+            assertTrue(html.contains("href=\"#submission-" + ordinal + "-question-1\""));
+            assertTrue(html.contains("id=\"submission-" + ordinal + "-question-1\""));
+        }
         assertTrue(java.util.Arrays.equals(scoreCsv,
                 Files.readAllBytes(run.directory().resolve("grade-report.csv"))));
         assertTrue(java.util.Arrays.equals(casesCsv,

@@ -3,3 +3,7 @@ target/
 output/
 .DS_Store
 build/
+
+# Boey's personal chat continuation notes
+/HANDOFF.md
+/BOEY_FEATURE2_HANDOFF.local.md

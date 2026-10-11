@@ -64,6 +64,9 @@
   sortOrder.addEventListener("change", applyControls);
   Array.from(document.querySelectorAll("a.details-link")).forEach(function (link) {
     link.addEventListener("click", function (event) {
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+        return;
+      }
       const targetId = link.getAttribute("href").slice(1);
       const row = document.getElementById(targetId);
       const details = row ? row.querySelector("details") : null;
@@ -73,6 +76,23 @@
         details.open = true;
         row.scrollIntoView({block: "nearest"});
         summary.focus();
+      }
+    });
+  });
+  Array.from(document.querySelectorAll("a.question-score-link")).forEach(function (link) {
+    link.addEventListener("click", function (event) {
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+        return;
+      }
+      const targetId = link.getAttribute("href").slice(1);
+      const heading = document.getElementById(targetId);
+      const detailRow = heading ? heading.closest("tr.detail-row") : null;
+      const details = detailRow ? detailRow.querySelector("details") : null;
+      if (heading && details) {
+        event.preventDefault();
+        details.open = true;
+        heading.scrollIntoView({block: "start"});
+        heading.focus({preventScroll: true});
       }
     });
   });

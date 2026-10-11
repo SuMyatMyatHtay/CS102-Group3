@@ -57,9 +57,7 @@ public final class OfflineHtmlReportGenerator implements HtmlReportGenerator {
         String script = readResource(SCRIPT_RESOURCE);
         List<StudentGrade> grades = batch.getGrades();
         List<QuestionDefinition> questions = batch.getAssessment().getQuestions();
-        BigDecimal assessmentMaximum = questions.stream()
-                .map(QuestionDefinition::getMaxScoreDecimal)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        BigDecimal assessmentMaximum = assessmentMaximum(questions);
         int received = grades.size();
         int withheld = 0;
         int warningSubmissions = 0;
@@ -85,7 +83,7 @@ public final class OfflineHtmlReportGenerator implements HtmlReportGenerator {
                 .append("<p class=\"assessment-meta\"><span>Assessment ID: <strong>")
                 .append(escape(batch.getAssessment().getId())).append("</strong></span>")
                 .append("<span>Configured maximum: <strong>")
-                .append(format(assessmentMaximum))
+                .append(formatOrUnavailable(assessmentMaximum))
                 .append(" points</strong></span></p>\n</header>\n");
 
         appendSummary(html, grades, context.withheld(), received, exported, withheld,
@@ -128,9 +126,9 @@ public final class OfflineHtmlReportGenerator implements HtmlReportGenerator {
             BigDecimal median = median(exportedScores);
             metric(html, "Average exported score", format(average) + " points",
                     "Exported-only mean rounded to " + AVERAGE_DECIMAL_PLACES + " decimal places; maximum "
-                            + format(maximumScore) + " points");
+                            + formatOrUnavailable(maximumScore) + " points");
             metric(html, "Median exported score", format(median) + " points",
-                    "Exported submissions only; maximum " + format(maximumScore) + " points");
+                    "Exported submissions only; maximum " + formatOrUnavailable(maximumScore) + " points");
         }
         html.append("</div>\n<p class=\"scope-note\">These results cover received submissions only. ")
                 .append("Students without a received submission are not listed here; their template values are retained in the CSV.</p>\n")
@@ -171,16 +169,26 @@ public final class OfflineHtmlReportGenerator implements HtmlReportGenerator {
                 .append("<option value=\"score-desc\">Diagnostic total, high to low</option></select></div>\n</div>\n")
                 .append("<p class=\"result-count\" id=\"result-count\" role=\"status\" aria-live=\"polite\">Showing ")
                 .append(received).append(" of ").append(received).append(" submissions.</p>\n")
+                .append("<div class=\"credit-legend\" role=\"group\" aria-label=\"Question score shading legend\">")
+                .append("<strong>Question score shading, based on earned points / configured maximum:</strong>")
+                .append("<ul><li><span class=\"credit-swatch credit-band-zero\"></span>0%</li>")
+                .append("<li><span class=\"credit-swatch credit-band-low\"></span>&gt;0–&lt;25%</li>")
+                .append("<li><span class=\"credit-swatch credit-band-quarter\"></span>25–&lt;50%</li>")
+                .append("<li><span class=\"credit-swatch credit-band-half\"></span>50–&lt;75%</li>")
+                .append("<li><span class=\"credit-swatch credit-band-three-quarter\"></span>75–&lt;100%</li>")
+                .append("<li><span class=\"credit-swatch credit-band-full\"></span>100%</li></ul>")
+                .append("<p>Neutral cells have incomplete or invalid evidence. Scores remain visible, and withheld scores are diagnostic.</p></div>\n")
                 .append("<div class=\"table-scroll\" role=\"region\" aria-label=\"Submission results table\" tabindex=\"0\">\n")
                 .append("<table><thead><tr><th scope=\"col\">Submission</th><th scope=\"col\">Preparation</th>")
                 .append("<th scope=\"col\">Export decision</th>");
         for (QuestionDefinition question : questions) {
             html.append("<th scope=\"col\">Question ").append(escape(question.getId()))
-                    .append("<span class=\"th-sub\"> / ").append(format(question.getMaxScoreDecimal()))
+                    .append("<span class=\"th-sub\"> / ")
+                    .append(formatOrUnavailable(QuestionOutcome.configuredMaximum(question)))
                     .append(" max</span></th>");
         }
         html.append("<th scope=\"col\">Total points<span class=\"th-sub\"> / ")
-                .append(format(assessmentMaximum)).append(" max</span></th>")
+                .append(formatOrUnavailable(assessmentMaximum)).append(" max</span></th>")
                 .append("<th scope=\"col\">Details</th></tr></thead><tbody id=\"submission-rows\">\n");
 
         if (grades.isEmpty()) {
@@ -235,16 +243,9 @@ public final class OfflineHtmlReportGenerator implements HtmlReportGenerator {
             html.append("<span class=\"row-secondary\">").append(escape(withheldReason)).append("</span>");
         }
         html.append("</td>");
-        for (QuestionDefinition question : questions) {
-            BigDecimal questionScore = questionScore(grade, question.getId());
-            html.append("<td class=\"numeric");
-            if (isWithheld) {
-                html.append(" diagnostic-score\" title=\"Diagnostic score for a withheld submission\">");
-            } else {
-                html.append("\">");
-            }
-            html.append(format(questionScore)).append(" / ").append(format(question.getMaxScoreDecimal()))
-                    .append("</td>");
+        List<QuestionSection> questionSections = questionSections(grade, questions, ordinal);
+        for (QuestionSection section : questionSections) {
+            appendQuestionScoreCell(html, section, isWithheld);
         }
         html.append("<td class=\"numeric total-score");
         if (isWithheld) {
@@ -253,14 +254,17 @@ public final class OfflineHtmlReportGenerator implements HtmlReportGenerator {
         } else {
             html.append("\">");
         }
-        html.append(format(score)).append(" / ").append(format(assessmentMaximum))
+        html.append(format(score)).append(" / ").append(formatOrUnavailable(assessmentMaximum))
                 .append("</td><td><a class=\"details-link\" href=\"#submission-")
                 .append(ordinal).append("-details\">Open details</a></td></tr>\n");
-        appendDetailRow(html, grade, ordinal, displayName, withheldReason, questions.size() + 5);
+        appendDetailRow(html, grade, ordinal, displayName, withheldReason, questions.size() + 5,
+                questionSections, unmatchedCases(grade, questionSections));
     }
 
     private void appendDetailRow(StringBuilder html, StudentGrade grade, int ordinal,
-                                 String displayName, String withheldReason, int columnCount) {
+                                 String displayName, String withheldReason, int columnCount,
+                                 List<QuestionSection> questionSections,
+                                 List<TestCaseResult> unmatchedCases) {
         SubmissionResult submission = grade.getSubmission();
         StudentIdentity identity = submission.getIdentity();
         html.append("<tr class=\"detail-row\" id=\"submission-").append(ordinal)
@@ -309,7 +313,7 @@ public final class OfflineHtmlReportGenerator implements HtmlReportGenerator {
         html.append("</section>\n");
 
         appendCorrections(html, submission.getCorrections());
-        appendCases(html, grade.getTestResults());
+        appendCases(html, questionSections, unmatchedCases);
         html.append("</div></details></td></tr>\n");
     }
 
@@ -334,12 +338,58 @@ public final class OfflineHtmlReportGenerator implements HtmlReportGenerator {
         html.append("</section>\n");
     }
 
-    private void appendCases(StringBuilder html, List<TestCaseResult> results) {
-        html.append("<section class=\"detail-block\"><h3>Question and case results</h3>");
-        if (results.isEmpty()) {
+    private void appendCases(StringBuilder html, List<QuestionSection> questionSections,
+                             List<TestCaseResult> unmatchedCases) {
+        html.append("<section class=\"detail-block case-results\"><h3>Question and case results</h3>");
+        if (questionSections.isEmpty() && unmatchedCases.isEmpty()) {
             html.append("<p>No case results recorded.</p></section>\n");
             return;
         }
+        boolean hasAnyResults = false;
+        for (QuestionSection section : questionSections) {
+            hasAnyResults |= !section.results().isEmpty();
+            appendQuestionCaseGroup(html, section);
+        }
+        if (!unmatchedCases.isEmpty()) {
+            hasAnyResults = true;
+            html.append("<section class=\"question-group other-cases\"><h4>Other recorded cases</h4>");
+            appendCaseTable(html, unmatchedCases);
+            html.append("</section>\n");
+        }
+        if (!hasAnyResults) {
+            html.append("<p>No case results recorded.</p>");
+        } else {
+            html.append("<p class=\"metric-description\">COMPILE_ERROR durations refer to ")
+                    .append("the compilation attempt and can repeat across its cases.</p>");
+        }
+        html.append("</section>\n");
+    }
+
+    private void appendQuestionCaseGroup(StringBuilder html, QuestionSection section) {
+        QuestionOutcome outcome = section.outcome();
+        html.append("<section class=\"question-group\"><h4 class=\"question-group-title\" id=\"submission-")
+                .append(section.submissionOrdinal()).append("-question-").append(section.questionIndex())
+                .append("\" tabindex=\"-1\">Question ").append(escape(section.question().getId()))
+                .append("</h4><p class=\"question-evidence\">Recorded ")
+                .append(outcome.recordedCaseCount()).append(" of ").append(outcome.configuredCaseCount())
+                .append(" configured cases.</p>");
+        if (!outcome.statusCounts().isEmpty()) {
+            html.append("<p class=\"question-status-counts\">");
+            appendStatusCounts(html, outcome.statusCounts());
+            html.append("</p>");
+        }
+        for (String note : outcome.evidenceNotes()) {
+            html.append("<p class=\"question-evidence-note\">").append(escape(note)).append("</p>");
+        }
+        if (section.results().isEmpty()) {
+            html.append("<p>No case results recorded for this question.</p>");
+        } else {
+            appendCaseTable(html, section.results());
+        }
+        html.append("</section>\n");
+    }
+
+    private void appendCaseTable(StringBuilder html, List<TestCaseResult> results) {
         html.append("<div class=\"table-scroll compact-table\"><table><thead><tr><th scope=\"col\">Question</th>")
                 .append("<th scope=\"col\">Case</th><th scope=\"col\">Status</th><th scope=\"col\">Points</th>")
                 .append("<th scope=\"col\">Recorded duration</th><th scope=\"col\">Recorded output</th></tr></thead><tbody>");
@@ -356,8 +406,82 @@ public final class OfflineHtmlReportGenerator implements HtmlReportGenerator {
             appendOutputDetails(html, "stderr", result.getStandardError());
             html.append("</td></tr>");
         }
-        html.append("</tbody></table></div><p class=\"metric-description\">COMPILE_ERROR durations refer to ")
-                .append("the compilation attempt and can repeat across its cases.</p></section>\n");
+        html.append("</tbody></table></div>");
+    }
+
+    private void appendQuestionScoreCell(StringBuilder html, QuestionSection section,
+                                        boolean withheld) {
+        QuestionOutcome outcome = section.outcome();
+        String bandClass = outcome.hasCreditBand()
+                ? "credit-band-" + outcome.creditBand().cssName() : "credit-band-neutral";
+        html.append("<td class=\"numeric question-score-cell ").append(bandClass).append("\">")
+                .append("<a class=\"question-score-link\" href=\"#submission-")
+                .append(section.submissionOrdinal()).append("-question-").append(section.questionIndex())
+                .append("\">")
+                .append("<span class=\"question-score-value\">")
+                .append(escape(formatOrUnavailable(outcome.earnedScore()))).append(" / ")
+                .append(escape(formatOrUnavailable(outcome.configuredMaximum())))
+                .append("</span>");
+        if (outcome.hasCreditBand()) {
+            html.append("<span class=\"credit-band-label\">")
+                    .append(escape(outcome.creditBand().label())).append(" of maximum</span>");
+        }
+        if (!outcome.statusCounts().isEmpty()) {
+            html.append("<span class=\"question-status-counts\">");
+            appendStatusCounts(html, outcome.statusCounts());
+            html.append("</span>");
+        }
+        if (withheld) {
+            html.append("<span class=\"diagnostic-label\">Diagnostic</span>");
+        }
+        for (String note : outcome.evidenceNotes()) {
+            html.append("<span class=\"question-evidence-note\">").append(escape(note)).append("</span>");
+        }
+        html.append("</a></td>");
+    }
+
+    private void appendStatusCounts(StringBuilder html, List<QuestionOutcome.StatusCount> counts) {
+        boolean first = true;
+        for (QuestionOutcome.StatusCount count : counts) {
+            if (!first) {
+                html.append(" · ");
+            }
+            first = false;
+            html.append(escape(count.label())).append(": ").append(count.count());
+        }
+    }
+
+    private List<QuestionSection> questionSections(StudentGrade grade,
+                                                  List<QuestionDefinition> questions,
+                                                  int submissionOrdinal) {
+        List<TestCaseResult> remaining = new ArrayList<>(grade.getTestResults());
+        List<QuestionSection> sections = new ArrayList<>();
+        for (int index = 0; index < questions.size(); index++) {
+            QuestionDefinition question = questions.get(index);
+            List<TestCaseResult> matching = new ArrayList<>();
+            for (var iterator = remaining.iterator(); iterator.hasNext();) {
+                TestCaseResult result = iterator.next();
+                if (Objects.equals(question.getId(), result.getTestCase().getQuestionId())) {
+                    matching.add(result);
+                    iterator.remove();
+                }
+            }
+            sections.add(new QuestionSection(question, index + 1, List.copyOf(matching),
+                    submissionOrdinal, QuestionOutcome.from(question,
+                    questionScore(grade, question.getId()), matching)));
+        }
+        return List.copyOf(sections);
+    }
+
+    private List<TestCaseResult> unmatchedCases(StudentGrade grade,
+                                               List<QuestionSection> questionSections) {
+        List<TestCaseResult> remaining = new ArrayList<>(grade.getTestResults());
+        for (QuestionSection section : questionSections) {
+            for (TestCaseResult result : section.results()) {
+                remaining.remove(result);
+            }
+        }
+        return List.copyOf(remaining);
     }
 
     private void appendOutputDetails(StringBuilder html, String label, String output) {
@@ -445,7 +569,8 @@ public final class OfflineHtmlReportGenerator implements HtmlReportGenerator {
     }
 
     private BigDecimal questionScore(StudentGrade grade, String questionId) {
-        return BigDecimal.valueOf(grade.getQuestionScore(questionId));
+        double score = grade.getQuestionScore(questionId);
+        return Double.isFinite(score) ? BigDecimal.valueOf(score) : null;
     }
 
     private BigDecimal caseScore(TestCaseResult result) {
@@ -465,6 +590,22 @@ public final class OfflineHtmlReportGenerator implements HtmlReportGenerator {
     private String format(BigDecimal value) {
         BigDecimal normalized = value.stripTrailingZeros();
         return normalized.signum() == 0 ? "0" : normalized.toPlainString();
+    }
+
+    private String formatOrUnavailable(BigDecimal value) {
+        return value == null ? "N/A" : format(value);
+    }
+
+    private BigDecimal assessmentMaximum(List<QuestionDefinition> questions) {
+        BigDecimal maximum = BigDecimal.ZERO;
+        for (QuestionDefinition question : questions) {
+            BigDecimal questionMaximum = QuestionOutcome.configuredMaximum(question);
+            if (questionMaximum == null) {
+                return null;
+            }
+            maximum = maximum.add(questionMaximum);
+        }
+        return maximum;
     }
 
     private String pathText(Path path) {
@@ -533,4 +674,8 @@ public final class OfflineHtmlReportGenerator implements HtmlReportGenerator {
             return new String(input.readAllBytes(), StandardCharsets.UTF_8);
         }
     }
+
+    private record QuestionSection(QuestionDefinition question, int questionIndex,
+                                   List<TestCaseResult> results, int submissionOrdinal,
+                                   QuestionOutcome outcome) { }
 }

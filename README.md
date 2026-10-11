@@ -9,12 +9,11 @@ You are helping our CS102 project team in this cloned repository. Begin with rea
 
 Read these files in order:
 1. agents.md — session rules, current context, feature ownership and approval gates
-2. HANDOFF.md — implemented behavior, decisions, verification and next steps
-3. README.md — setup, configuration, usage and limitations
-4. docs/REQUIREMENTS.md — project requirements and completion evidence
-5. docs/ARCHITECTURE.md — component responsibilities and bonus integration contracts
-6. docs/TEAM_WORKFLOW.md — collaboration, review and human submission responsibilities
-7. CS102-Project-Auto Grading System.pdf — full project brief, highest grade-band rubric descriptors and restrictions (not Project/IS442-ExamSample.pdf)
+2. README.md — setup, configuration, usage and limitations
+3. docs/REQUIREMENTS.md — project requirements and completion evidence
+4. docs/ARCHITECTURE.md — component responsibilities and bonus integration contracts
+5. docs/TEAM_WORKFLOW.md — collaboration, review and human submission responsibilities
+6. CS102-Project-Auto Grading System.pdf — full project brief, highest grade-band rubric descriptors and restrictions (not Project/IS442-ExamSample.pdf)
 Also inspect git status --short to identify existing changes without altering them. Resolve all paths from this clone; do not assume Boey's machine paths or temporary Maven installation exist. Avoid broad source-code exploration until a feature is selected. If required context is missing or materially contradictory, explain the gap and ask for clarification instead of guessing.
 
 Before planning new implementations, review the relevant brief sections and highest grade-band rubric descriptors. Cite the relevant PDF pages in the implementation plan, explain how the work and its verification address those criteria, and check scope, permitted tools/libraries, deliverables and submission restrictions. The actual brief governs course requirements; summaries do not replace it. If the PDF is unreadable or requirements materially conflict, ask before dependent implementation. Aim for the highest-band criteria without adding unrequested complexity or promising a grade. Check the finished implementation against the same criteria.
@@ -36,6 +35,8 @@ After identity is confirmed, reread the feature board. For Sera or William, conf
 A Java application being built to prepare and grade student submissions against instructor tests, then fill the supplied CSV score sheet.
 
 **Current stage: core MVP and feature 2 DONE.** The command prepares submissions, compiles each part, runs the 20 instructor cases separately with deadlines, exports real scores and generates an optional offline HTML dashboard. Boey confirmed the 59-test clean build, sample run and displayed dashboard on 2026-10-10. Other bonuses remain TODO. See [the dashboard architecture](offline_html_dashboard_architecture.md) for its implementation and presentation talking points.
+
+The separately approved question heatmap revision is **REVIEW**, awaiting Boey's clean-build and local display/interaction confirmation. Its agent clean build passed 67 tests; the original dashboard acceptance above remains unchanged. The new sample report is `build/grading/run-3551798997316566219/dashboard.html`.
 
 ## Setup, build and run
 
@@ -82,7 +83,7 @@ mvn clean verify
 
 This removes the previous `target` output, compiles the application, runs the tests and builds `target/auto-grading-system-1.0-SNAPSHOT.jar`. The first build downloads Maven plugins/test dependencies and needs internet access. No separate application libraries need to be downloaded manually.
 
-Wait for **BUILD SUCCESS** before running the application. The current feature 2 build passed **59 tests, zero failures/errors/skips**; the accepted MVP baseline had 48 tests. Messages about deliberately broken archives, missing files or timeouts during tests are expected when the final test summary passes. Detailed test reports are in `target/surefire-reports`.
+Wait for **BUILD SUCCESS** before running the application. The heatmap revision's agent build passed **67 tests, zero failures/errors/skips**; the accepted original dashboard had 59 tests and the accepted MVP baseline had 48 tests. Messages about deliberately broken archives, missing files or timeouts during tests are expected when the final test summary passes. Detailed test reports are in `target/surefire-reports`.
 
 ### 4. Grade the supplied sample submissions
 
@@ -110,6 +111,8 @@ java -jar target/auto-grading-system-1.0-SNAPSHOT.jar --help
 ### Offline HTML dashboard
 
 Open the HTML file printed by the command directly in your browser. It contains its own styles and scripts and needs no server or internet connection. Search by name, username or archive, filter by export decision and warnings, sort by name or score, and expand a submission to see question marks, preparation corrections and per-case diagnostics.
+
+Question-score cells form a heatmap: darker blue means a larger share of the configured marks, while the score and recorded case-status counts remain visible. The legend explains the six credit bands. Click a question score to open that submission's details at the matching question group; active search, filters and sorting stay in place. Withheld cells explicitly label their points diagnostic. Missing or mismatched case records, questions whose recorded cases were all not run, and unusable score ranges receive neutral styling with an explanation. All recorded cases remain in the details, including cases for unexpected question IDs.
 
 Summary averages and medians include only exported submissions and identify that denominator. The mean is rounded to four decimal places; individual marks and maxima retain their decimal values. WITHHELD scores are diagnostic totals, not final exported marks. Preparation status is shown separately: a REVIEW_REQUIRED name warning can coexist with an exported score. Rows use matched roster names/usernames and retain reported header values in details. The report covers received submissions, so absent roster rows remain outside the dashboard. Read the score CSV together with `submissions.csv` when examining unchanged template numerators.
 
@@ -170,8 +173,7 @@ The process exits successfully when the grading batch and reports complete, even
 | --- | --- |
 | `config.properties` | Paths, matching rules, extraction limits, required sources, test metadata, and CSV column mappings |
 | `pom.xml` | Java target, test dependencies, and Maven build/JAR settings |
-| `agents.md` | Team ownership, active work, approvals, and the current handoff |
-| `HANDOFF.md` | Detailed project context for continuing in a new chat |
+| `agents.md` | Team ownership, active work, approvals, and current project status |
 | `docs/REQUIREMENTS.md` | Rubric requirements, evidence targets, bonus checks, and submission checklist |
 | `docs/ARCHITECTURE.md` | Component responsibilities, shared contracts, and execution decisions |
 | `docs/TEAM_WORKFLOW.md` | Human review, safe division of work, build confirmation, and presentation preparation |

@@ -45,6 +45,8 @@ After the pipeline has written its CSVs, `App` supplies the immutable `GradingRe
 
 Feature 2 is DONE after Boey's clean-build/run and displayed-dashboard acceptance. See [offline_html_dashboard_architecture.md](../offline_html_dashboard_architecture.md) for implementation details, actual OOP principles and Slide Deck Talking Points.
 
+Boey approved a question heatmap revision on 2026-10-12. A package-private immutable `QuestionOutcome` assembles report-local scores, status counts, case-count evidence and a credit-band classification from existing models. The renderer uses it in the existing question columns and groups recorded diagnostics by configured question order. Safe ordinal/index anchors let browser code open and focus the matching group without changing active controls. Missing/mismatched evidence and all-NOT_RUN questions receive neutral treatment; every recorded case remains available, including unexpected question IDs. This revision changes presentation only: the shared models, eligibility decisions, CSV reports and pipeline contracts retain their existing responsibilities.
+
 ## Scoring foundation
 
 `TestCaseDefinition` names a globally unique test, question, runner class, arguments, and configured maximum points. `TestCaseResult` distinguishes pass, fail, timeout, compilation error, runtime error, and not-run. Only a passed case earns its configured points. `StudentGrade` sums recorded case scores using decimal arithmetic and rejects duplicate case identifiers. `BatchResult` groups assessment, grades and analysis findings for report features.

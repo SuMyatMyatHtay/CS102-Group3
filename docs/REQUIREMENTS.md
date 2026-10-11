@@ -50,6 +50,14 @@ The packaged sample run produced all expected six scores, 120 case records, six 
 
 Boey supplied BUILD SUCCESS with 59 tests and zero failures/errors/skips plus all six expected grading scores on 2026-10-10, satisfying the human clean-build/run gate. His dashboard is `build/grading/run-1332949390012507172/dashboard.html`. He then viewed the local report and accepted it with “ok looks good”. Feature 2 is DONE; its implementation/OOP/presentation document is [offline_html_dashboard_architecture.md](../offline_html_dashboard_architecture.md). Automated browser checking remained blocked; specific network-disabled/narrow-viewport assertions were not separately reported and are not claimed. Do not repeat the accepted build request.
 
+## Question heatmap revision (REVIEW)
+
+Boey approved the detailed revision on 2026-10-12 with “ok lets do it approved”. The original feature 2 remains accepted DONE. This revision adds credit shading and recorded status counts to existing question cells, links them to grouped diagnostics, and preserves search/filter/sort state. It must preserve all CSV bytes and supplied inputs, use safe numeric anchors and escaped text, retain unexpected-question evidence, and explicitly handle missing/mismatched records, all-NOT_RUN questions, decimals, withheld partial scores, empty batches and duplicate/missing identities.
+
+This uses the page 6 report/design criteria and page 1/page 7 usable-operation and demonstration criteria. Focused tests passed 14/14; the final clean integration build passed 67 tests with zero failures/errors/skips. Existing integration fixtures preserve the three CSVs byte-for-byte after rendering. A built-in-Node DOM API fixture executing the actual script passed two scenarios covering filters/sorting/row pairing and ordinal question navigation, keyboard-like activation, modified clicks and existing Open details. This is not real-browser verification. Scoped numeric checks give heatmap text at least 5.45:1 contrast and cell focus at least 3.84:1 across the six bands.
+
+The packaged run retained totals 12,10,10,0,20,1, six submissions and 120 case records, producing `build/grading/run-3551798997316566219/dashboard.html`. Dependency-free HTML checks verified 30 unique question-link destinations, preserved case evidence, Ping's full-credit cells and Xing's Q2a 1/5 with one pass/four timeouts. All 67 Project input hashes matched the new snapshot. Human clean-build and local display/interaction acceptance for this revision are pending; the original 59-test acceptance remains historical. Actual browser, Java 17 runtime and Windows checks were not run. Attention overview and score distribution are unapproved. No branch synchronization or publication is authorized.
+
 ## Submission checklist
 
 - Build from a clean extraction using only the README commands on another team member's machine

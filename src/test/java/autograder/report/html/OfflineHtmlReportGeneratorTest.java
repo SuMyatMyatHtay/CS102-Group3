@@ -171,6 +171,77 @@ class OfflineHtmlReportGeneratorTest {
     }
 
     @Test
+    void linksQuestionScoresToGroupedEvidenceAndKeepsUnmatchedCasesVisible() throws Exception {
+        String configuredId = "Q<&script>";
+        String unmatchedId = "<script>unexpected</script>";
+        QuestionDefinition scoredQuestion = question(configuredId, 2, 0.5);
+        QuestionDefinition emptyQuestion = question("Empty", 1, 1.0);
+        AssessmentDefinition assessment = new AssessmentDefinition("A-2", "Grouped report",
+                List.of(scoredQuestion, emptyQuestion));
+        SubmissionResult submission = submission("Student One", "student1", SubmissionStatus.READY,
+                List.of(), Path.of("one.zip"));
+        List<TestCaseResult> results = List.of(
+                new TestCaseResult(testCase("case<&one", configuredId, 0.5), TestStatus.RUNTIME_ERROR,
+                        17, "stdout & <value>", "stderr </script><script>alert(1)</script>"),
+                new TestCaseResult(testCase("case-two", configuredId, 0.5), TestStatus.PASSED,
+                        23, "passed output", ""),
+                new TestCaseResult(testCase("orphan", unmatchedId, 0.75), TestStatus.COMPILE_ERROR,
+                        31, "compile stdout", "compile stderr"));
+        StudentGrade grade = new StudentGrade(submission, results);
+        GradingReportContext context = new GradingReportContext(
+                new BatchResult(assessment, List.of(grade), List.of(), List.of()),
+                Map.of(submission, "duplicate identity; hold for review"));
+
+        String html = render(context);
+
+        assertTrue(html.contains("class=\"credit-legend\""));
+        assertTrue(html.contains("&gt;0–&lt;25%"));
+        assertTrue(html.contains("25–&lt;50%"));
+        assertTrue(html.contains("href=\"#submission-1-question-1\""));
+        assertTrue(html.contains("id=\"submission-1-question-1\" tabindex=\"-1\">Question Q&lt;&amp;script&gt;"));
+        assertTrue(html.contains("href=\"#submission-1-question-2\""));
+        assertTrue(html.contains("id=\"submission-1-question-2\" tabindex=\"-1\">Question Empty"));
+        assertTrue(html.contains("credit-band-half"));
+        assertTrue(html.contains("Diagnostic</span>"));
+        assertFalse(html.contains("Runtime error: 1 · Passed: 1"),
+                "status summaries must follow enum order, with Passed before Runtime error");
+        assertTrue(html.contains("Passed: 1 · Runtime error: 1"));
+        assertTrue(html.contains("Recorded 0 of 1 configured cases."));
+        assertTrue(html.contains("No case results recorded for this question."));
+        assertTrue(html.contains("Other recorded cases"));
+        assertTrue(html.contains("&lt;script&gt;unexpected&lt;/script&gt;"));
+        assertTrue(html.contains("case&lt;&amp;one"));
+        assertTrue(html.contains("stdout &amp; &lt;value&gt;"));
+        assertTrue(html.contains("stderr &lt;/script&gt;&lt;script&gt;alert(1)&lt;/script&gt;"));
+        assertTrue(html.contains("31 ms"));
+        assertTrue(html.contains("COMPILE_ERROR durations refer to the compilation attempt"));
+        assertFalse(html.contains("</script><script>alert(1)</script>"));
+        assertEquals(1, occurrences(html, "case&lt;&amp;one"));
+        assertEquals(1, occurrences(html, "orphan"));
+    }
+
+    @Test
+    void rendersEmptyGroupsAndZeroMaximumAsNeutralEvidence() throws Exception {
+        QuestionDefinition zeroMaximum = question("Zero", 0, 1.0);
+        QuestionDefinition validQuestion = question("Valid", 1, 1.0);
+        AssessmentDefinition assessment = new AssessmentDefinition("A-3", "Zero maximum",
+                List.of(zeroMaximum, validQuestion));
+        SubmissionResult submission = submission("Student", "student", SubmissionStatus.READY,
+                List.of(), Path.of("empty.zip"));
+        StudentGrade grade = new StudentGrade(submission, List.of());
+
+        String html = render(new GradingReportContext(
+                new BatchResult(assessment, List.of(grade), List.of(), List.of()), Map.of()));
+
+        assertTrue(html.contains("Question Zero<span class=\"th-sub\"> / 0 max"));
+        assertTrue(html.contains("class=\"numeric question-score-cell credit-band-neutral\""));
+        assertTrue(html.contains("0 / 0"));
+        assertTrue(html.contains("Configured maximum is not positive; credit shading is unavailable."));
+        assertTrue(html.contains("No case results recorded for this question."));
+        assertFalse(html.contains("100% of maximum"));
+    }
+
+    @Test
     void handlesEmptyAndAllWithheldRunsDuplicateNamesAndMissingIdentity() throws Exception {
         String empty = render(new GradingReportContext(batch(List.of(), List.of(), List.of()), Map.of()));
         assertTrue(empty.contains("Received submissions</h3><p class=\"metric-value\">0"));
@@ -253,6 +324,16 @@ class OfflineHtmlReportGeneratorTest {
                     stdout[index] == null ? "" : stdout[index], stderr[index] == null ? "" : stderr[index]));
         }
         return results;
+    }
+
+    private int occurrences(String text, String token) {
+        int count = 0;
+        int offset = 0;
+        while ((offset = text.indexOf(token, offset)) >= 0) {
+            count++;
+            offset += token.length();
+        }
+        return count;
     }
 
     private TestCaseDefinition testCase(String id, String question, double maximum) {

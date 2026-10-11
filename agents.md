@@ -2,7 +2,7 @@
 
 ## Session protocol
 
-At the start of each new workflow, read this file, HANDOFF.md, README.md, docs/REQUIREMENTS.md, docs/ARCHITECTURE.md, docs/TEAM_WORKFLOW.md and the project brief `CS102-Project-Auto Grading System.pdf`. Read-only context gathering and a concise project/bonus summary may precede identity confirmation. Show all six bonus features with their purpose, current owner, status and availability from this board, then ask:
+At the start of each new workflow, read this file, README.md, docs/REQUIREMENTS.md, docs/ARCHITECTURE.md, docs/TEAM_WORKFLOW.md and the project brief `CS102-Project-Auto Grading System.pdf`. Read-only context gathering and a concise project/bonus summary may precede identity confirmation. Show all six bonus features with their purpose, current owner, status and availability from this board, then ask:
 
 "Who am I speaking with? Please choose your recorded team name: Boey, Sera, William, Kai Cong, Kiya, or Gabriel."
 
@@ -43,6 +43,13 @@ Move implemented features to REVIEW. Provide exact Maven commands for compilatio
 
 ## Current Context
 
+- Heatmap revision: Boey approved the detailed plan on 2026-10-12 with “ok lets do it approved”; implementation is REVIEW on offline-html-dashboard, awaiting his clean-build and local display/interaction confirmation for this revision. The original MVP/dashboard remain accepted DONE. Attention overview and score distribution remain outside this approval
+- Heatmap file ownership: main integrated pipeline assertions, shared documentation and final review; bounded Luna completed report/html/QuestionOutcome.java, OfflineHtmlReportGenerator.java, dashboard.css, dashboard.js and their focused tests/verification. No agents are actively editing. Shared models/configuration/pipeline contracts are unchanged; branch synchronization and publication remain unauthorized
+- Heatmap verification: focused tests 14/14; clean verify 67 tests with zero failures/errors/skips; actual-script DOM API fixture 2/2 (not a real browser pass); sample run scores 12,10,10,0,20,1 with six submissions and 120 cases. All 30 question links resolve to unique headings and recorded case evidence is retained exactly once. Existing pipeline tests preserve all three CSVs byte-for-byte after rendering
+- Heatmap report: build/grading/run-3551798997316566219/dashboard.html. All 67 Project file hashes and .gitignore match the new baseline; HANDOFF.md remains absent. .DS_Store changed from its baseline hash during verification without an intentional agent edit; current bytes were left untouched and its concurrent source is unknown
+- Heatmap limits: no real-browser, Java 17 runtime or Windows verification; supported DOM fixture and numeric color checks passed. Local main's CRLF fixture fix remains intentionally absent from this branch. No commit/push/merge/fetch was performed; HEAD remains 820394e and staging is empty
+- Heatmap review commands: mvn clean verify; java -jar target/auto-grading-system-1.0-SNAPSHOT.jar config.properties. Boey's available fallback is /tmp/apache-maven-3.9.9/bin/mvn -Dmaven.repo.local=/tmp/cs102-maven-repository clean verify. Next: Boey confirms the new revision's clean build/run and checks the displayed heatmap and question navigation
+- Preserve the existing unstaged handoff-cleanup mirrors, deleted HANDOFF.md and unrelated .DS_Store; BOEY_FEATURE2_HANDOFF.local.md remains the single ignored local handoff. Gabriel's reported feature-5 branch/claim remains unchecked
 - Feature 2: Boey approved the original six-step plan with “Ok lets implement the original plan”; optional heatmap, attention overview and score distribution are outside this implementation
 - Active branch: offline-html-dashboard; no commit or push is authorized for feature implementation
 - File ownership for feature 2: main integrated the reporting context/API, HTML configuration, App integration, their tests and shared documentation; renderer subagent completed autograder/report/html, autograder/html resources and renderer tests; integration subagent completed GradingPipelineTest HTML/CSV checks and targeted runtime verification; no agents are actively editing
@@ -58,7 +65,7 @@ Move implemented features to REVIEW. Provide exact Maven commands for compilatio
 
 - Date: 2026-10-10 (Asia/Tokyo)
 - Validated driver: Boey; identity reconfirmed in this continuation
-- Approved work: Boey approved the remaining MVP plan recorded in HANDOFF.md with “Approved lets go”
+- Approved work: Boey approved the remaining MVP plan with “Approved lets go”; current behavior is documented in README.md and docs/ARCHITECTURE.md
 - Foundation: DONE; Boey previously confirmed 30 tests and successful preparation run
 - Remaining MVP: DONE; Boey supplied BUILD SUCCESS, 48 tests with zero failures/errors/skips, and the expected six-submission grading output on 2026-10-10
 - Implemented: five explicit per-case instructor adapters, independent compilation, bounded per-case child processes, score aggregation, CSV export and per-case/export-decision diagnostics
@@ -85,7 +92,7 @@ Move implemented features to REVIEW. Provide exact Maven commands for compilatio
 - Exact commands: mvn clean verify; java -jar target/auto-grading-system-1.0-SNAPSHOT.jar config.properties
 - Fallback build command: /tmp/apache-maven-3.9.9/bin/mvn -Dmaven.repo.local=/tmp/cs102-maven-repository clean verify
 - Next: onboard teammates using the README kickoff, confirm canonical identity and bonus ownership, then seek approval for the selected feature plan; do not repeat the accepted MVP build-confirmation gate
-- Read HANDOFF.md, README.md, docs/REQUIREMENTS.md, docs/ARCHITECTURE.md and docs/TEAM_WORKFLOW.md for detailed behavior and responsibilities
+- Read README.md, docs/REQUIREMENTS.md, docs/ARCHITECTURE.md and docs/TEAM_WORKFLOW.md for detailed behavior and responsibilities
 - Boey approved reconciling remote history and publishing the current code on 2026-10-10; pre-existing unrelated .DS_Store change preserved
 
 - Documentation onboarding update approved by Boey: kickoff placed first in README; identity prompts list every group member; read-only context/summary may precede identity confirmation
@@ -94,5 +101,5 @@ Move implemented features to REVIEW. Provide exact Maven commands for compilatio
 - Remote September work-division assignment preserved: Kiya owns feature 1; WORK_DIVISION.md now maps proposals to current contracts
 
 - Boey claimed feature 2 (offline HTML dashboard) on 2026-10-10, approved the original implementation plan, supplied the clean build/run and accepted the displayed report; current status is DONE
-- Current authorized work is the original feature 2 implementation and verification; optional extras and publishing changes are outside this approval
-- On continuation, read the latest HANDOFF.md feature 2 section and board; confirm canonical identity only for a new workflow and preserve the completed feature's accepted scope
+- The original feature 2 is accepted DONE; its separately approved heatmap revision is now REVIEW. Attention overview, score distribution, branch synchronization and publishing remain outside the current approval
+- On continuation, read the current board and offline_html_dashboard_architecture.md; confirm canonical identity only for a new workflow and preserve the completed feature's accepted scope
