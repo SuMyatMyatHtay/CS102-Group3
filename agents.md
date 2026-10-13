@@ -22,7 +22,7 @@ Before proposing any new implementation, review the relevant brief sections and 
 
 | Feature | Owner | Status |
 | --- | --- | --- |
-| 1: Token-based plagiarism detection | Kiya | TODO |
+| 1: Token-based plagiarism detection | Kiya | REVIEW |
 | 2: Offline HTML dashboard | Boey | TODO |
 | 3: Starter code / boilerplate diff detector | Sera (locked) | TODO |
 | 4: Dynamic parameterized test ingestion | William (locked) | TODO |
@@ -83,3 +83,10 @@ Move implemented features to REVIEW. Provide exact Maven commands for compilatio
 - Boey claimed feature 2 (offline HTML dashboard) on 2026-10-10; owner recorded, status TODO because implementation has not started
 - Current authorized work is claim documentation and continuation handoff only; feature 2 implementation plan still needs explicit approval
 - Next chat: read this board, README.md and the project docs; confirm the driver using the full member list, inspect relevant reporting contracts and the PDF rubric, then propose a concise feature 2 plan for approval
+
+- 2026-10-13: Kiya confirmed identity and approved the feature 1 plan (n-gram Jaccard similarity) with "yes run build"; branch kayra-ngram-similarity
+- Feature 1 implemented in autograder.plagiarism (Token, LineRange, JavaTokenizer, NGramBuilder, SimilarityCalculator, NGramPlagiarismDetector) plus autograder.config.PlagiarismConfig; status REVIEW pending Kiya's clean-build confirmation
+- Shared changes: GradingPipeline gained an optional PlagiarismDetector constructor and writes similarity.csv; App prints a similarity summary; ExecutionConfig rejects similarity.csv as the score filename; config.properties gained plagiarism.* settings
+- Similarity is advisory: findings never change scores or export decisions; starter n-grams are excluded; detector failures are reported and skipped
+- Agent verification: clean verify passed 70 tests (48 existing + 22 new), zero failures/errors/skips; real run unchanged scores 12, 10, 10, 0, 20, 1 and 0 pairs at threshold 0.80
+- Sample similarity with threshold 0.01: highest Chee/David Q1a 0.663, then Chee/Fen Q2a 0.467; no sample pair is flagged at the default 0.80
