@@ -13,7 +13,6 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -65,12 +64,7 @@ class GradingPipelineTest {
         SubmissionResult broken = submission("broken", student("#01400002", "broken"), true,
                 "public class Q1a { broken }");
 
-        List<String> progress = new ArrayList<>();
-        GradingRun run = new GradingPipeline(app, execution(),
-                (stage, item, completed, total) -> progress.add(stage + ":" + completed + "/" + total))
-                .grade(List.of(looping, broken));
-        assertTrue(progress.contains("grading:2/2"));
-        assertTrue(progress.contains("reporting:1/1"));
+        GradingRun run = new GradingPipeline(app, execution()).grade(List.of(looping, broken));
 
         Map<String, TestStatus> loopingCases = statuses(run, "looping");
         assertEquals(TestStatus.PASSED, loopingCases.get("Q1a-1"));
@@ -133,16 +127,6 @@ class GradingPipelineTest {
                 Files.readString(run.directory().resolve("grade-report.csv")));
         assertEquals(7, reportRows.size());
         assertEquals("", protectedScore(reportRows, "#01400005"));
-    }
-
-    @Test
-    void displayFailureDoesNotStopReportWriting() throws Exception {
-        AppConfig app = AppConfig.load(PROJECT_ROOT.resolve("config.properties"));
-        GradingRun run = new GradingPipeline(app, execution(),
-                (stage, item, completed, total) -> {
-                    throw new IllegalStateException("display failure");
-                }).grade(List.of());
-        assertTrue(Files.exists(run.directory().resolve("grade-report.csv")));
     }
 
     private ExecutionConfig execution() throws Exception {

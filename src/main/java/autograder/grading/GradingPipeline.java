@@ -1,6 +1,5 @@
 package autograder.grading;
 
-import autograder.api.ProgressListener;
 import autograder.config.AppConfig;
 import autograder.config.ExecutionConfig;
 import autograder.csv.CsvCodec;
@@ -24,17 +23,10 @@ public final class GradingPipeline {
     private final AppConfig app;
     private final ExecutionConfig execution;
     private final List<TestCaseDefinition> cases;
-    private ProgressListener progressListener;
 
     public GradingPipeline(AppConfig app, ExecutionConfig execution) throws IOException {
-        this(app, execution, null);
-    }
-
-    public GradingPipeline(AppConfig app, ExecutionConfig execution,
-                           ProgressListener progressListener) throws IOException {
         this.app = app;
         this.execution = execution;
-        this.progressListener = progressListener;
         this.cases = new InstructorTestCaseProvider().load(app.getAssessment());
     }
 
@@ -74,14 +66,11 @@ public final class GradingPipeline {
         List<StudentGrade> grades = new ArrayList<>();
         int index = 0;
         for (SubmissionResult submission : submissions) {
-            if (Thread.currentThread().isInterrupted()) {
-                throw new InterruptedException("grading cancelled");
-            }
-            notifyProgress("grading", submission.getArchivePath().getFileName().toString(),
-                    index, submissions.size());
             index++;
             String blocker = blocker(submission, identities);
             List<TestCaseResult> results = new ArrayList<>();
+            System.out.println("Grading " + index + "/" + submissions.size() + ": "
+                    + submission.getArchivePath().getFileName());
             if (blocker != null) {
                 withheld.put(submission, blocker);
                 for (TestCaseDefinition test : cases) {
@@ -90,9 +79,6 @@ public final class GradingPipeline {
             } else {
                 Path studentDirectory = Files.createDirectory(run.resolve("submission-" + index));
                 for (QuestionDefinition question : app.getAssessment().getQuestions()) {
-                    if (Thread.currentThread().isInterrupted()) {
-                        throw new InterruptedException("grading cancelled");
-                    }
                     List<TestCaseDefinition> questionCases = casesFor(question.getId());
                     try {
                         Path part = studentDirectory.resolve(question.getId());
@@ -110,9 +96,6 @@ public final class GradingPipeline {
                             }
                         } else {
                             for (TestCaseDefinition test : questionCases) {
-                                if (Thread.currentThread().isInterrupted()) {
-                                    throw new InterruptedException("grading cancelled");
-                                }
                                 results.add(new CaseExecutor().execute(test, question, part,
                                         execution.javaExecutable(), execution.caseTimeoutMillis(),
                                         execution.maxOutputBytes()));
@@ -133,31 +116,11 @@ public final class GradingPipeline {
                 throw new IOException("incomplete grading result; score export stopped");
             }
             grades.add(new StudentGrade(submission, results));
-            notifyProgress("grading", submission.getArchivePath().getFileName().toString(),
-                    index, submissions.size());
         }
         BatchResult batch = new BatchResult(app.getAssessment(), grades, List.of(), List.of());
         GradingRun result = new GradingRun(batch, run, withheld);
-        if (Thread.currentThread().isInterrupted()) {
-            throw new InterruptedException("grading cancelled");
-        }
-        notifyProgress("reporting", "Writing score and diagnostic CSV files", 0, 1);
         writeReports(result);
-        notifyProgress("reporting", "Score and diagnostic CSV files ready", 1, 1);
         return result;
-    }
-
-    private void notifyProgress(String stage, String item, int completed, int total) {
-        if (progressListener == null) {
-            return;
-        }
-        try {
-            progressListener.onProgress(stage, item, completed, total);
-        } catch (RuntimeException exception) {
-            System.err.println("progress listener failed; continuing without progress updates: "
-                    + exception.getMessage());
-            progressListener = null;
-        }
     }
 
     private String blocker(SubmissionResult submission, Map<String, Integer> identities) {

@@ -8,9 +8,7 @@ import autograder.model.StudentGrade;
 import autograder.model.SubmissionResult;
 import autograder.model.SubmissionStatus;
 import autograder.submission.SubmissionProcessor;
-import autograder.ui.DashboardSettings;
-import autograder.ui.TerminalCancellation;
-import autograder.ui.TerminalDashboard;
+import autograder.ui.ConsoleProgressListener;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -39,42 +37,36 @@ public final class App {
         try {
             AppConfig config = AppConfig.load(Path.of(args[0]));
             ExecutionConfig execution = ExecutionConfig.load(Path.of(args[0]), config);
-            DashboardSettings settings = DashboardSettings.load(Path.of(args[0]));
-            TerminalDashboard dashboard = new TerminalDashboard(System.out, settings.mode(),
-                    System.console() != null, System.getenv());
-            GradingPipeline grading = new GradingPipeline(config, execution, dashboard);
+            GradingPipeline grading = new GradingPipeline(config, execution);
             grading.validateEnvironment();
-            try (TerminalCancellation cancellation = TerminalCancellation.start(
-                    System.console(), Thread.currentThread(), System.out)) {
-                System.out.println("Preparing submissions for " + config.getAssessment().getName());
-                SubmissionProcessor processor = new SubmissionProcessor(config, dashboard);
-                List<SubmissionResult> results = processor.processBatch();
-                if (results.isEmpty()) {
-                    System.err.println("No submission archives matched the configured input directory and pattern");
-                    return 1;
-                }
-                printResults(results);
-                System.out.println("Diagnostics: " + config.getAnomalyLog());
-                System.out.println("Corrections: " + config.getCorrectionLog());
-                GradingRun run = grading.grade(results);
-                for (StudentGrade grade : run.batch().getGrades()) {
-                    String reason = run.withheld().get(grade.getSubmission());
-                    System.out.println(grade.getSubmission().getIdentity().getLabel() + " | "
-                            + (reason == null ? "Score: " + grade.getTotalScore()
-                            : "WITHHELD: " + reason));
-                }
-                System.out.println("Score report: " + run.directory().resolve(execution.reportFile()));
-                System.out.println("Per-case diagnostics: " + run.directory().resolve("cases.csv"));
-                System.out.println("Export decisions and review warnings: "
-                        + run.directory().resolve("submissions.csv"));
-                System.out.println("Withheld or absent students retain their original score-sheet rows");
-                return 0;
+            System.out.println("Preparing submissions for " + config.getAssessment().getName());
+            SubmissionProcessor processor = new SubmissionProcessor(config,
+                    new ConsoleProgressListener());
+            List<SubmissionResult> results = processor.processBatch();
+            if (results.isEmpty()) {
+                System.err.println("No submission archives matched the configured input directory and pattern");
+                return 1;
             }
-        } catch (InterruptedException exception) {
-            Thread.currentThread().interrupt();
-            System.err.println("Grading cancelled; check the run directory for partial output");
-            return 130;
+            printResults(results);
+            System.out.println("Diagnostics: " + config.getAnomalyLog());
+            System.out.println("Corrections: " + config.getCorrectionLog());
+            GradingRun run = grading.grade(results);
+            for (StudentGrade grade : run.batch().getGrades()) {
+                String reason = run.withheld().get(grade.getSubmission());
+                System.out.println(grade.getSubmission().getIdentity().getLabel() + " | "
+                        + (reason == null ? "Score: " + grade.getTotalScore()
+                        : "WITHHELD: " + reason));
+            }
+            System.out.println("Score report: " + run.directory().resolve(execution.reportFile()));
+            System.out.println("Per-case diagnostics: " + run.directory().resolve("cases.csv"));
+            System.out.println("Export decisions and review warnings: "
+                    + run.directory().resolve("submissions.csv"));
+            System.out.println("Withheld or absent students retain their original score-sheet rows");
+            return 0;
         } catch (Exception exception) {
+            if (exception instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
             System.err.println("could not complete grading: " + exception.getMessage());
             return 1;
         }

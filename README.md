@@ -34,7 +34,7 @@ After identity is confirmed, reread the feature board. For Sera or William, conf
 
 A Java application being built to prepare and grade student submissions against instructor tests, then fill the supplied CSV score sheet.
 
-**Current stage: core MVP DONE; Boey confirmed a successful clean build and grading run on 2026-10-10.** The command prepares submissions, compiles each part, runs the 20 instructor cases separately with deadlines, and exports real scores. The accepted foundation remains intact. Kai Cong's terminal dashboard is implemented on `kaicong/6-terminal-dashboard` for team review; other bonus work has separate ownership and review.
+**Current stage: core MVP DONE; Boey confirmed a successful clean build and grading run on 2026-10-10.** The command prepares submissions, compiles each part, runs the 20 instructor cases separately with deadlines, and exports real scores. The accepted foundation remains intact. Bonus implementations remain TODO and require individual claims, approved plans and their own build confirmations.
 
 ## Setup, build and run
 
@@ -98,10 +98,6 @@ The terminal prints the exact new `build/grading/run-*` directory containing:
 - `submissions.csv`: export/withholding decisions and preparation warnings
 
 Each run creates a fresh directory. `mvn clean` removes `target`, but does not remove old `build` workspaces or appended preparation logs. Supplied input files remain unchanged. See the execution policy below before using submissions outside the supplied sample.
-
-### Terminal progress dashboard (feature 6)
-
-The command shows intake, grading, and report-writing progress with counts and percentage bars. `dashboard.mode=auto` uses ANSI color only when a compatible interactive console is detected; redirected output and terminals with `NO_COLOR` or `TERM=dumb` receive plain text. Set `dashboard.mode=plain` to force plain output, or `dashboard.mode=ansi` to force color for a compatible terminal. In an interactive console, type `q` then Enter to cancel. The command exits with code 130; inspect the run directory before using any partial output. Display errors do not stop grading. Detailed case results remain in `cases.csv`. See [docs/TERMINAL_DASHBOARD.md](docs/TERMINAL_DASHBOARD.md) for design and demo notes.
 
 To display help without grading:
 
@@ -245,7 +241,7 @@ The grading pipeline supplies scores only for eligible students after recording 
 | 3: starter-code comparison | BoilerplateDetector | Sera, locked |
 | 4: parameterized test cases | TestCaseProvider | William, locked |
 | 5: Markdown feedback | FeedbackGenerator | Unclaimed |
-| 6: terminal dashboard | ProgressListener | Kai Cong (review) |
+| 6: terminal dashboard | ProgressListener | Unclaimed |
 
 The interfaces exist so implementations share common inputs and outputs. The basic console implements progress reporting; the interactive ANSI dashboard has not been built. Bonus implementation begins only after the core MVP works end to end. Boey has claimed the HTML dashboard (feature 2). Kai Cong and Gabriel can claim features 5 and 6.
 

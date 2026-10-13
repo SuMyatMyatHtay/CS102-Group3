@@ -48,7 +48,7 @@ public final class SubmissionProcessor {
         this.correctionLog = new CorrectionLog(config.getCorrectionLog());
     }
 
-    public List<SubmissionResult> processBatch() throws IOException, InterruptedException {
+    public List<SubmissionResult> processBatch() throws IOException {
         ScoreSheet scoreSheet = new ScoreSheetRepository(
                 config.getScoreSheetPath(), config.getScoreSheetColumns()).load();
         validateAssessmentScore(scoreSheet);
@@ -64,9 +64,6 @@ public final class SubmissionProcessor {
         List<SubmissionResult> results = new ArrayList<>();
         int completed = 0;
         for (Path archive : archives) {
-            if (Thread.currentThread().isInterrupted()) {
-                throw new InterruptedException("submission preparation cancelled");
-            }
             notifyProgress("ingestion", archive.getFileName().toString(), completed,
                     archives.size());
             Path extractionPath = extractionRun.resolve(
@@ -75,9 +72,6 @@ public final class SubmissionProcessor {
                     scoreSheet.getStudents());
             results.add(result);
             completed++;
-            if (Thread.currentThread().isInterrupted()) {
-                throw new InterruptedException("submission preparation cancelled");
-            }
             notifyProgress("ingestion", archive.getFileName().toString(), completed,
                     archives.size());
         }
