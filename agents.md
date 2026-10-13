@@ -27,13 +27,13 @@ Before proposing any new implementation, review the relevant brief sections and 
 | 3: Starter code / boilerplate diff detector | Sera (locked) | TODO |
 | 4: Dynamic parameterized test ingestion | William (locked) | TODO |
 | 5: Markdown student feedback | Unclaimed | TODO |
-| 6: ANSI terminal dashboard | Unclaimed | TODO |
+| 6: ANSI terminal dashboard | Kai Cong | REVIEW |
 
 Allowed statuses: TODO, IN_PROGRESS, REVIEW, DONE.
 
 ## Gatekeeper and ownership
 
-Boey has claimed feature 2 (offline HTML dashboard); implementation has not started. Available features: 5, 6. Ask unassigned members to claim an available feature before feature work. Only Sera may claim or implement feature 3; only William may claim or implement feature 4. No bonus implementation begins until the MVP is functional and tested.
+Boey has claimed feature 2 (offline HTML dashboard); implementation has not started. Kai Cong has claimed feature 6; its branch is awaiting team review and human build confirmation. Feature 5 remains available. Only Sera may claim or implement feature 3; only William may claim or implement feature 4. No bonus implementation begins until the MVP is functional and tested.
 
 Keep shared configuration, domain models, interfaces, Maven setup, and pipeline integration coordinated by the main agent. Give each bonus implementation its own package after the interfaces are approved. Record file ownership before concurrent edits. Agents must reread this board before claiming work; this file alone does not provide a concurrent locking mechanism.
 
@@ -66,7 +66,7 @@ Move implemented features to REVIEW. Provide exact Maven commands for compilatio
 - Ownership: main integrated configuration, pipeline, CLI and docs; delegated adapters/provider/tests and process services/tests are complete; no agents actively editing
 - Original ZIPs, instructor tests, starter files and source score sheet remain unchanged
 - Do not add AI-attribution comments to Java; Boey retained that rule and humans own review/modification and brief-required declarations before submission
-- All six bonuses remain TODO; Kiya owns feature 1, Sera owns feature 3 and William feature 4; Boey owns feature 2; available features 5, 6
+- As of 2026-10-10, all six bonuses were TODO; later status updates are recorded below and in the feature board
 - No bonus is DONE; no per-bonus architecture document is due
 - Maven is temporarily available at /tmp/apache-maven-3.9.9/bin/mvn with -Dmaven.repo.local=/tmp/cs102-maven-repository
 - Exact commands: mvn clean verify; java -jar target/auto-grading-system-1.0-SNAPSHOT.jar config.properties
@@ -83,3 +83,6 @@ Move implemented features to REVIEW. Provide exact Maven commands for compilatio
 - Boey claimed feature 2 (offline HTML dashboard) on 2026-10-10; owner recorded, status TODO because implementation has not started
 - Current authorized work is claim documentation and continuation handoff only; feature 2 implementation plan still needs explicit approval
 - Next chat: read this board, README.md and the project docs; confirm the driver using the full member list, inspect relevant reporting contracts and the PDF rubric, then propose a concise feature 2 plan for approval
+
+- 2026-10-14: Kai Cong identified himself as feature 6 owner and requested work on branch `kaicong/6-terminal-dashboard`
+- Feature 6 adds a `ProgressListener` implementation, intake/grading/reporting progress events, plain-text fallback, and interactive q + Enter cancellation; branch status REVIEW pending team review and human build confirmation

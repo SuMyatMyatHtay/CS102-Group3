@@ -2,7 +2,7 @@
 
 Updated 2026-10-10 after reconciling the September planning commits with the completed MVP. The original proposals remain available in Git history. This document describes the current integration points; algorithms and implementation details still require an approved feature plan.
 
-[agents.md](agents.md) is the authoritative ownership/status board. Start with the [README kickoff](README.md#start-here-teammate-agent-kickoff), confirm identity and coordinate claims before editing. The core MVP is DONE following Boey's successful 48-test build and grading run. All bonus implementations remain TODO.
+[agents.md](agents.md) is the authoritative ownership/status board. Start with the [README kickoff](README.md#start-here-teammate-agent-kickoff), confirm identity and coordinate claims before editing. The core MVP is DONE following Boey's successful 48-test build and grading run. Kai Cong's feature 6 branch is in review; consult the board and open branches for the other bonuses.
 
 | Feature | Owner | Goal | Existing contract in autograder.api |
 | --- | --- | --- | --- |
@@ -11,9 +11,9 @@ Updated 2026-10-10 after reconciling the September planning commits with the com
 | 3: Starter-code comparison | Sera (locked) | Compare answers with starter files and report unchanged or minimally changed implementations | BoilerplateDetector.analyze(submission, starterDirectory) returns analysis findings |
 | 4: Parameterized test ingestion | William (locked) | Load additional varied inputs and expected outcomes through an approved case format | TestCaseProvider.load(assessment) returns case definitions |
 | 5: Markdown student feedback | Unclaimed | Explain scores and failure reasons in individual student reports | FeedbackGenerator.generate(grade, outputDirectory) returns a report path |
-| 6: ANSI terminal dashboard | Unclaimed | Display grading progress with a readable plain-text fallback | ProgressListener.onProgress(stage, item, completed, total) |
+| 6: ANSI terminal dashboard | Kai Cong (review) | Display grading progress with a readable plain-text fallback and interactive cancellation | ProgressListener.onProgress(stage, item, completed, total) |
 
-Kiya's feature 1 assignment is preserved from the remote September work-division document. Boey has claimed feature 2. Available claims are 5 and 6 for Kai Cong and Gabriel. Coordinate any reassignment rather than overwriting a teammate's claim.
+Kiya's feature 1 assignment is preserved from the remote September work-division document. Boey has claimed feature 2. Kai Cong has claimed feature 6. Feature 5 remains unclaimed. Coordinate any reassignment rather than overwriting a teammate's claim.
 
 ## Implementation boundaries
 
