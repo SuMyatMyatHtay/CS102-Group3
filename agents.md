@@ -23,7 +23,7 @@ Before proposing any new implementation, review the relevant brief sections and 
 | Feature | Owner | Status |
 | --- | --- | --- |
 | 1: Token-based plagiarism detection | Kiya | TODO |
-| 2: Offline HTML dashboard | Boey | TODO |
+| 2: Offline HTML dashboard | Boey | DONE |
 | 3: Starter code / boilerplate diff detector | Sera (locked) | TODO |
 | 4: Dynamic parameterized test ingestion | William (locked) | TODO |
 | 5: Markdown student feedback | Unclaimed | TODO |
@@ -33,15 +33,55 @@ Allowed statuses: TODO, IN_PROGRESS, REVIEW, DONE.
 
 ## Gatekeeper and ownership
 
-Boey has claimed feature 2 (offline HTML dashboard); implementation has not started. Available features: 5, 6. Ask unassigned members to claim an available feature before feature work. Only Sera may claim or implement feature 3; only William may claim or implement feature 4. No bonus implementation begins until the MVP is functional and tested.
+Boey owns feature 2 (offline HTML dashboard) and approved the original implementation plan on 2026-10-10. Available features: 5, 6. Ask unassigned members to claim an available feature before feature work. Only Sera may claim or implement feature 3; only William may claim or implement feature 4. No bonus implementation begins until the MVP is functional and tested.
 
 Keep shared configuration, domain models, interfaces, Maven setup, and pipeline integration coordinated by the main agent. Give each bonus implementation its own package after the interfaces are approved. Record file ownership before concurrent edits. Agents must reread this board before claiming work; this file alone does not provide a concurrent locking mechanism.
+
+## Feature branches and pull requests
+
+All members must create and work on each feature in their own feature branch, never directly on `main`. Start new branches from the latest `origin/main` after checking and preserving local changes. Use one branch per feature or focused follow-up task, for example `codex/kiya-feature-1-plagiarism`; existing feature branches such as Boey's `offline-html-dashboard` may be reused. Branches isolate edits but do not replace ownership coordination for shared files.
+
+After approved implementation and proportionate verification, commit and push only the feature's reviewed files to its branch and create a pull request with that branch as the head and `main` as the base. This workflow authorizes those publication steps for approved feature work; it does not authorize merging into `main`, force-pushing, discarding local work or publishing unrelated changes. Check for an existing PR first and update it rather than creating a duplicate. Use a draft PR when required verification or human acceptance is still pending.
+
+Include the behavior change, scope, exact build/run commands, actual test evidence, limitations and remaining checks in the PR. Immediately tell the driver that the PR was created, provide its URL, and ask them to contact the group to review it. A teammate may use an AI assistant to help review, but a human teammate owns acceptance. Agents must not message teammates, request reviews from named accounts or merge the PR without explicit authorization. Address review feedback on the same branch and PR; resolve conflicts with the owner while preserving shared changes. See [docs/TEAM_WORKFLOW.md](docs/TEAM_WORKFLOW.md#feature-branches-and-pull-requests) for the full sequence.
 
 ## Completion gate
 
 Move implemented features to REVIEW. Provide exact Maven commands for compilation and execution of the relevant feature, then explicitly request the user's confirmation of a clean build. Never mark DONE before that confirmation. On marking a bonus DONE, create <feature_name>_architecture.md with implementation details, actual OOP principles used, and Slide Deck Talking Points.
 
+Opening a PR does not mark a feature DONE or merge it. Before merging, require the documented checks, human build/behavior acceptance and review by another teammate. Existing accepted work remains DONE while a separate enhancement can remain REVIEW. Recommend protecting `main` with a required approving review and required build checks when available; changing repository protection settings requires explicit authorization.
+
 ## Current Context
+
+- Date: 2026-10-14 (Asia/Singapore); validated driver: Boey in this ongoing workflow
+- Boey requested the branch/PR workflow above and creation of an `offline-html-dashboard` -> `main` PR for group review. Committing/pushing this workflow update and opening the PR are authorized; merging into `main` is not
+- Before this update, the dashboard and heatmap were already published on `offline-html-dashboard` at 6efe86b. Remote main was checked at a8d10d7; it contains the earlier handoff cleanup/Windows test fix and a terminal-dashboard change followed by its revert. Neither dashboard nor heatmap is on main
+- The original MVP/dashboard remain accepted DONE; the heatmap remains REVIEW pending its human clean-build and local display/interaction acceptance. The PR is to be opened as a draft with those remaining checks recorded
+- Preserve local .DS_Store bytes and the single ignored BOEY_FEATURE2_HANDOFF.local.md; do not recreate shared HANDOFF.md. Publication does not authorize attention overview, score distribution, extra feature claims or teammate messages. Gabriel's reported feature-5 branch/claim remains unchecked
+
+## Historical context through heatmap implementation (2026-10-12)
+
+The authorization and Git snapshots below describe earlier sessions. The current context and branch/PR policy above supersede their publication restrictions; historical verification and human acceptance are retained.
+
+- Heatmap revision: Boey approved the detailed plan on 2026-10-12 with “ok lets do it approved”; implementation is REVIEW on offline-html-dashboard, awaiting his clean-build and local display/interaction confirmation for this revision. The original MVP/dashboard remain accepted DONE. Attention overview and score distribution remain outside this approval
+- Heatmap file ownership: main integrated pipeline assertions, shared documentation and final review; bounded Luna completed report/html/QuestionOutcome.java, OfflineHtmlReportGenerator.java, dashboard.css, dashboard.js and their focused tests/verification. No agents are actively editing. Shared models/configuration/pipeline contracts are unchanged; branch synchronization and publication remain unauthorized
+- Heatmap verification: focused tests 14/14; clean verify 67 tests with zero failures/errors/skips; actual-script DOM API fixture 2/2 (not a real browser pass); sample run scores 12,10,10,0,20,1 with six submissions and 120 cases. All 30 question links resolve to unique headings and recorded case evidence is retained exactly once. Existing pipeline tests preserve all three CSVs byte-for-byte after rendering
+- Heatmap report: build/grading/run-3551798997316566219/dashboard.html. All 67 Project file hashes and .gitignore match the new baseline; HANDOFF.md remains absent. .DS_Store changed from its baseline hash during verification without an intentional agent edit; current bytes were left untouched and its concurrent source is unknown
+- Heatmap limits: no real-browser, Java 17 runtime or Windows verification; supported DOM fixture and numeric color checks passed. Local main's CRLF fixture fix remains intentionally absent from this branch. No commit/push/merge/fetch was performed; HEAD remains 820394e and staging is empty
+- Heatmap review commands: mvn clean verify; java -jar target/auto-grading-system-1.0-SNAPSHOT.jar config.properties. Boey's available fallback is /tmp/apache-maven-3.9.9/bin/mvn -Dmaven.repo.local=/tmp/cs102-maven-repository clean verify. Next: Boey confirms the new revision's clean build/run and checks the displayed heatmap and question navigation
+- Preserve the existing unstaged handoff-cleanup mirrors, deleted HANDOFF.md and unrelated .DS_Store; BOEY_FEATURE2_HANDOFF.local.md remains the single ignored local handoff. Gabriel's reported feature-5 branch/claim remains unchecked
+- Feature 2: Boey approved the original six-step plan with “Ok lets implement the original plan”; optional heatmap, attention overview and score distribution are outside this implementation
+- Active branch: offline-html-dashboard; no commit or push is authorized for feature implementation
+- File ownership for feature 2: main integrated the reporting context/API, HTML configuration, App integration, their tests and shared documentation; renderer subagent completed autograder/report/html, autograder/html resources and renderer tests; integration subagent completed GradingPipelineTest HTML/CSV checks and targeted runtime verification; no agents are actively editing
+- Keep the existing CSV and withholding policy; HTML is generated afterward from the completed run and authoritative withheld map
+- Feature 2 completion gate satisfied: Boey supplied the clean build/run and accepted the displayed dashboard with “ok looks good” on 2026-10-10
+- Feature 2 architecture document: offline_html_dashboard_architecture.md (implementation, actual OOP principles and Slide Deck Talking Points)
+- Feature 2 verification: focused tests 15/15; clean verify 59 tests with zero failures/errors/skips; packaged grading run retained scores 12,10,10,0,20,1 and produced 120 case records plus dashboard.html
+- Feature 2 report: build/grading/run-15042814915555924988/dashboard.html; all 64 files in /tmp/cs102-feature2-input-hashes.json remained unchanged; git diff --check passed
+- Automated browser verification was unavailable: isolated Chrome aborted (SIGABRT), and CUA rejected file:// navigation under its browser security policy (http/https only; workarounds prohibited); Boey subsequently viewed and accepted the dashboard; no automated browser pass is claimed
+- Boey provided BUILD SUCCESS on 2026-10-10: 59 tests with zero failures/errors/skips and all six expected sample scores; the feature 2 human clean-build/run gate is satisfied
+- Boey's latest report: build/grading/run-1332949390012507172/dashboard.html
+- Next: Boey reviews and commits the feature on offline-html-dashboard; a requested commit message does not authorize the agent to commit or push. Other bonus ownership and human release declarations remain as recorded
 
 - Date: 2026-10-10 (Asia/Tokyo)
 - Validated driver: Boey; identity reconfirmed in this continuation
@@ -66,8 +106,8 @@ Move implemented features to REVIEW. Provide exact Maven commands for compilatio
 - Ownership: main integrated configuration, pipeline, CLI and docs; delegated adapters/provider/tests and process services/tests are complete; no agents actively editing
 - Original ZIPs, instructor tests, starter files and source score sheet remain unchanged
 - Do not add AI-attribution comments to Java; Boey retained that rule and humans own review/modification and brief-required declarations before submission
-- All six bonuses remain TODO; Kiya owns feature 1, Sera owns feature 3 and William feature 4; Boey owns feature 2; available features 5, 6
-- No bonus is DONE; no per-bonus architecture document is due
+- Feature 2 is DONE after Boey's clean-build/run and dashboard acceptance; other bonuses remain TODO; Kiya owns feature 1, Sera owns feature 3 and William feature 4; available features 5, 6
+- Feature 2 architecture document is complete; no other per-bonus architecture document is due
 - Maven is temporarily available at /tmp/apache-maven-3.9.9/bin/mvn with -Dmaven.repo.local=/tmp/cs102-maven-repository
 - Exact commands: mvn clean verify; java -jar target/auto-grading-system-1.0-SNAPSHOT.jar config.properties
 - Fallback build command: /tmp/apache-maven-3.9.9/bin/mvn -Dmaven.repo.local=/tmp/cs102-maven-repository clean verify
@@ -79,6 +119,10 @@ Move implemented features to REVIEW. Provide exact Maven commands for compilatio
 - Boey-confirmed run reports: build/grading/run-9005748573100915500/{scorereport,cases,submissions}.csv
 
 - Remote September work-division assignment preserved: Kiya owns feature 1; WORK_DIVISION.md now maps proposals to current contracts
+
+### Earlier onboarding snapshot before dashboard implementation
+
+The following three entries predate the accepted dashboard and approved heatmap; they do not describe the current feature status.
 
 - Boey claimed feature 2 (offline HTML dashboard) on 2026-10-10; owner recorded, status TODO because implementation has not started
 - Current authorized work is claim documentation and continuation handoff only; feature 2 implementation plan still needs explicit approval
