@@ -69,6 +69,8 @@ These processes are not a security sandbox. The supported setting is controlled 
 
 ## Configuration and simplicity
 
+Follow [CODING_STYLE.md](CODING_STYLE.md) for class/method responsibilities and size review guidelines. [CODE_REVIEW.md](CODE_REVIEW.md) records the merged-main review and proposed extraction boundaries; the current component map remains the implementation until a concrete refactoring plan is approved and implemented.
+
 Externalize settings the instructor or team may change: paths, assessment identifiers, required files, case counts, marks, matching rules, extraction limits, and execution limits. Language/protocol mechanics such as zero-based indexes, CSV quoting characters, and a success exit code are not configurable grading policy. Keep comments minimal, lowercase, and without full stops; agents must not add AI attribution comments.
 
 ## Dependency choices

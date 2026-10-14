@@ -18,6 +18,7 @@ Kiya's feature 1 assignment is preserved from the remote September work-division
 ## Implementation boundaries
 
 - Every member implements each feature in their own feature branch, starting new branches from current `main`; coordinate shared changes even across separate branches
+- Use descriptive new branch names without a `codex/` prefix and follow [docs/CODING_STYLE.md](docs/CODING_STYLE.md). Shared-code refactoring requires a concrete approved plan; [docs/CODE_REVIEW.md](docs/CODE_REVIEW.md) records recommendations, not implementation approval
 - After approved implementation and verification, commit/push only the reviewed feature files and create/update a PR from that branch into `main`. Use a draft for pending checks/human acceptance, tell the driver the PR URL and ask them to contact the group for review. Leave merging for explicit authorization after teammate review and required checks; see [the team PR workflow](docs/TEAM_WORKFLOW.md#feature-branches-and-pull-requests)
 - Use the existing contracts under src/main/java/autograder/api and shared models under autograder.model; do not recreate the older proposed interfaces or restore the legacy src/autograder tree
 - Give each bonus its own implementation package after the plan/interfaces are approved; coordinate shared configuration, models and GradingPipeline integration with the main agent

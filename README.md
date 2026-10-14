@@ -13,7 +13,8 @@ Read these files in order:
 3. docs/REQUIREMENTS.md — project requirements and completion evidence
 4. docs/ARCHITECTURE.md — component responsibilities and bonus integration contracts
 5. docs/TEAM_WORKFLOW.md — collaboration, review and human submission responsibilities
-6. CS102-Project-Auto Grading System.pdf — full project brief, highest grade-band rubric descriptors and restrictions (not Project/IS442-ExamSample.pdf)
+6. docs/CODING_STYLE.md — class/method responsibilities, size review guidelines and behaviour-preserving refactoring rules
+7. CS102-Project-Auto Grading System.pdf — full project brief, highest grade-band rubric descriptors and restrictions (not Project/IS442-ExamSample.pdf)
 Also inspect git status --short to identify existing changes without altering them. Resolve all paths from this clone; do not assume Boey's machine paths or temporary Maven installation exist. Avoid broad source-code exploration until a feature is selected. If required context is missing or materially contradictory, explain the gap and ask for clarification instead of guessing.
 
 Before planning new implementations, review the relevant brief sections and highest grade-band rubric descriptors. Cite the relevant PDF pages in the implementation plan, explain how the work and its verification address those criteria, and check scope, permitted tools/libraries, deliverables and submission restrictions. The actual brief governs course requirements; summaries do not replace it. If the PDF is unreadable or requirements materially conflict, ask before dependent implementation. Aim for the highest-band criteria without adding unrequested complexity or promising a grade. Check the finished implementation against the same criteria.
@@ -40,7 +41,7 @@ The separately approved question heatmap revision is **REVIEW**, awaiting Boey's
 
 ## Feature branches and pull requests
 
-Everyone works on their own feature branch; keep one branch per feature or focused follow-up task. Start new branches from the latest `main`, coordinate ownership and shared files, and keep `main` for reviewed changes. Existing branches, including `offline-html-dashboard`, can be reused for their current feature.
+Everyone works on their own feature branch; keep one branch per feature or focused follow-up task. Start new branches from the latest `main`, coordinate ownership and shared files, and keep `main` for reviewed changes. Use descriptive names without the `codex/` prefix, such as `code-modularisation` or `kiya-feature-1-plagiarism`. Existing branches, including `offline-html-dashboard`, can be reused for their current feature.
 
 After implementation and the appropriate checks, commit/push the reviewed feature files and open a PR **from the feature branch into `main`**. The PR should explain the change, give exact build/run commands and actual verification evidence, and list remaining checks. Use a draft while required verification or human acceptance is pending. Tell the driver that the PR was created, share its URL, and ask them to contact the group for review; a teammate can use their AI assistant to help, while a human owns acceptance. Address feedback in the same PR. Merge only after another teammate's approval, required checks and human build/behavior acceptance, with explicit merge authorization. See [the detailed team workflow](docs/TEAM_WORKFLOW.md#feature-branches-and-pull-requests).
 
@@ -183,6 +184,8 @@ The process exits successfully when the grading batch and reports complete, even
 | `docs/REQUIREMENTS.md` | Rubric requirements, evidence targets, bonus checks, and submission checklist |
 | `docs/ARCHITECTURE.md` | Component responsibilities, shared contracts, and execution decisions |
 | `docs/TEAM_WORKFLOW.md` | Human review, safe division of work, build confirmation, and presentation preparation |
+| `docs/CODING_STYLE.md` | Responsibilities, class/method size review guidelines and future agent coding rules |
+| `docs/CODE_REVIEW.md` | Merged-main file inventory, modularisation proposals and separate correctness findings |
 | `src/main/java/autograder` | Application code and extension contracts |
 | `src/test/java/autograder` | Automated regression tests with temporary synthetic inputs |
 | `Project/student-submission` | Six supplied ZIP submissions |
@@ -288,6 +291,8 @@ David and Xing retain name-header warnings while their uniquely matched submissi
 Verification includes original-tester equivalence on Ping (20/20), wrong-answer and expected-exception equivalence, pass–loop–pass retaining 2 points, independent compilation failure, bounded output, interrupted-process cleanup, missing results/System.exit(0), duplicate/unresolved withholding, missing sources, configured-path checks and exact CSV integration. The final reports are under `build/grading/run-10952970798376735826`. Tests ran on the available JDK 25 with Maven's Java 17 compilation target; actual Java 17 runtime and Windows behavior have not been verified.
 
 ## Review rules
+
+Read [docs/CODING_STYLE.md](docs/CODING_STYLE.md) before generating or editing code. Production Java files above 300 total lines and methods/constructors above 40 nonblank, noncomment lines trigger a responsibility review with justified exceptions. The [merged-main review](docs/CODE_REVIEW.md) records proposed class boundaries and checks; Java refactoring still requires its concrete approved plan. Report discovered bugs separately from behaviour-preserving refactoring.
 
 Keep the Java code readable, with clear responsibilities, meaningful names, ordinary loops, and operational settings in configuration. Minimal comments must be lowercase and have no full stops. Agents must not add AI attribution comments: after reviewing and modifying code, the human team will manually add the declarations required by the brief and the presentation AI Use appendix. This remains a final submission requirement.
 

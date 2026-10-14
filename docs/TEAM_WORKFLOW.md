@@ -14,6 +14,8 @@ Before a new implementation plan, review the relevant highest grade-band rubric 
 
 ## Avoiding conflicting edits
 
+Read [CODING_STYLE.md](CODING_STYLE.md) before planning or editing application code. Use its responsibility and size guidelines, record justified exceptions, preserve existing contracts and keep bug fixes separately approved. The [merged-main review](CODE_REVIEW.md) is evidence for a later implementation plan, not approval to implement its recommendations.
+
 Each task declares owned files before editing. Feature implementations go under separate feature packages. Shared models, config, interfaces, Maven setup, and pipeline wiring require coordinated review by the main agent and human team. Read the latest shared branch before claiming work. A Markdown board is a record, not a lock: communicate claims and do not assume separate clones synchronize automatically.
 
 All feature work must use the member's own feature branch as described below. Do not create extra user-facing Codex chats without an explicit request. Subagents receive bounded work and may not spawn more agents.
@@ -21,7 +23,7 @@ All feature work must use the member's own feature branch as described below. Do
 ## Feature branches and pull requests
 
 1. Confirm the feature owner and approved scope. Check `git status --short` and preserve any existing local work before switching or updating branches.
-2. Start each new feature or unrelated follow-up task from current `main` in its own branch. Prefer names such as `codex/kiya-feature-1-plagiarism`; do not use one permanent personal branch for unrelated features. Existing feature branches such as `offline-html-dashboard` may be reused for their current work. Never implement features directly on `main`.
+2. Start each new feature or unrelated follow-up task from current `main` in its own branch. Use descriptive names without a `codex/` prefix, such as `kiya-feature-1-plagiarism` or `code-modularisation`; do not use one permanent personal branch for unrelated features. Existing feature branches such as `offline-html-dashboard` may be reused for their current work. Never implement features directly on `main`.
 3. Implement the approved plan, coordinate shared-file changes, and run proportionate checks. Review the diff and stage only the intended files; exclude supplied-input edits, generated output, local handoffs and unrelated metadata. Commit and push to the feature branch using ordinary pushes, without force-pushing or discarding work.
 4. Check whether the branch already has an open PR. Create or update a PR with **base `main` and head the feature branch**. Include the concrete behavior change, scope, exact Maven/run commands, actual verification evidence, material limitations and remaining checks. Open a draft if required verification or human acceptance is pending; mark it ready when those checks pass. The feature remains REVIEW until its human completion gate is satisfied.
 5. Immediately inform the driver that the PR was created, provide the URL, and ask them to contact the group to review it. A teammate may use their AI assistant to inspect the diff and test the branch, but a human teammate owns acceptance. Do not message the group or request reviews from named accounts without authorization.
@@ -36,7 +38,7 @@ For a clean checkout starting a new feature, the following example uses Kiya's f
 git status --short
 git switch main
 git pull --ff-only origin main
-git switch -c codex/kiya-feature-1-plagiarism
+git switch -c kiya-feature-1-plagiarism
 ```
 
 Recommend protecting `main` so merges require at least one approving review and the project's build checks when available. This enforces the written policy; an administrator must explicitly authorize configuring protection or CI. AI review assists human review and does not replace accountability or the human-owned declarations.

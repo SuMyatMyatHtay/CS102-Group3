@@ -2,7 +2,7 @@
 
 ## Session protocol
 
-At the start of each new workflow, read this file, README.md, docs/REQUIREMENTS.md, docs/ARCHITECTURE.md, docs/TEAM_WORKFLOW.md and the project brief `CS102-Project-Auto Grading System.pdf`. Read-only context gathering and a concise project/bonus summary may precede identity confirmation. Show all six bonus features with their purpose, current owner, status and availability from this board, then ask:
+At the start of each new workflow, read this file, README.md, docs/REQUIREMENTS.md, docs/ARCHITECTURE.md, docs/TEAM_WORKFLOW.md, docs/CODING_STYLE.md and the project brief `CS102-Project-Auto Grading System.pdf`. Read-only context gathering and a concise project/bonus summary may precede identity confirmation. Show all six bonus features with their purpose, current owner, status and availability from this board, then ask:
 
 "Who am I speaking with? Please choose your recorded team name: Boey, Sera, William, Kai Cong, Kiya, or Gabriel."
 
@@ -39,7 +39,7 @@ Keep shared configuration, domain models, interfaces, Maven setup, and pipeline 
 
 ## Feature branches and pull requests
 
-All members must create and work on each feature in their own feature branch, never directly on `main`. Start new branches from the latest `origin/main` after checking and preserving local changes. Use one branch per feature or focused follow-up task, for example `codex/kiya-feature-1-plagiarism`; existing feature branches such as Boey's `offline-html-dashboard` may be reused. Branches isolate edits but do not replace ownership coordination for shared files.
+All members must create and work on each feature in their own feature branch, never directly on `main`. Start new branches from the latest `origin/main` after checking and preserving local changes. Use short, descriptive names without the `codex/` prefix, for example `code-modularisation` or `kiya-feature-1-plagiarism`. Use one branch per feature or focused follow-up task; existing feature branches such as Boey's `offline-html-dashboard` may be reused. Branches isolate edits but do not replace ownership coordination for shared files.
 
 After approved implementation and proportionate verification, commit and push only the feature's reviewed files to its branch and create a pull request with that branch as the head and `main` as the base. This workflow authorizes those publication steps for approved feature work; it does not authorize merging into `main`, force-pushing, discarding local work or publishing unrelated changes. Check for an existing PR first and update it rather than creating a duplicate. Use a draft PR when required verification or human acceptance is still pending.
 
@@ -51,7 +51,23 @@ Move implemented features to REVIEW. Provide exact Maven commands for compilatio
 
 Opening a PR does not mark a feature DONE or merge it. Before merging, require the documented checks, human build/behavior acceptance and review by another teammate. Existing accepted work remains DONE while a separate enhancement can remain REVIEW. Recommend protecting `main` with a required approving review and required build checks when available; changing repository protection settings requires explicit authorization.
 
+## Coding style and code review
+
+Before generating or editing application code, read [docs/CODING_STYLE.md](docs/CODING_STYLE.md). Keep each class responsible for one coherent concern and each method focused on one logical operation. Production Java files above 300 total lines and methods/constructors above 40 nonblank, noncomment lines require a responsibility review, not an automatic split. Record justified exceptions in the PR or review report. Preserve existing public contracts unless an approved plan explicitly changes them; prefer composition and package-private implementation collaborators.
+
+Use [docs/CODE_REVIEW.md](docs/CODE_REVIEW.md) for the merged-main review, proposed extraction boundaries, known evidence limits and separately listed correctness findings. A review recommendation is not implementation approval. Behaviour-preserving refactoring must retain grading, identity, input protection, CSV and offline-report semantics; newly discovered bugs require separate approval. Do not split supplied assessment files or introduce tooling/dependencies simply to enforce line counts.
+
 ## Current Context
+
+- Date: 2026-10-14 (Asia/Singapore); validated driver: Boey in this ongoing workflow
+- Boey approved a merged-main code review and coding-style/documentation phase, using the branch `code-modularisation` without a `codex/` prefix. The baseline is merged main `a99190f49ef6ec307f169f0fe4eeb2c5c37dd841`
+- Approved changes in this phase are Markdown guidelines, the review report and their onboarding/workflow links. Java, tests, browser assets, configuration and Maven changes require the subsequent concrete implementation plan and Boey's explicit approval
+- Main owns all documentation edits and final architecture/integration decisions. Bounded read-only agents cover reporting/configuration/CSV and execution/submission/adapters; they do not edit files or spawn agents. Shared contracts/models/application/pipeline/build settings are reviewed by main
+- PR #2 was accepted by Boey and externally merged on 2026-10-14. The original MVP/dashboard remain accepted DONE. Heatmap implementation and recorded agent verification are complete and included in that merge; a separate new human heatmap build/display transcript remains uncaptured. Historical REVIEW evidence is retained without inventing acceptance observations
+- Live main still lists feature 5 Unclaimed/TODO, while `markdown-student-feedback` records Gabriel/REVIEW. That branch also records Kai Cong's intent for feature 6 without a completed claim. Coordinate before treating either feature as available; this review does not claim or implement bonuses
+- Preserve supplied inputs, unrelated `.DS_Store` changes and the single ignored `BOEY_FEATURE2_HANDOFF.local.md`. Shared `HANDOFF.md` stays absent. Reviewed Markdown work follows the standing feature-branch/PR publication policy; no merge or teammate message is authorised
+
+### Historical PR creation context (before the accepted merge)
 
 - Date: 2026-10-14 (Asia/Singapore); validated driver: Boey in this ongoing workflow
 - Boey requested the branch/PR workflow above and creation of an `offline-html-dashboard` -> `main` PR for group review. Committing/pushing this workflow update and opening the PR are authorized; merging into `main` is not
