@@ -1,15 +1,19 @@
 package autograder;
 
 import autograder.api.FeedbackGenerator;
+import autograder.api.HtmlReportGenerator;
 import autograder.config.AppConfig;
 import autograder.config.ExecutionConfig;
 import autograder.config.FeedbackConfig;
+import autograder.config.HtmlReportConfig;
 import autograder.grading.GradingPipeline;
 import autograder.grading.GradingRun;
+import autograder.model.GradingReportContext;
 import autograder.model.StudentGrade;
 import autograder.model.SubmissionResult;
 import autograder.model.SubmissionStatus;
 import autograder.report.feedback.MarkdownFeedbackGenerator;
+import autograder.report.html.OfflineHtmlReportGenerator;
 import autograder.submission.SubmissionProcessor;
 import autograder.ui.ConsoleProgressListener;
 
@@ -41,6 +45,7 @@ public final class App {
         try {
             AppConfig config = AppConfig.load(Path.of(args[0]));
             ExecutionConfig execution = ExecutionConfig.load(Path.of(args[0]), config);
+            HtmlReportConfig html = HtmlReportConfig.load(Path.of(args[0]));
             FeedbackConfig feedback = FeedbackConfig.load(Path.of(args[0]));
             GradingPipeline grading = new GradingPipeline(config, execution);
             grading.validateEnvironment();
@@ -67,9 +72,12 @@ public final class App {
             System.out.println("Export decisions and review warnings: "
                     + run.directory().resolve("submissions.csv"));
             System.out.println("Withheld or absent students retain their original score-sheet rows");
-            return generateFeedback(run, feedback, new MarkdownFeedbackGenerator(config.getAssessment(),
-                    execution.caseTimeoutMillis(), feedback.maxDiagnosticLines(), config.getRosterPrefix(),
-                    config.getRosterLastNamePlaceholder()));
+            int htmlExit = generateHtmlReport(run, html, new OfflineHtmlReportGenerator(html.file()));
+            int feedbackExit = generateFeedback(run, feedback, new MarkdownFeedbackGenerator(
+                    config.getAssessment(), execution.caseTimeoutMillis(), feedback.maxDiagnosticLines(),
+                    config.getRosterPrefix(), config.getRosterLastNamePlaceholder()));
+            // each optional report runs even if the other failed, and either failure is reported
+            return Math.max(htmlExit, feedbackExit);
         } catch (Exception exception) {
             if (exception instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
@@ -103,6 +111,24 @@ public final class App {
             return 1;
         }
         return 0;
+    }
+
+    static int generateHtmlReport(GradingRun run, HtmlReportConfig config,
+                                 HtmlReportGenerator generator) {
+        if (!config.enabled()) {
+            return 0;
+        }
+        try {
+            Path report = generator.generate(new GradingReportContext(run.batch(), run.withheld()),
+                    run.directory());
+            System.out.println("HTML dashboard: " + report);
+            return 0;
+        } catch (IOException exception) {
+            System.err.println("could not write HTML dashboard " + run.directory().resolve(config.file())
+                    + ": " + exception.getMessage());
+            System.err.println("Grading and CSV exports are complete; reports remain in " + run.directory());
+            return 1;
+        }
     }
 
     private static void printResults(List<SubmissionResult> results) {

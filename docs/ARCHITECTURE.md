@@ -30,13 +30,23 @@ Small immutable data classes pass results between components. Lists exposed by r
 | Contract | Input | Output |
 | --- | --- | --- |
 | PlagiarismDetector | Submissions and assessment | Similarity findings with evidence |
-| HtmlReportGenerator | Completed batch results and output directory | Generated report path |
+| HtmlReportGenerator | GradingReportContext (batch and withholding decisions), output directory | Generated report path |
 | BoilerplateDetector | Submission and starter directory | Findings identifying the source file and reason |
 | TestCaseProvider | Assessment | Independently runnable test definitions |
 | FeedbackGenerator | Student grading results and output directory | Feedback file path |
 | ProgressListener | Stage, item, completed count and total | Display update |
 
-These are Java contracts, not completed bonus implementations. Sera and William retain ownership of their implementation logic. The current runners are explicit source resources; a TestCaseDefinition describes the runner class and arguments to execute, not a general Java source parser.
+Feature 2 implements HTML reporting; the other bonus implementations remain TODO. Sera and William retain ownership of their implementation logic. The current runners are explicit source resources; a TestCaseDefinition describes the runner class and arguments to execute, not a general Java source parser.
+
+## Offline HTML reporting
+
+After the pipeline has written its CSVs, `App` supplies the immutable `GradingReportContext` to the HTML interface. The context copies the run's authoritative withholding map and rejects unrelated submissions or empty reasons. Reporting does not decide eligibility or rerun tests. Summary averages and medians use exported submissions only; withheld computed scores remain labelled diagnostics. Missing roster submissions are not inferred from batch results, and empty analysis lists do not imply that an analysis ran.
+
+`HtmlReportConfig` loads enablement and a safe `.html` basename from external properties. Generation defaults to disabled when older configurations omit these settings. `OfflineHtmlReportGenerator` encapsulates rendering in `autograder.report.html`, with classpath assets embedded into one UTF-8 file. Student-controlled text is escaped for HTML; filtering and sorting operate on rendered DOM data. The report opens directly from disk without external dependencies. An enabled report-write failure returns a nonzero CLI status after printing completed CSV locations; it does not remove those reports.
+
+Feature 2 is DONE after Boey's clean-build/run and displayed-dashboard acceptance. See [offline_html_dashboard_architecture.md](../offline_html_dashboard_architecture.md) for implementation details, actual OOP principles and Slide Deck Talking Points.
+
+Boey approved a question heatmap revision on 2026-10-12. A package-private immutable `QuestionOutcome` assembles report-local scores, status counts, case-count evidence and a credit-band classification from existing models. The renderer uses it in the existing question columns and groups recorded diagnostics by configured question order. Safe ordinal/index anchors let browser code open and focus the matching group without changing active controls. Missing/mismatched evidence and all-NOT_RUN questions receive neutral treatment; every recorded case remains available, including unexpected question IDs. This revision changes presentation only: the shared models, eligibility decisions, CSV reports and pipeline contracts retain their existing responsibilities.
 
 ## Scoring foundation
 
