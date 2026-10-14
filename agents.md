@@ -60,11 +60,12 @@ Use [docs/CODE_REVIEW.md](docs/CODE_REVIEW.md) for the merged-main review, propo
 ## Current Context
 
 - Date: 2026-10-14 (Asia/Singapore); validated driver: Boey in this ongoing workflow
-- Boey approved a merged-main code review and coding-style/documentation phase, using the branch `code-modularisation` without a `codex/` prefix. The baseline is merged main `a99190f49ef6ec307f169f0fe4eeb2c5c37dd841`
+- Boey approved a merged-main code review and coding-style/documentation phase, using the branch `code-modularisation` without a `codex/` prefix. Review began at `a99190f`; main advanced while it was in progress, so PR #3's accepted merge was preserved and the review baseline extended to `c769fa93fc25b28b2a8b1af6806949e72de97979`
 - Approved changes in this phase are Markdown guidelines, the review report and their onboarding/workflow links. Java, tests, browser assets, configuration and Maven changes require the subsequent concrete implementation plan and Boey's explicit approval
 - Main owns all documentation edits and final architecture/integration decisions. Bounded read-only agents cover reporting/configuration/CSV and execution/submission/adapters; they do not edit files or spawn agents. Shared contracts/models/application/pipeline/build settings are reviewed by main
 - PR #2 was accepted by Boey and externally merged on 2026-10-14. The original MVP/dashboard remain accepted DONE. Heatmap implementation and recorded agent verification are complete and included in that merge; a separate new human heatmap build/display transcript remains uncaptured. Historical REVIEW evidence is retained without inventing acceptance observations
-- Live main still lists feature 5 Unclaimed/TODO, while `markdown-student-feedback` records Gabriel/REVIEW. That branch also records Kai Cong's intent for feature 6 without a completed claim. Coordinate before treating either feature as available; this review does not claim or implement bonuses
+- PR #3 merged Gabriel's Markdown feedback into main during this review. Preserve its recorded Gabriel/REVIEW ownership and uncaptured human completion gate. Feature 6 remains unclaimed with Kai Cong's intent recorded; coordinate before claiming it. This review does not implement or claim bonuses
+- The merged upstream record reports a Windows run with 80/81 tests passing and an InvalidPathException in the existing heatmap test fixture. The review lists that portability defect and the case-variant CSV-name collision separately; neither fix is approved or implemented in this phase
 - Preserve supplied inputs, unrelated `.DS_Store` changes and the single ignored `BOEY_FEATURE2_HANDOFF.local.md`. Shared `HANDOFF.md` stays absent. Reviewed Markdown work follows the standing feature-branch/PR publication policy; no merge or teammate message is authorised
 
 ### Historical PR creation context (before the accepted merge)

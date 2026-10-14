@@ -1,16 +1,16 @@
 # Merged-main code review and modularisation proposals
 
-Reviewed on 2026-10-14 for Boey's approved review/documentation phase. Source baseline: `a99190f49ef6ec307f169f0fe4eeb2c5c37dd841` (accepted PR #2 merged into main). Working branch: `code-modularisation`. These are review findings and a proposed implementation sequence; Java refactoring and bug fixes have not been approved or performed in this phase.
+Reviewed on 2026-10-14 for Boey's approved review/documentation phase. Source baseline: `c769fa93fc25b28b2a8b1af6806949e72de97979` (accepted PR #3 merged into main). Review began at PR #2's merge `a99190f`; when main advanced, those new teammate changes were merged into the review branch and the new/modified files were reviewed. Working branch: `code-modularisation`. These are review findings and a proposed implementation sequence; agent Java refactoring and bug fixes have not been approved or performed in this phase.
 
 ## Scope, ownership and evidence
 
-The review covers every tracked application Java file, Java resource adapter, dashboard asset, test file, `pom.xml`, `config.properties` and `.gitignore`: 46 application Java files (4,919 lines), 15 test files (2,327 lines), 5 adapter resources (243 lines), 2 browser assets (246 lines), and 3 build/configuration files. The inventory below records all 71 reviewed files. Supplied assessment/student inputs, unrelated files, generated output and teammates' unmerged branches are outside the code-edit scope.
+The review covers every tracked application Java file, Java resource adapter, dashboard asset, test file, `pom.xml`, `config.properties` and `.gitignore`: 48 application Java files (5,398 lines), 17 test files (2,660 lines), 5 adapter resources (243 lines), 2 browser assets (246 lines), and 3 build/configuration files. The inventory below records all 75 reviewed files. Supplied assessment/student inputs, unrelated files, generated output and teammates' unmerged branches are outside the code-edit scope.
 
-Main reviewed application/pipeline integration, APIs, shared models, their tests and build/settings; it owns all documentation and final design decisions. One bounded Luna reconnaissance agent reviewed reporting/configuration/CSV/roster/assets/tests; one bounded Luna/xhigh agent reviewed execution/submission/provider/adapters/tests. Neither agent edited files or spawned agents. Main inspected their evidence and the cross-component boundaries.
+Main reviewed application/pipeline integration, APIs, shared models, their tests and build/settings; it owns all documentation and final design decisions. One bounded Luna reconnaissance agent reviewed reporting/configuration/CSV/roster/assets/tests and the later merged feedback delta; one bounded Luna/xhigh agent reviewed execution/submission/provider/adapters/tests. Neither agent edited files or spawned agents. Main inspected their evidence and the cross-component boundaries, including the newly merged feedback implementation. The execution agent's additional documentation verification was interrupted by a usage limit; main completed that targeted check from the source and its already-completed full review.
 
 This is a source review, not a new passing build or browser result. No Maven tests, grading run or browser checks were run during this phase. The one new runtime probe used a disposable temporary directory to establish local filesystem case aliasing; it did not execute the application. Documentation checks and preservation hashes are reported separately in the PR.
 
-The accepted MVP/original-dashboard evidence and completed heatmap agent evidence remain historical: heatmap focused tests 14/14, clean build 67 tests, mock-DOM fixture 2/2, six expected totals and 120 case records. The DOM fixture is not a real browser/keyboard pass. Actual Java 17 runtime and Windows verification were not performed; a separate new human heatmap clean-build/display transcript remains uncaptured despite PR acceptance and merge. This review does not replace or expand those observations.
+The accepted MVP/original-dashboard evidence and completed heatmap agent evidence remain historical: heatmap focused tests 14/14, clean build 67 tests, mock-DOM fixture 2/2, six expected totals and 120 case records. The DOM fixture is not a real browser/keyboard pass. Agent Java 17 runtime and Windows verification were not performed; a separate new human heatmap clean-build/display transcript remains uncaptured despite PR acceptance and merge. PR #3's upstream record reports Windows 11/Temurin 25.0.4/Maven 3.9.16, 80/81 tests passing, and a packaged run producing HTML plus six feedback files with the expected totals. That is recorded teammate evidence, not a new independent agent run or clean Windows build; B2 records its test failure.
 
 ## Main findings
 
@@ -20,10 +20,12 @@ The accepted MVP/original-dashboard evidence and completed heatmap agent evidenc
 | M2 | Second batch | `AppConfig` combines immutable settings, properties parsing, assessment loading and path policy in 611 lines | Delegate loading and validation while retaining `load(Path)`, getters and the existing canonicalisation bridge |
 | M3 | Third batch | `IdentityResolver` collects evidence, matches a roster, plans repairs and writes corrected files in 578 lines | Separate evidence, matching, repair planning and mutation; retain the resolution facade/result |
 | M4 | Later bounded batch | `GradingPipeline` is only 193 lines, but `grade` combines nested per-submission/per-question execution and `writeReports` owns three CSV projections | Extract diagnostic persistence and clarify execution helpers while keeping eligibility and ordering authoritative |
+| M5 | Coordinate with Gabriel | Newly merged `MarkdownFeedbackGenerator` combines file naming/writing, Markdown sections and diagnostic formatting in 397 lines | Discuss focused diagnostic/output-naming extraction with its owner after the shared review; preserve existing feedback semantics |
 | S1 | Scoped cleanup | Some existing Java files use wildcard imports or tightly grouped getters; new style calls for explicit imports and consistent spacing | Correct only deliberately edited areas; no broad formatting-only rewrite |
 | B1 | Separate correctness approval | Case variants of reserved CSV filenames can overwrite diagnostics on a case-insensitive filesystem | Add explicit validation only after a separate bug-fix approval; do not mix it into pure extraction |
+| B2 | Separate correctness approval | The hostile question-ID test builds a Windows-invalid tester path; upstream reports an 80/81 test run | Decouple the synthetic tester filename from hostile display text, retaining escaping coverage; no fix in this phase |
 
-No other material correctness defect was established in the reviewed evidence. This is not a guarantee that no defects exist. The known controlled-course execution limits remain documented; changing them is outside this modularisation proposal.
+No other material correctness defect was established in the reviewed evidence. This is not a guarantee that no defects exist. The known controlled-course execution limits remain documented; changing them is outside this modularisation proposal. Feedback currently derives its withholding notice from NOT_RUN cases rather than receiving the run's authoritative map; M5 records that contract limitation without claiming a proven export discrepancy in the current pipeline.
 
 ## Proposed extraction boundaries
 
@@ -84,7 +86,17 @@ Propose a package-private `GradingDiagnosticsWriter` to own the `cases.csv` and 
 
 Keep batch sequencing, blockers and infrastructure withholding in `GradingPipeline`. If its long `grade` method remains hard to follow after report extraction, introduce focused per-submission/per-question private helpers in a bounded follow-up. Preserve all expected case records, independent compilation, per-case timeouts, continuation after infrastructure errors and report order. Do not introduce a new provider/injection architecture or implement William's feature 4 in this work.
 
-`App` remains the CLI coordinator. Its linear `run` method is a reasonable size-review exception at this stage: it keeps the startup/preparation/grading/report flow visible, with error handling at the CLI boundary. Extract console formatting later only if it materially improves readability. Existing `AppTest` and `GradingPipelineTest` remain the observable contract checks. Exception record: `App.java:32-79`, 48 physical lines, 47 nonblank/noncomment lines; responsibility is end-to-end CLI coordination; retaining this sequence helps readers see stage order and the exit/error boundary. Existing CLI/pipeline tests were inspected, not rerun; live runtime/platform limits remain as recorded above.
+`App` remains the CLI coordinator. Its linear `run` method is a reasonable size-review exception at this stage: it keeps the startup/preparation/grading/report flow visible, with error handling at the CLI boundary. Extract console formatting later only if it materially improves readability. Existing `AppTest` and `GradingPipelineTest` remain the observable contract checks. Exception record at the extended baseline: `App.java:35-88`, 54 physical lines, 52 nonblank/noncomment lines; responsibility is end-to-end CLI coordination, including both optional report hooks; retaining this sequence helps readers see stage order and the exit/error boundary. Existing CLI/pipeline tests were inspected, not rerun; live runtime/platform limits remain as recorded above.
+
+### M5: newly merged Markdown feedback
+
+Gabriel owns feature 5, recorded REVIEW. Review its modularisation proposals with him before scheduling edits; its merge does not imply a separately captured human completion gate. Keep the public `FeedbackGenerator.generate(StudentGrade, Path)` contract and `MarkdownFeedbackGenerator` facade initially. Two cohesive candidate collaborators in `autograder.report.feedback` are `MarkdownDiagnosticFormatter` (bounded output, launcher-notice filtering, dynamic fences and workspace-path redaction) and `FeedbackFileWriter` (sanitised basename, suffix allocation and CREATE_NEW persistence). Keep section composition readable; extract additional sections only where their responsibilities justify it.
+
+Preserve recorded statuses/marks, line-limit notices, missing-file explanations, roster formatting, Markdown escaping, question/case order and continued generation after one student's write failure. `FeedbackConfig` is a small cohesive record/loader and should remain intact. The changed `App` invokes HTML then feedback and returns nonzero if either optional report fails; retain that sequence and the independent report attempts.
+
+The existing feedback contract contains a grade but no authoritative withholding map. The implementation currently derives its notice from NOT_RUN records. A pure refactor retains that behaviour; changing eligibility presentation or adding withholding context requires a separate coordinated API/design plan. The current fixed pipeline creates NOT_RUN records for its withholding paths, so no concrete exported-score discrepancy was established here.
+
+Existing feedback tests cover rendering, recorded outcomes, missing source/compilation, withheld notices, hostile text/fences, bounded diagnostics, safe unique filenames, corrections, roster/JVM-noise formatting and invalid limits. App wrapper tests cover disabled output and continuation after a student's failure. The delta adds no full App.run configuration-to-feedback integration test; that remains a targeted integration consideration for later approved changes.
 
 ## Separate correctness and hardening findings
 
@@ -101,6 +113,12 @@ Proposed separately approved fix: reject reserved filenames case-insensitively, 
 ### H1: conditional multiline anomaly records
 
 `AnomalyLog.java:17` removes tabs from an archive basename but retains CR/LF. A custom archive regex allowing line breaks, or another direct logger caller, could split a record. The supplied archive regex uses Java's default dot behaviour and rejects line-break basenames, so this was not established as a defect in the supplied intake flow. Treat filename normalisation as optional hardening requiring separate approval, not part of pure modularisation.
+
+### B2: hostile display text creates a Windows-invalid test path
+
+Priority: P2 for portable clean builds. The merged upstream `agents.md` record reports `OfflineHtmlReportGeneratorTest.linksQuestionScoresToGroupedEvidenceAndKeepsUnmatchedCasesVisible` failing on Windows with InvalidPathException, with 80 of 81 tests passing. Source inspection supports that report: the test supplies `Q<&script>` as the question ID at line 175, then its helper at lines 306-308 resolves `id + "Tester.java"` as a filesystem path. Those display-test characters are invalid in a Windows filename. This is a test-fixture portability issue; no production dashboard defect was established, and no Windows run was performed in this review.
+
+Proposed separately approved fix: give that synthetic tester path a portable basename while retaining hostile question/case IDs and output text in the model and escaping assertions. Run the focused renderer test and request actual Windows confirmation where available. Do not repeat the already-merged CRLF fixture fix; this is a distinct test concern. Fixing B2 before substantial refactoring would give the team a more useful cross-platform baseline, subject to its separate approval.
 
 ### Existing limits and evidence gaps
 
@@ -119,7 +137,9 @@ Proposed separately approved fix: reject reserved filenames case-insensitively, 
 | M2 | `ExecutionConfigTest,HtmlReportConfigTest,SubmissionProcessorTest,GradingPipelineTest` | Direct AppConfig loading/path/regex/numeric regression scenarios at the new parsing boundaries |
 | M3 | `SubmissionProcessorTest,GradingPipelineTest` | Focused evidence/matching/planning/application tests where independent seams merit them |
 | M4 | `GradingPipelineTest,AppTest,CsvScoreReportWriterTest` | Same case/submission CSV fields, export eligibility, diagnostic persistence and failure behaviour |
+| M5 (owner coordination) | `MarkdownFeedbackGeneratorTest,FeedbackConfigTest,AppTest` | Same Markdown/diagnostic/name behaviour and optional-report failure sequencing |
 | B1 (separate approval) | `ExecutionConfigTest` | Case variants of reserved names rejected; valid custom name remains accepted |
+| B2 (separate approval) | `OfflineHtmlReportGeneratorTest` | Portable synthetic paths with unchanged hostile-text coverage; actual Windows confirmation separately recorded |
 
 After approved Java batches, run `mvn clean verify` and `java -jar target/auto-grading-system-1.0-SNAPSHOT.jar config.properties` once at final integration. Expected supplied totals remain Chee 12, David 10, Fen 10, Jing 0, Ping 20 and Xing 1, with six submissions and 120 case records. Compare semantic decisions/statuses/fields across independent runs; timings and run paths can vary. Existing fixtures assert the three completed CSVs remain byte-identical during HTML rendering. Check supplied-input hashes and record actual platform/runtime/browser limits.
 
@@ -133,13 +153,13 @@ See [CODING_STYLE.md](CODING_STYLE.md) for future coding rules. The inventory be
 
 ## Complete reviewed-file inventory
 
-Line counts are physical lines at source baseline `a99190f`; paths resolve from the repository root. Each listed file was read by main or its bounded reviewer and integrated into this report. Test size is assessed by scenario readability rather than a production-file cap.
+Line counts are physical lines at the extended source baseline `c769fa9`; paths resolve from the repository root. Each listed file was read by main or its bounded reviewer and integrated into this report. Test size is assessed by scenario readability rather than a production-file cap.
 
 ### Application Java
 
 | Reviewed file | Lines | Responsibility | Disposition |
 | --- | ---: | --- | --- |
-| [src/main/java/autograder/App.java](../src/main/java/autograder/App.java) | 133 | CLI orchestration, exit status and report coordination | Keep coordinator; method-size exception recorded in M4 |
+| [src/main/java/autograder/App.java](../src/main/java/autograder/App.java) | 168 | CLI orchestration, exit status and report coordination | Keep coordinator; method-size exception recorded in M4 |
 | [src/main/java/autograder/api/BoilerplateDetector.java](../src/main/java/autograder/api/BoilerplateDetector.java) | 12 | Starter-analysis extension contract | Keep; Sera owns implementation |
 | [src/main/java/autograder/api/FeedbackGenerator.java](../src/main/java/autograder/api/FeedbackGenerator.java) | 9 | Student-feedback extension contract | Keep; coordinate feature integration |
 | [src/main/java/autograder/api/HtmlReportGenerator.java](../src/main/java/autograder/api/HtmlReportGenerator.java) | 9 | Completed-context HTML output contract | Keep public boundary |
@@ -148,6 +168,7 @@ Line counts are physical lines at source baseline `a99190f`; paths resolve from 
 | [src/main/java/autograder/api/TestCaseProvider.java](../src/main/java/autograder/api/TestCaseProvider.java) | 10 | Runnable-case provider contract | Keep; coordinate William’s feature |
 | [src/main/java/autograder/config/AppConfig.java](../src/main/java/autograder/config/AppConfig.java) | 611 | Immutable settings plus properties/assessment/path loading | Extract loading/policy (M2); retain facade |
 | [src/main/java/autograder/config/ExecutionConfig.java](../src/main/java/autograder/config/ExecutionConfig.java) | 86 | Execution settings and grading-output validation | Keep cohesive record; B1 requires separate fix |
+| [src/main/java/autograder/config/FeedbackConfig.java](../src/main/java/autograder/config/FeedbackConfig.java) | 47 | Feedback enablement, safe subdirectory and line cap | Keep cohesive record/loader |
 | [src/main/java/autograder/config/HtmlReportConfig.java](../src/main/java/autograder/config/HtmlReportConfig.java) | 29 | Optional report enablement and safe basename | Keep cohesive record |
 | [src/main/java/autograder/csv/CsvCodec.java](../src/main/java/autograder/csv/CsvCodec.java) | 128 | CSV quoting, records, parsing and serialization | Keep focused codec |
 | [src/main/java/autograder/execution/CaseExecutor.java](../src/main/java/autograder/execution/CaseExecutor.java) | 92 | Fixture copying, one case and result protocol | Keep execution boundary |
@@ -174,6 +195,7 @@ Line counts are physical lines at source baseline `a99190f`; paths resolve from 
 | [src/main/java/autograder/model/TestCaseResult.java](../src/main/java/autograder/model/TestCaseResult.java) | 46 | Status, captured output, timing and earned points | Keep scoring/result boundary |
 | [src/main/java/autograder/model/TestStatus.java](../src/main/java/autograder/model/TestStatus.java) | 10 | Recorded execution-status enum | Keep all six states |
 | [src/main/java/autograder/report/CsvScoreReportWriter.java](../src/main/java/autograder/report/CsvScoreReportWriter.java) | 143 | Schema-preserving score export and atomic write | Keep persistence/safety boundary |
+| [src/main/java/autograder/report/feedback/MarkdownFeedbackGenerator.java](../src/main/java/autograder/report/feedback/MarkdownFeedbackGenerator.java) | 397 | Markdown sections, diagnostics and unique file output | Coordinate diagnostic/output extraction with Gabriel (M5) |
 | [src/main/java/autograder/report/html/OfflineHtmlReportGenerator.java](../src/main/java/autograder/report/html/OfflineHtmlReportGenerator.java) | 681 | Document, sections, summaries and HTML persistence | Extract render collaborators (M1) |
 | [src/main/java/autograder/report/html/QuestionOutcome.java](../src/main/java/autograder/report/html/QuestionOutcome.java) | 175 | Recorded question evidence and credit bands | Keep existing report-local helper |
 | [src/main/java/autograder/roster/ScoreSheetRepository.java](../src/main/java/autograder/roster/ScoreSheetRepository.java) | 144 | CSV roster import and semantic validation | Keep import boundary |
@@ -190,8 +212,9 @@ Line counts are physical lines at source baseline `a99190f`; paths resolve from 
 
 | Reviewed file | Lines | Responsibility | Disposition |
 | --- | ---: | --- | --- |
-| [src/test/java/autograder/AppTest.java](../src/test/java/autograder/AppTest.java) | 74 | Help/startup, optional HTML and retained CSV errors | Keep public CLI behaviour tests |
+| [src/test/java/autograder/AppTest.java](../src/test/java/autograder/AppTest.java) | 129 | CLI/HTML handling plus disabled/failed feedback hooks | Keep observable CLI/report wrapper checks |
 | [src/test/java/autograder/config/ExecutionConfigTest.java](../src/test/java/autograder/config/ExecutionConfigTest.java) | 60 | Tool/path resolution, overlaps and invalid settings | Keep; add B1 cases only after fix approval |
+| [src/test/java/autograder/config/FeedbackConfigTest.java](../src/test/java/autograder/config/FeedbackConfigTest.java) | 55 | Defaults, valid settings and rejected feedback values | Keep public config validation scenarios |
 | [src/test/java/autograder/config/HtmlReportConfigTest.java](../src/test/java/autograder/config/HtmlReportConfigTest.java) | 39 | Report defaults, enablement and safe name | Keep public config tests |
 | [src/test/java/autograder/execution/ExecutionServicesTest.java](../src/test/java/autograder/execution/ExecutionServicesTest.java) | 181 | Timeout/output/interruption/compile/result protocol | Keep observable execution scenarios |
 | [src/test/java/autograder/grading/AdapterEquivalenceTest.java](../src/test/java/autograder/grading/AdapterEquivalenceTest.java) | 224 | Original/adapted scoring and exception comparisons | Keep; limitations recorded separately |
@@ -201,6 +224,7 @@ Line counts are physical lines at source baseline `a99190f`; paths resolve from 
 | [src/test/java/autograder/model/StudentGradeTest.java](../src/test/java/autograder/model/StudentGradeTest.java) | 53 | Independent marks, duplicate IDs and decimals | Keep score invariants |
 | [src/test/java/autograder/model/TestCaseResultTest.java](../src/test/java/autograder/model/TestCaseResultTest.java) | 34 | Only passes earn points; invalid maximum/duration | Keep status/score invariants |
 | [src/test/java/autograder/report/CsvScoreReportWriterTest.java](../src/test/java/autograder/report/CsvScoreReportWriterTest.java) | 110 | Schema/BOM preservation, source protection and bounds | Keep persistence invariants |
+| [src/test/java/autograder/report/feedback/MarkdownFeedbackGeneratorTest.java](../src/test/java/autograder/report/feedback/MarkdownFeedbackGeneratorTest.java) | 223 | Outcomes, escaping/fences, diagnostics and safe names | Keep observable feedback assertions |
 | [src/test/java/autograder/report/html/OfflineHtmlReportGeneratorTest.java](../src/test/java/autograder/report/html/OfflineHtmlReportGeneratorTest.java) | 371 | Inline assets, escaping, eligibility, links and edge cases | Keep cohesive black-box report assertions; test files have no automatic cap |
 | [src/test/java/autograder/report/html/QuestionOutcomeTest.java](../src/test/java/autograder/report/html/QuestionOutcomeTest.java) | 147 | Exact bands, mixed statuses and neutral states | Keep calculation/evidence invariants |
 | [src/test/java/autograder/roster/ScoreSheetRepositoryTest.java](../src/test/java/autograder/roster/ScoreSheetRepositoryTest.java) | 136 | Roster/schema/quoting and invalid-row validation | Keep import scenarios |
@@ -223,5 +247,5 @@ Line counts are physical lines at source baseline `a99190f`; paths resolve from 
 | Reviewed file | Lines | Responsibility | Disposition |
 | --- | ---: | --- | --- |
 | [pom.xml](../pom.xml) | 48 | Java 17/JUnit/Maven executable packaging | Keep build/dependencies; no new tooling proposed |
-| [config.properties](../config.properties) | 93 | Operational settings and supplied assessment mapping | Keep unchanged; defaults do not trigger B1 |
+| [config.properties](../config.properties) | 96 | Operational settings and supplied assessment mapping | Keep unchanged; defaults do not trigger B1 |
 | [.gitignore](../.gitignore) | 8 | Generated output and exact local-handoff ignore rules | Keep; tracked metadata remains unrelated |

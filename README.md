@@ -35,7 +35,7 @@ After identity is confirmed, reread the feature board. For Sera or William, conf
 
 A Java application being built to prepare and grade student submissions against instructor tests, then fill the supplied CSV score sheet.
 
-**Current stage: core MVP and feature 2 DONE.** The command prepares submissions, compiles each part, runs the 20 instructor cases separately with deadlines, exports real scores and generates an optional offline HTML dashboard. Boey confirmed the 59-test clean build, sample run and displayed dashboard on 2026-10-10. Other bonuses remain TODO. See [the dashboard architecture](offline_html_dashboard_architecture.md) for its implementation and presentation talking points.
+**Current stage: core MVP and feature 2 DONE.** The command prepares submissions, compiles each part, runs the 20 instructor cases separately with deadlines, exports real scores and generates an optional offline HTML dashboard. Boey confirmed the 59-test clean build, sample run and displayed dashboard on 2026-10-10. Gabriel's feature 5 is implemented and merged into main, with its recorded status REVIEW; other bonuses remain TODO. See [the dashboard architecture](offline_html_dashboard_architecture.md) for its implementation and presentation talking points.
 
 The separately approved question heatmap revision is **REVIEW**, awaiting Boey's clean-build and local display/interaction confirmation. Its agent clean build passed 67 tests; the original dashboard acceptance above remains unchanged. The new sample report is `build/grading/run-3551798997316566219/dashboard.html`.
 

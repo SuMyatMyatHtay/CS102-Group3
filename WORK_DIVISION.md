@@ -2,7 +2,7 @@
 
 Updated 2026-10-10 after reconciling the September planning commits with the completed MVP. The original proposals remain available in Git history. This document describes the current integration points; algorithms and implementation details still require an approved feature plan.
 
-[agents.md](agents.md) is the authoritative ownership/status board. Start with the [README kickoff](README.md#start-here-teammate-agent-kickoff), confirm identity and coordinate claims before editing. The core MVP is DONE following Boey's successful 48-test build and grading run. Feature 2 is DONE after Boey's 59-test clean build/run and displayed-dashboard acceptance. The other bonuses remain TODO. See [the dashboard architecture](offline_html_dashboard_architecture.md).
+[agents.md](agents.md) is the authoritative ownership/status board. Start with the [README kickoff](README.md#start-here-teammate-agent-kickoff), confirm identity and coordinate claims before editing. The core MVP is DONE following Boey's successful 48-test build and grading run. Feature 2 is DONE after Boey's 59-test clean build/run and displayed-dashboard acceptance. Gabriel's feature 5 is implemented and merged into main, with its recorded status REVIEW; other bonuses remain TODO. See [the dashboard architecture](offline_html_dashboard_architecture.md).
 
 | Feature | Owner | Goal | Existing contract in autograder.api |
 | --- | --- | --- | --- |

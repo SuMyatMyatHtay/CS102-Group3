@@ -36,7 +36,7 @@ Small immutable data classes pass results between components. Lists exposed by r
 | FeedbackGenerator | Student grading results and output directory | Feedback file path |
 | ProgressListener | Stage, item, completed count and total | Display update |
 
-Feature 2 implements HTML reporting; the other bonus implementations remain TODO. Sera and William retain ownership of their implementation logic. The current runners are explicit source resources; a TestCaseDefinition describes the runner class and arguments to execute, not a general Java source parser.
+Feature 2 implements HTML reporting; Gabriel's feature 5 implements Markdown feedback and remains REVIEW after its merge into main. The other bonus implementations remain TODO. Sera and William retain ownership of their implementation logic. The current runners are explicit source resources; a TestCaseDefinition describes the runner class and arguments to execute, not a general Java source parser.
 
 ## Offline HTML reporting
 
