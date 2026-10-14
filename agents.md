@@ -37,11 +37,31 @@ Boey owns feature 2 (offline HTML dashboard) and approved the original implement
 
 Keep shared configuration, domain models, interfaces, Maven setup, and pipeline integration coordinated by the main agent. Give each bonus implementation its own package after the interfaces are approved. Record file ownership before concurrent edits. Agents must reread this board before claiming work; this file alone does not provide a concurrent locking mechanism.
 
+## Feature branches and pull requests
+
+All members must create and work on each feature in their own feature branch, never directly on `main`. Start new branches from the latest `origin/main` after checking and preserving local changes. Use one branch per feature or focused follow-up task, for example `codex/kiya-feature-1-plagiarism`; existing feature branches such as Boey's `offline-html-dashboard` may be reused. Branches isolate edits but do not replace ownership coordination for shared files.
+
+After approved implementation and proportionate verification, commit and push only the feature's reviewed files to its branch and create a pull request with that branch as the head and `main` as the base. This workflow authorizes those publication steps for approved feature work; it does not authorize merging into `main`, force-pushing, discarding local work or publishing unrelated changes. Check for an existing PR first and update it rather than creating a duplicate. Use a draft PR when required verification or human acceptance is still pending.
+
+Include the behavior change, scope, exact build/run commands, actual test evidence, limitations and remaining checks in the PR. Immediately tell the driver that the PR was created, provide its URL, and ask them to contact the group to review it. A teammate may use an AI assistant to help review, but a human teammate owns acceptance. Agents must not message teammates, request reviews from named accounts or merge the PR without explicit authorization. Address review feedback on the same branch and PR; resolve conflicts with the owner while preserving shared changes. See [docs/TEAM_WORKFLOW.md](docs/TEAM_WORKFLOW.md#feature-branches-and-pull-requests) for the full sequence.
+
 ## Completion gate
 
 Move implemented features to REVIEW. Provide exact Maven commands for compilation and execution of the relevant feature, then explicitly request the user's confirmation of a clean build. Never mark DONE before that confirmation. On marking a bonus DONE, create <feature_name>_architecture.md with implementation details, actual OOP principles used, and Slide Deck Talking Points.
 
+Opening a PR does not mark a feature DONE or merge it. Before merging, require the documented checks, human build/behavior acceptance and review by another teammate. Existing accepted work remains DONE while a separate enhancement can remain REVIEW. Recommend protecting `main` with a required approving review and required build checks when available; changing repository protection settings requires explicit authorization.
+
 ## Current Context
+
+- Date: 2026-10-14 (Asia/Singapore); validated driver: Boey in this ongoing workflow
+- Boey requested the branch/PR workflow above and creation of an `offline-html-dashboard` -> `main` PR for group review. Committing/pushing this workflow update and opening the PR are authorized; merging into `main` is not
+- Before this update, the dashboard and heatmap were already published on `offline-html-dashboard` at 6efe86b. Remote main was checked at a8d10d7; it contains the earlier handoff cleanup/Windows test fix and a terminal-dashboard change followed by its revert. Neither dashboard nor heatmap is on main
+- The original MVP/dashboard remain accepted DONE; the heatmap remains REVIEW pending its human clean-build and local display/interaction acceptance. The PR is to be opened as a draft with those remaining checks recorded
+- Preserve local .DS_Store bytes and the single ignored BOEY_FEATURE2_HANDOFF.local.md; do not recreate shared HANDOFF.md. Publication does not authorize attention overview, score distribution, extra feature claims or teammate messages. Gabriel's reported feature-5 branch/claim remains unchecked
+
+## Historical context through heatmap implementation (2026-10-12)
+
+The authorization and Git snapshots below describe earlier sessions. The current context and branch/PR policy above supersede their publication restrictions; historical verification and human acceptance are retained.
 
 - Heatmap revision: Boey approved the detailed plan on 2026-10-12 with “ok lets do it approved”; implementation is REVIEW on offline-html-dashboard, awaiting his clean-build and local display/interaction confirmation for this revision. The original MVP/dashboard remain accepted DONE. Attention overview and score distribution remain outside this approval
 - Heatmap file ownership: main integrated pipeline assertions, shared documentation and final review; bounded Luna completed report/html/QuestionOutcome.java, OfflineHtmlReportGenerator.java, dashboard.css, dashboard.js and their focused tests/verification. No agents are actively editing. Shared models/configuration/pipeline contracts are unchanged; branch synchronization and publication remain unauthorized
@@ -65,7 +85,7 @@ Move implemented features to REVIEW. Provide exact Maven commands for compilatio
 
 - Date: 2026-10-10 (Asia/Tokyo)
 - Validated driver: Boey; identity reconfirmed in this continuation
-- Approved work: Boey approved the remaining MVP plan with “Approved lets go”; current behavior is documented in README.md and docs/ARCHITECTURE.md
+- Approved work: Boey approved the remaining MVP plan with “Approved lets go”; the accepted MVP behavior and verification are summarized in README.md and the project docs
 - Foundation: DONE; Boey previously confirmed 30 tests and successful preparation run
 - Remaining MVP: DONE; Boey supplied BUILD SUCCESS, 48 tests with zero failures/errors/skips, and the expected six-submission grading output on 2026-10-10
 - Implemented: five explicit per-case instructor adapters, independent compilation, bounded per-case child processes, score aggregation, CSV export and per-case/export-decision diagnostics
@@ -100,6 +120,10 @@ Move implemented features to REVIEW. Provide exact Maven commands for compilatio
 
 - Remote September work-division assignment preserved: Kiya owns feature 1; WORK_DIVISION.md now maps proposals to current contracts
 
-- Boey claimed feature 2 (offline HTML dashboard) on 2026-10-10, approved the original implementation plan, supplied the clean build/run and accepted the displayed report; current status is DONE
-- The original feature 2 is accepted DONE; its separately approved heatmap revision is now REVIEW. Attention overview, score distribution, branch synchronization and publishing remain outside the current approval
-- On continuation, read the current board and offline_html_dashboard_architecture.md; confirm canonical identity only for a new workflow and preserve the completed feature's accepted scope
+### Earlier onboarding snapshot before dashboard implementation
+
+The following three entries predate the accepted dashboard and approved heatmap; they do not describe the current feature status.
+
+- Boey claimed feature 2 (offline HTML dashboard) on 2026-10-10; owner recorded, status TODO because implementation has not started
+- Current authorized work is claim documentation and continuation handoff only; feature 2 implementation plan still needs explicit approval
+- Next chat: read this board, README.md and the project docs; confirm the driver using the full member list, inspect relevant reporting contracts and the PDF rubric, then propose a concise feature 2 plan for approval

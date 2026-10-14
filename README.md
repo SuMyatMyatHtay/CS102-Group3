@@ -29,7 +29,7 @@ Then give a short, plain-language onboarding summary:
 Finish by asking: "Who am I speaking with? Please choose your recorded team name: Boey, Sera, William, Kai Cong, Kiya, or Gabriel."
 Do not infer my identity from the machine username, Git identity or previous driver. If I give a nickname or ambiguous variation, ask me to confirm the corresponding listed name. Wait for my answer before proceeding.
 
-After identity is confirmed, reread the feature board. For Sera or William, confirm their locked feature assignment. For anyone else, confirm an existing claim or ask them to select an available feature. Do not automatically assign or overwrite ownership; coordinate claims with teammates before recording them. Keep shared interfaces/configuration/pipeline changes coordinated, preserve supplied inputs and unrelated changes, and follow the repository's approval and build-confirmation gates. Keep the human-owned AI declarations as a release task; do not add AI-attribution comments to Java. Do not commit or push unless explicitly requested.
+After identity is confirmed, reread the feature board. For Sera or William, confirm their locked feature assignment. For anyone else, confirm an existing claim or ask them to select an available feature. Do not automatically assign or overwrite ownership; coordinate claims with teammates before recording them. Keep shared interfaces/configuration/pipeline changes coordinated, preserve supplied inputs and unrelated changes, and follow the repository's approval and build-confirmation gates. Keep the human-owned AI declarations as a release task; do not add AI-attribution comments to Java. All members must create and work on their features in their own branches, starting new branches from current main. Follow docs/TEAM_WORKFLOW.md: after approved implementation and verification, commit/push only the reviewed feature files and create or update a PR targeting main. Use a draft if required checks or human acceptance are pending. Give me the PR URL and ask me to contact the group to review it. This workflow authorizes feature-branch publication, not merging into main, force-pushing, unrelated changes or messaging teammates.
 ```
 
 A Java application being built to prepare and grade student submissions against instructor tests, then fill the supplied CSV score sheet.
@@ -37,6 +37,12 @@ A Java application being built to prepare and grade student submissions against 
 **Current stage: core MVP and feature 2 DONE.** The command prepares submissions, compiles each part, runs the 20 instructor cases separately with deadlines, exports real scores and generates an optional offline HTML dashboard. Boey confirmed the 59-test clean build, sample run and displayed dashboard on 2026-10-10. Other bonuses remain TODO. See [the dashboard architecture](offline_html_dashboard_architecture.md) for its implementation and presentation talking points.
 
 The separately approved question heatmap revision is **REVIEW**, awaiting Boey's clean-build and local display/interaction confirmation. Its agent clean build passed 67 tests; the original dashboard acceptance above remains unchanged. The new sample report is `build/grading/run-3551798997316566219/dashboard.html`.
+
+## Feature branches and pull requests
+
+Everyone works on their own feature branch; keep one branch per feature or focused follow-up task. Start new branches from the latest `main`, coordinate ownership and shared files, and keep `main` for reviewed changes. Existing branches, including `offline-html-dashboard`, can be reused for their current feature.
+
+After implementation and the appropriate checks, commit/push the reviewed feature files and open a PR **from the feature branch into `main`**. The PR should explain the change, give exact build/run commands and actual verification evidence, and list remaining checks. Use a draft while required verification or human acceptance is pending. Tell the driver that the PR was created, share its URL, and ask them to contact the group for review; a teammate can use their AI assistant to help, while a human owns acceptance. Address feedback in the same PR. Merge only after another teammate's approval, required checks and human build/behavior acceptance, with explicit merge authorization. See [the detailed team workflow](docs/TEAM_WORKFLOW.md#feature-branches-and-pull-requests).
 
 ## Setup, build and run
 
@@ -173,7 +179,7 @@ The process exits successfully when the grading batch and reports complete, even
 | --- | --- |
 | `config.properties` | Paths, matching rules, extraction limits, required sources, test metadata, and CSV column mappings |
 | `pom.xml` | Java target, test dependencies, and Maven build/JAR settings |
-| `agents.md` | Team ownership, active work, approvals, and current project status |
+| `agents.md` | Team ownership, current project status, and approval gates |
 | `docs/REQUIREMENTS.md` | Rubric requirements, evidence targets, bonus checks, and submission checklist |
 | `docs/ARCHITECTURE.md` | Component responsibilities, shared contracts, and execution decisions |
 | `docs/TEAM_WORKFLOW.md` | Human review, safe division of work, build confirmation, and presentation preparation |
