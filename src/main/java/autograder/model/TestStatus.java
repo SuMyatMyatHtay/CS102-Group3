@@ -1,0 +1,10 @@
+package autograder.model;
+
+public enum TestStatus {
+    PASSED,
+    FAILED,
+    TIMED_OUT,
+    COMPILE_ERROR,
+    RUNTIME_ERROR,
+    NOT_RUN
+}
