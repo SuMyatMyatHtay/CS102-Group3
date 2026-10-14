@@ -26,14 +26,14 @@ Before proposing any new implementation, review the relevant brief sections and 
 | 2: Offline HTML dashboard | Boey | DONE |
 | 3: Starter code / boilerplate diff detector | Sera (locked) | TODO |
 | 4: Dynamic parameterized test ingestion | William (locked) | TODO |
-| 5: Markdown student feedback | Unclaimed | TODO |
+| 5: Markdown student feedback | Gabriel | REVIEW |
 | 6: ANSI terminal dashboard | Unclaimed | TODO |
 
 Allowed statuses: TODO, IN_PROGRESS, REVIEW, DONE.
 
 ## Gatekeeper and ownership
 
-Boey owns feature 2 (offline HTML dashboard) and approved the original implementation plan on 2026-10-10. Available features: 5, 6. Ask unassigned members to claim an available feature before feature work. Only Sera may claim or implement feature 3; only William may claim or implement feature 4. No bonus implementation begins until the MVP is functional and tested.
+Boey owns feature 2 (offline HTML dashboard) and approved the original implementation plan on 2026-10-10. Gabriel claimed feature 5 (Markdown student feedback) on 2026-10-10 and approved its plan; implementation is in REVIEW on branch markdown-student-feedback awaiting Gabriel's clean-build confirmation. Available feature: 6 (Gabriel reports Kai Cong intends to take it; Kai Cong should confirm and record the claim). Ask unassigned members to claim an available feature before feature work. Only Sera may claim or implement feature 3; only William may claim or implement feature 4. No bonus implementation begins until the MVP is functional and tested.
 
 Keep shared configuration, domain models, interfaces, Maven setup, and pipeline integration coordinated by the main agent. Give each bonus implementation its own package after the interfaces are approved. Record file ownership before concurrent edits. Agents must reread this board before claiming work; this file alone does not provide a concurrent locking mechanism.
 
@@ -106,7 +106,7 @@ The authorization and Git snapshots below describe earlier sessions. The current
 - Ownership: main integrated configuration, pipeline, CLI and docs; delegated adapters/provider/tests and process services/tests are complete; no agents actively editing
 - Original ZIPs, instructor tests, starter files and source score sheet remain unchanged
 - Do not add AI-attribution comments to Java; Boey retained that rule and humans own review/modification and brief-required declarations before submission
-- Feature 2 is DONE after Boey's clean-build/run and dashboard acceptance; other bonuses remain TODO; Kiya owns feature 1, Sera owns feature 3 and William feature 4; available features 5, 6
+- Feature 2 is DONE after Boey's clean-build/run and dashboard acceptance; Gabriel owns feature 5 (REVIEW); other bonuses remain TODO; Kiya owns feature 1, Sera owns feature 3 and William feature 4; available feature 6
 - Feature 2 architecture document is complete; no other per-bonus architecture document is due
 - Maven is temporarily available at /tmp/apache-maven-3.9.9/bin/mvn with -Dmaven.repo.local=/tmp/cs102-maven-repository
 - Exact commands: mvn clean verify; java -jar target/auto-grading-system-1.0-SNAPSHOT.jar config.properties
@@ -126,4 +126,7 @@ The following three entries predate the accepted dashboard and approved heatmap;
 
 - Boey claimed feature 2 (offline HTML dashboard) on 2026-10-10; owner recorded, status TODO because implementation has not started
 - Current authorized work is claim documentation and continuation handoff only; feature 2 implementation plan still needs explicit approval
+- Gabriel (validated driver for this workflow) claimed feature 5 on 2026-10-10 after coordinating with Kai Cong, who is expected to claim feature 6; Gabriel approved the feature 5 plan: MarkdownFeedbackGenerator in autograder.report.feedback implementing the unchanged FeedbackGenerator contract, FeedbackConfig with grading.feedback.* settings, and a small App hook; App/config wiring must be reconciled with the unmerged offline-html-dashboard branch
+- Feature 5 implemented on branch markdown-student-feedback: agent-side mvn clean verify passed 62 tests, zero failures/errors/skips; packaged run wrote 6 feedback files under build/grading/run-*/feedback whose totals match scorereport.csv (12, 10, 10, 0, 20, 1); awaiting Gabriel's own clean-build confirmation before DONE
+- 2026-10-14: Gabriel had main (including the merged offline HTML dashboard) merged into markdown-student-feedback; App runs the HTML dashboard then feedback and returns nonzero if either fails; config keeps both grading.html.* and grading.feedback.*. Windows 11 (Temurin 25.0.4, Maven 3.9.16): 80 of 81 tests passed; OfflineHtmlReportGeneratorTest.linksQuestionScoresToGroupedEvidenceAndKeepsUnmatchedCasesVisible errors on Windows only (InvalidPathException for '<' in a test tester filename; dashboard test code identical to main, flagged for Boey). Packaged run wrote dashboard.html and 6 feedback files; totals match scorereport.csv (12, 10, 10, 0, 20, 1)
 - Next chat: read this board, README.md and the project docs; confirm the driver using the full member list, inspect relevant reporting contracts and the PDF rubric, then propose a concise feature 2 plan for approval
