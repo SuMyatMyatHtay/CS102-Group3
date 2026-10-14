@@ -1,5 +1,6 @@
 package autograder.grading;
 
+import autograder.api.TestCaseProvider;
 import autograder.config.AppConfig;
 import autograder.config.ExecutionConfig;
 import autograder.csv.CsvCodec;
@@ -10,6 +11,8 @@ import autograder.execution.StudentCompiler;
 import autograder.model.*;
 import autograder.report.CsvScoreReportWriter;
 import autograder.roster.ScoreSheetRepository;
+import autograder.grading.DynamicTestCaseProvider;
+import autograder.grading.InstructorTestCaseProvider;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,7 +30,10 @@ public final class GradingPipeline {
     public GradingPipeline(AppConfig app, ExecutionConfig execution) throws IOException {
         this.app = app;
         this.execution = execution;
-        this.cases = new InstructorTestCaseProvider().load(app.getAssessment());
+        TestCaseProvider fixedProvider = new InstructorTestCaseProvider();
+        TestCaseProvider dynamicProvider = new DynamicTestCaseProvider();
+        TestCaseProvider combinedProvider = new CombinedTestCaseProvider(fixedProvider, dynamicProvider);
+        this.cases = combinedProvider.load(app.getAssessment());
     }
 
     public void validateEnvironment() throws IOException, InterruptedException {
