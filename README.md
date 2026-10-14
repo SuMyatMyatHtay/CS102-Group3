@@ -234,7 +234,7 @@ The model classes are forms for storing and passing information, not separate ap
 
 ## Configuration and another assessment
 
-Relative paths resolve against the properties file's directory. `execution.java` and `execution.javac` accept `JDK` (the running JDK's tools), an executable on PATH, or a path. Compilation defaults to 15 seconds per part, execution to 2 seconds per case, and captured output to 65,536 bytes per stream. Both streams keep draining after the capture limit. These settings live in `config.properties`.
+Relative paths resolve against the properties file's directory. `execution.java` and `execution.javac` accept `JDK` (the running JDK's tools), an executable on PATH, or a path. Compilation defaults to 15 seconds per part, execution to 2 seconds per case, and captured output to 65,536 bytes per stream. Both streams keep draining after the capture limit. These settings live in `config.properties`. `grading.feedback.enabled`, `grading.feedback.directory` and `grading.feedback.max.diagnostic.lines` control the per-student Markdown feedback files (feature 5, in review) written to `build/grading/run-*/feedback`.
 
 `assessment.question.ids` describes independently scored parts, source files, instructor testers, case counts, weights, support classes, and fixtures. The current fixed adapters support the supplied Q1a (3 cases), Q1b (3), Q2a (5), Q2b (5), and Q3 (4) testers. Weights remain configurable and the roster denominator must agree. The provider verifies the original tester content so an edited tester cannot silently use an outdated adapter. Supporting a different tester requires a new reviewed adapter/provider; preparation's configurable metadata alone does not provide general-purpose test ingestion. William's parameterized-case bonus remains separate.
 
@@ -268,10 +268,10 @@ The grading pipeline supplies scores only for eligible students after recording 
 | 2: offline HTML report | HtmlReportGenerator | Boey |
 | 3: starter-code comparison | BoilerplateDetector | Sera, locked |
 | 4: parameterized test cases | TestCaseProvider | William, locked |
-| 5: Markdown feedback | FeedbackGenerator | Unclaimed |
+| 5: Markdown feedback | FeedbackGenerator | Gabriel |
 | 6: terminal dashboard | ProgressListener | Unclaimed |
 
-The interfaces exist so implementations share common inputs and outputs. HTML reporting receives `GradingReportContext`, which carries completed batch results and explicit withholding reasons. The basic console implements progress reporting; the interactive ANSI dashboard has not been built. Boey owns the HTML dashboard (feature 2, DONE). Kai Cong and Gabriel can claim features 5 and 6.
+The interfaces exist so implementations share common inputs and outputs. HTML reporting receives `GradingReportContext`, which carries completed batch results and explicit withholding reasons. The basic console implements progress reporting; the interactive ANSI dashboard has not been built. Boey owns the HTML dashboard (feature 2, DONE). Gabriel has claimed Markdown feedback (feature 5, REVIEW). Feature 6 remains available for Kai Cong to claim.
 
 ## Latest verification
 
