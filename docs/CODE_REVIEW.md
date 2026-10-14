@@ -143,13 +143,7 @@ Existing feedback tests cover rendering, recorded outcomes, missing source/compi
 
 ### B1: case-variant report names can replace diagnostic CSVs
 
-Priority: P2. Confidence: high for the code-level validation gap and filesystem aliasing; no full grading reproduction was run.
-
-Trigger: configure `grading.report.file=Cases.csv` or `Submissions.csv` on a case-insensitive filesystem. `ExecutionConfig.load` rejects only exact `cases.csv`/`submissions.csv` strings at lines 36-40, so these `.csv` variants pass that filename guard. `GradingPipeline.writeReports` writes the lowercase diagnostic files first at lines 187-188, then passes the configured name to `CsvScoreReportWriter` at line 191. The writer's atomic move uses `REPLACE_EXISTING` at lines 134-137. The case-variant name therefore targets the same file and can replace diagnostic content with the score-sheet CSV.
-
-A disposable local Python filesystem probe created `cases.csv`, confirmed `Cases.csv` existed as the same file, and confirmed writing through the variant replaced its contents. The probe directory was removed. This establishes local path aliasing, not a new Java/Windows test result. Default `scorereport.csv` does not trigger the issue.
-
-Proposed separately approved fix: reject reserved filenames case-insensitively, with targeted configuration regression tests covering case variants of both names and a valid custom score filename. Consider constructor invariants only in an explicitly approved API review; do not silently alter programmatically constructed `ExecutionConfig` behaviour during extraction.
+Tracked in [BUGS.md — B1](BUGS.md#b1-csv-filename-case-can-overwrite-diagnostics): case variants of reserved score-report filenames can replace diagnostic CSVs on case-insensitive filesystems. The register preserves the source/filesystem evidence and its reproduction limits, current code locations, suggested validation checks and Boey's shared-core coordination role. No fix is approved or included in this refactor.
 
 ### H1: conditional multiline anomaly records
 
@@ -157,9 +151,7 @@ Proposed separately approved fix: reject reserved filenames case-insensitively, 
 
 ### B2: hostile display text creates a Windows-invalid test path
 
-Priority: P2 for portable clean builds. The merged upstream `agents.md` record reports `OfflineHtmlReportGeneratorTest.linksQuestionScoresToGroupedEvidenceAndKeepsUnmatchedCasesVisible` failing on Windows with InvalidPathException, with 80 of 81 tests passing. Source inspection supports that report: the test supplies `Q<&script>` as the question ID at line 175, then its helper at lines 306-308 resolves `id + "Tester.java"` as a filesystem path. Those display-test characters are invalid in a Windows filename. This is a test-fixture portability issue; no production dashboard defect was established, and no Windows run was performed in this review.
-
-Proposed separately approved fix: give that synthetic tester path a portable basename while retaining hostile question/case IDs and output text in the model and escaping assertions. Run the focused renderer test and request actual Windows confirmation where available. Do not repeat the already-merged CRLF fixture fix; this is a distinct test concern. Fixing B2 before substantial refactoring would give the team a more useful cross-platform baseline, subject to its separate approval.
+Tracked in [BUGS.md — B2](BUGS.md#b2-dashboard-test-uses-a-windows-invalid-filename): the escaping-test fixture uses a hostile display ID in a Windows-invalid tester filename. The register preserves the reported Windows 80/81 result, source evidence, platform limits and proposed acceptance checks. Boey owns the affected feature-2 tests; no production dashboard defect or new Windows pass is claimed.
 
 ### Existing limits and evidence gaps
 

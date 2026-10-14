@@ -57,6 +57,8 @@ Before generating or editing application code, read [docs/CODING_STYLE.md](docs/
 
 Use [docs/CODE_REVIEW.md](docs/CODE_REVIEW.md) for the merged-main review, proposed extraction boundaries, known evidence limits and separately listed correctness findings. A review recommendation is not implementation approval. Behaviour-preserving refactoring must retain grading, identity, input protection, CSV and offline-report semantics; newly discovered bugs require separate approval. Do not split supplied assessment files or introduce tooling/dependencies simply to enforce line counts.
 
+Use [docs/BUGS.md](docs/BUGS.md) as the known-bug register before proposing fixes. It records B1 (shared grading/configuration; Boey coordinates, implementing human owner unassigned) and B2 (feature-2 dashboard fixture; Boey). Documentation does not assign another teammate or approve a fix; coordinate shared ownership and preserve the recorded evidence limits.
+
 ## Current Context
 
 - Date: 2026-10-14 (Asia/Singapore); validated driver: Boey in this ongoing workflow

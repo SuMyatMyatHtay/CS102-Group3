@@ -186,6 +186,7 @@ The process exits successfully when the grading batch and reports complete, even
 | `docs/TEAM_WORKFLOW.md` | Human review, safe division of work, build confirmation, and presentation preparation |
 | `docs/CODING_STYLE.md` | Responsibilities, class/method size review guidelines and future agent coding rules |
 | `docs/CODE_REVIEW.md` | Source-baseline review inventory, implemented class boundaries, verification and separate correctness findings |
+| `docs/BUGS.md` | Known bugs, evidence, ownership contacts and suggested fix checks |
 | `src/main/java/autograder` | Application code and extension contracts |
 | `src/test/java/autograder` | Automated regression tests with temporary synthetic inputs |
 | `Project/student-submission` | Six supplied ZIP submissions |
