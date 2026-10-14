@@ -9,13 +9,13 @@ The archive and supplied inputs are evidence. Extraction output is a raw copy. C
 ## Responsibilities
 
 - `App`: accepts the config filename, shows progress and the final summary
-- `AppConfig`: loads paths, identity rules, extraction limits, CSV column mappings, and assessment settings
+- `AppConfig`: immutable settings and public loading facade; `AppConfigLoader` coordinates loading, `AssessmentConfigLoader` reads assessment definitions, `PropertyParsers` validates values, and `ConfigPathPolicy` protects input/output paths
 - `AssessmentDefinition` / `QuestionDefinition`: describe the assessment without fixed Java question names or marks
 - `ScoreSheetRepository`: validates the supplied class list and retains its original CSV data
 - `SafeZipExtractor`: bounded ZIP extraction with unsafe path and corruption rejection
 - `SubmissionProcessor`: coordinates the batch and records per-submission outcomes
 - `SubmissionValidator`: selects an unambiguous question root and checks question folders
-- `IdentityResolver`: checks required sources/headers and matches identity evidence against the roster
+- `IdentityResolver`: coordinates evidence collection, roster matching, correction planning and working-copy application through focused collaborators
 - `WorkingCopyPreparer`: creates a canonical copy under the roster username and applies approved identity repairs
 - `CorrectionLog` / `AnomalyLog`: keep corrections separate from problems
 - `SubmissionResult`: shares the original/working locations, identity, status, problems, and corrections
@@ -24,6 +24,20 @@ The archive and supplied inputs are evidence. Extraction output is a raw copy. C
 - `MarkdownFeedbackGenerator` / `FeedbackConfig` (feature 5, in review): write one Markdown feedback file per graded submission from recorded case results, preparation problems and corrections; a failed feedback file is reported without affecting grading or CSV exports
 
 Small immutable data classes pass results between components. Lists exposed by result models cannot be modified by consumers. Composition keeps responsibilities separate. Interfaces allow later feature implementations to fit into the pipeline without changing its core responsibilities. Java class inheritance is not being added artificially; the supplied instructor tester classes themselves extend student question classes, which the later compilation design must respect.
+
+## Modularisation boundaries
+
+The public entry points remain stable. Implementation collaborators are package-private within their existing packages; shared domain models and bonus contracts retain their original signatures.
+
+| Package | Coordinator | Focused collaborators |
+| --- | --- | --- |
+| `config` | `AppConfig.load` / `AppConfigLoader` | Assessment loading, property parsing and symlink-aware path policy |
+| `submission` | `IdentityResolver` | `IdentityEvidenceCollector`, `RosterIdentityMatcher`, `HeaderCorrectionPlanner`, `HeaderCorrectionApplier`; copied `IdentityEvidence` transfer data |
+| `grading` | `GradingPipeline` | Private per-submission/per-question execution helpers and `GradingDiagnosticsWriter` for completed CSV projections; eligibility stays in the pipeline |
+| `report.html` | `OfflineHtmlReportGenerator` | Summary, table/details, cases and analysis renderers; one escaper, decimal formatter, submission presentation helper and immutable `QuestionSection` |
+| `report.feedback` | `MarkdownFeedbackGenerator` | `MarkdownDiagnosticFormatter` for recorded diagnostics and `FeedbackFileWriter` for safe unique filenames/CREATE_NEW persistence |
+
+The generator still embeds the same CSS and JavaScript. Report classes render completed evidence; they do not rerun cases, alter scores or decide export eligibility. The Markdown facade retains its existing NOT_RUN-derived notice because its public contract does not include the run's withholding map. Section composition remains a justified size exception; see [CODE_REVIEW.md](CODE_REVIEW.md) for checks and other exceptions.
 
 ## Bonus connections
 
@@ -70,7 +84,7 @@ These processes are not a security sandbox. The supported setting is controlled 
 
 ## Configuration and simplicity
 
-Follow [CODING_STYLE.md](CODING_STYLE.md) for class/method responsibilities and size review guidelines. [CODE_REVIEW.md](CODE_REVIEW.md) records the merged-main review and proposed extraction boundaries; the current component map remains the implementation until a concrete refactoring plan is approved and implemented.
+Follow [CODING_STYLE.md](CODING_STYLE.md) for class/method responsibilities and size review guidelines. [CODE_REVIEW.md](CODE_REVIEW.md) records the merged-main review and proposed extraction boundaries; M1-M5 are implemented in the current modularisation revision, with agent checks passed and human acceptance pending.
 
 Externalize settings the instructor or team may change: paths, assessment identifiers, required files, case counts, marks, matching rules, extraction limits, and execution limits. Language/protocol mechanics such as zero-based indexes, CSV quoting characters, and a success exit code are not configurable grading policy. Keep comments minimal, lowercase, and without full stops; agents must not add AI attribution comments.
 

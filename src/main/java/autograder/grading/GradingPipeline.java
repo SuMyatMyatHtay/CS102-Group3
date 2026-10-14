@@ -2,14 +2,19 @@ package autograder.grading;
 
 import autograder.config.AppConfig;
 import autograder.config.ExecutionConfig;
-import autograder.csv.CsvCodec;
 import autograder.execution.CaseExecutor;
 import autograder.execution.ProcessResult;
 import autograder.execution.ProcessRunner;
 import autograder.execution.StudentCompiler;
-import autograder.model.*;
-import autograder.report.CsvScoreReportWriter;
-import autograder.roster.ScoreSheetRepository;
+import autograder.model.BatchResult;
+import autograder.model.QuestionDefinition;
+import autograder.model.StudentGrade;
+import autograder.model.StudentRecord;
+import autograder.model.SubmissionResult;
+import autograder.model.SubmissionStatus;
+import autograder.model.TestCaseDefinition;
+import autograder.model.TestCaseResult;
+import autograder.model.TestStatus;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -55,6 +60,21 @@ public final class GradingPipeline {
     public GradingRun grade(List<SubmissionResult> submissions) throws IOException, InterruptedException {
         Files.createDirectories(execution.directory());
         Path run = Files.createTempDirectory(execution.directory(), "run-");
+        Map<String, Integer> identities = identityCounts(submissions);
+        Map<SubmissionResult, String> withheld = new LinkedHashMap<>();
+        List<StudentGrade> grades = new ArrayList<>();
+        int index = 0;
+        for (SubmissionResult submission : submissions) {
+            index++;
+            grades.add(gradeSubmission(submission, identities, run, index, submissions.size(), withheld));
+        }
+        BatchResult batch = new BatchResult(app.getAssessment(), grades, List.of(), List.of());
+        GradingRun result = new GradingRun(batch, run, withheld);
+        new GradingDiagnosticsWriter(app, execution).write(result);
+        return result;
+    }
+
+    private Map<String, Integer> identityCounts(List<SubmissionResult> submissions) {
         Map<String, Integer> identities = new HashMap<>();
         for (SubmissionResult submission : submissions) {
             StudentRecord student = submission.getIdentity().getStudentRecord();
@@ -62,65 +82,74 @@ public final class GradingPipeline {
                 identities.merge(student.getId(), 1, Integer::sum);
             }
         }
-        Map<SubmissionResult, String> withheld = new LinkedHashMap<>();
-        List<StudentGrade> grades = new ArrayList<>();
-        int index = 0;
-        for (SubmissionResult submission : submissions) {
-            index++;
-            String blocker = blocker(submission, identities);
-            List<TestCaseResult> results = new ArrayList<>();
-            System.out.println("Grading " + index + "/" + submissions.size() + ": "
-                    + submission.getArchivePath().getFileName());
-            if (blocker != null) {
-                withheld.put(submission, blocker);
-                for (TestCaseDefinition test : cases) {
-                    results.add(new TestCaseResult(test, TestStatus.NOT_RUN, 0, "", blocker));
-                }
-            } else {
-                Path studentDirectory = Files.createDirectory(run.resolve("submission-" + index));
-                for (QuestionDefinition question : app.getAssessment().getQuestions()) {
-                    List<TestCaseDefinition> questionCases = casesFor(question.getId());
-                    try {
-                        Path part = studentDirectory.resolve(question.getId());
-                        ProcessResult compilation = new StudentCompiler().compile(question,
-                                submission.getWorkingRoot(), part, execution.javacExecutable(),
-                                execution.compileTimeoutMillis(), execution.maxOutputBytes());
-                        if (compilation.timedOut() || compilation.exitCode() != 0) {
-                            String diagnostic = compilation.stderr();
-                            if (compilation.timedOut()) {
-                                diagnostic = "compilation deadline exceeded\n" + diagnostic;
-                            }
-                            for (TestCaseDefinition test : questionCases) {
-                                results.add(new TestCaseResult(test, TestStatus.COMPILE_ERROR,
-                                        compilation.durationMillis(), compilation.stdout(), diagnostic));
-                            }
-                        } else {
-                            for (TestCaseDefinition test : questionCases) {
-                                results.add(new CaseExecutor().execute(test, question, part,
-                                        execution.javaExecutable(), execution.caseTimeoutMillis(),
-                                        execution.maxOutputBytes()));
-                            }
-                        }
-                    } catch (IOException exception) {
-                        String reason = "grading infrastructure error: " + exception.getMessage();
-                        withheld.put(submission, reason);
-                        for (TestCaseDefinition test : questionCases) {
-                            if (!hasResult(results, test.getId())) {
-                                results.add(new TestCaseResult(test, TestStatus.NOT_RUN, 0, "", reason));
-                            }
-                        }
-                    }
-                }
+        return identities;
+    }
+
+    private StudentGrade gradeSubmission(SubmissionResult submission, Map<String, Integer> identities,
+                                         Path run, int index, int total,
+                                         Map<SubmissionResult, String> withheld)
+            throws IOException, InterruptedException {
+        String blocker = blocker(submission, identities);
+        List<TestCaseResult> results = new ArrayList<>();
+        System.out.println("Grading " + index + "/" + total + ": "
+                + submission.getArchivePath().getFileName());
+        if (blocker != null) {
+            withheld.put(submission, blocker);
+            for (TestCaseDefinition test : cases) {
+                results.add(new TestCaseResult(test, TestStatus.NOT_RUN, 0, "", blocker));
             }
-            if (results.size() != cases.size()) {
-                throw new IOException("incomplete grading result; score export stopped");
+        } else {
+            Path studentDirectory = Files.createDirectory(run.resolve("submission-" + index));
+            for (QuestionDefinition question : app.getAssessment().getQuestions()) {
+                gradeQuestion(submission, question, studentDirectory, results, withheld);
             }
-            grades.add(new StudentGrade(submission, results));
         }
-        BatchResult batch = new BatchResult(app.getAssessment(), grades, List.of(), List.of());
-        GradingRun result = new GradingRun(batch, run, withheld);
-        writeReports(result);
-        return result;
+        if (results.size() != cases.size()) {
+            throw new IOException("incomplete grading result; score export stopped");
+        }
+        return new StudentGrade(submission, results);
+    }
+
+    private void gradeQuestion(SubmissionResult submission, QuestionDefinition question,
+                               Path studentDirectory, List<TestCaseResult> results,
+                               Map<SubmissionResult, String> withheld) throws InterruptedException {
+        List<TestCaseDefinition> questionCases = casesFor(question.getId());
+        try {
+            Path part = studentDirectory.resolve(question.getId());
+            ProcessResult compilation = new StudentCompiler().compile(question,
+                    submission.getWorkingRoot(), part, execution.javacExecutable(),
+                    execution.compileTimeoutMillis(), execution.maxOutputBytes());
+            if (compilation.timedOut() || compilation.exitCode() != 0) {
+                recordCompilationFailure(results, questionCases, compilation);
+            } else {
+                for (TestCaseDefinition test : questionCases) {
+                    results.add(new CaseExecutor().execute(test, question, part,
+                            execution.javaExecutable(), execution.caseTimeoutMillis(),
+                            execution.maxOutputBytes()));
+                }
+            }
+        } catch (IOException exception) {
+            String reason = "grading infrastructure error: " + exception.getMessage();
+            withheld.put(submission, reason);
+            for (TestCaseDefinition test : questionCases) {
+                if (!hasResult(results, test.getId())) {
+                    results.add(new TestCaseResult(test, TestStatus.NOT_RUN, 0, "", reason));
+                }
+            }
+        }
+    }
+
+    private void recordCompilationFailure(List<TestCaseResult> results,
+                                          List<TestCaseDefinition> questionCases,
+                                          ProcessResult compilation) {
+        String diagnostic = compilation.stderr();
+        if (compilation.timedOut()) {
+            diagnostic = "compilation deadline exceeded\n" + diagnostic;
+        }
+        for (TestCaseDefinition test : questionCases) {
+            results.add(new TestCaseResult(test, TestStatus.COMPILE_ERROR,
+                    compilation.durationMillis(), compilation.stdout(), diagnostic));
+        }
     }
 
     private String blocker(SubmissionResult submission, Map<String, Integer> identities) {
@@ -154,40 +183,5 @@ public final class GradingPipeline {
             }
         }
         return false;
-    }
-
-    private void writeReports(GradingRun run) throws IOException {
-        List<List<String>> caseRows = new ArrayList<>();
-        caseRows.add(List.of("Archive", "Username", "Case", "Status", "Score", "Maximum",
-                "DurationMillis", "Stdout", "Stderr"));
-        List<List<String>> submissionRows = new ArrayList<>();
-        submissionRows.add(List.of("Archive", "Username", "Export", "Reason", "ComputedScore",
-                "PreparationWarnings"));
-        Map<String, Double> scores = new LinkedHashMap<>();
-        for (StudentGrade grade : run.batch().getGrades()) {
-            SubmissionResult submission = grade.getSubmission();
-            StudentRecord student = submission.getIdentity().getStudentRecord();
-            String username = student == null ? "" : student.getUsername();
-            String archive = submission.getArchivePath().getFileName().toString();
-            String reason = run.withheld().get(submission);
-            if (reason == null) {
-                scores.put(student.getId(), grade.getTotalScore());
-            }
-            submissionRows.add(List.of(archive, username, reason == null ? "EXPORTED" : "WITHHELD",
-                    reason == null ? "" : reason, Double.toString(grade.getTotalScore()),
-                    String.join("\n", submission.getAnomalies())));
-            for (TestCaseResult result : grade.getTestResults()) {
-                caseRows.add(List.of(archive, username, result.getTestCase().getId(),
-                        result.getStatus().name(), Double.toString(result.getScore()),
-                        Double.toString(result.getTestCase().getMaximumScore()),
-                        Long.toString(result.getDurationMillis()), result.getStandardOutput(),
-                        result.getStandardError()));
-            }
-        }
-        Files.writeString(run.directory().resolve("cases.csv"), CsvCodec.write(caseRows));
-        Files.writeString(run.directory().resolve("submissions.csv"), CsvCodec.write(submissionRows));
-        ScoreSheet sheet = new ScoreSheetRepository(app.getScoreSheetPath(),
-                app.getScoreSheetColumns()).load();
-        new CsvScoreReportWriter().write(sheet, scores, run.directory().resolve(execution.reportFile()));
     }
 }

@@ -1,18 +1,59 @@
-# Merged-main code review and modularisation proposals
+# Code review and modularisation
 
-Reviewed on 2026-10-14 for Boey's approved review/documentation phase. Source baseline: `c769fa93fc25b28b2a8b1af6806949e72de97979` (accepted PR #3 merged into main). Review began at PR #2's merge `a99190f`; when main advanced, those new teammate changes were merged into the review branch and the new/modified files were reviewed. Working branch: `code-modularisation`. These are review findings and a proposed implementation sequence; agent Java refactoring and bug fixes have not been approved or performed in this phase.
+Reviewed on 2026-10-14 for Boey's approved review/documentation phase. Source baseline: `c769fa93fc25b28b2a8b1af6806949e72de97979` (accepted PR #3 merged into main). Review began at PR #2's merge `a99190f`; when main advanced, those new teammate changes were merged into the review branch and the new/modified files were reviewed. Working branch: `code-modularisation`. Boey subsequently directly requested the actual behaviour-preserving modularisation and a replacement PR. Documentation-only PR #4 was closed unmerged. M1-M5 are now implemented on this branch, in REVIEW pending human clean-build/behaviour acceptance; the separate bug fixes remain unapproved.
 
 ## Scope, ownership and evidence
 
-The review covers every tracked application Java file, Java resource adapter, dashboard asset, test file, `pom.xml`, `config.properties` and `.gitignore`: 48 application Java files (5,398 lines), 17 test files (2,660 lines), 5 adapter resources (243 lines), 2 browser assets (246 lines), and 3 build/configuration files. The inventory below records all 75 reviewed files. Supplied assessment/student inputs, unrelated files, generated output and teammates' unmerged branches are outside the code-edit scope.
+The original source review covered every then-tracked application Java file, Java resource adapter, dashboard asset, test file, `pom.xml`, `config.properties` and `.gitignore`: 48 application Java files (5,398 lines), 17 test files (2,660 lines), 5 adapter resources (243 lines), 2 browser assets (246 lines), and 3 build/configuration files. The inventory below records all 75 reviewed files. Supplied assessment/student inputs, unrelated files, generated output and teammates' unmerged branches are outside the code-edit scope.
 
-Main reviewed application/pipeline integration, APIs, shared models, their tests and build/settings; it owns all documentation and final design decisions. One bounded Luna reconnaissance agent reviewed reporting/configuration/CSV/roster/assets/tests and the later merged feedback delta; one bounded Luna/xhigh agent reviewed execution/submission/provider/adapters/tests. Neither agent edited files or spawned agents. Main inspected their evidence and the cross-component boundaries, including the newly merged feedback implementation. The execution agent's additional documentation verification was interrupted by a usage limit; main completed that targeted check from the source and its already-completed full review.
+For the source-review phase, main reviewed application/pipeline integration, APIs, shared models, their tests and build/settings; it owns all documentation and final design decisions. One bounded Luna reconnaissance agent reviewed reporting/configuration/CSV/roster/assets/tests and the later merged feedback delta; one bounded Luna/xhigh agent reviewed execution/submission/provider/adapters/tests. Neither agent edited files or spawned agents. Main inspected their evidence and the cross-component boundaries, including the newly merged feedback implementation. The execution agent's additional documentation verification was interrupted by a usage limit; main completed that targeted check from the source and its already-completed full review.
 
-This is a source review, not a new passing build or browser result. No Maven tests, grading run or browser checks were run during this phase. The one new runtime probe used a disposable temporary directory to establish local filesystem case aliasing; it did not execute the application. Documentation checks and preservation hashes are reported separately in the PR.
+That initial source-review phase did not run Maven tests, a grading run or browser checks. The subsequent implementation evidence is recorded below. The one new runtime probe used a disposable temporary directory to establish local filesystem case aliasing; it did not execute the application. Documentation checks and preservation hashes are reported separately in the PR.
 
 The accepted MVP/original-dashboard evidence and completed heatmap agent evidence remain historical: heatmap focused tests 14/14, clean build 67 tests, mock-DOM fixture 2/2, six expected totals and 120 case records. The DOM fixture is not a real browser/keyboard pass. Agent Java 17 runtime and Windows verification were not performed; a separate new human heatmap clean-build/display transcript remains uncaptured despite PR acceptance and merge. PR #3's upstream record reports Windows 11/Temurin 25.0.4/Maven 3.9.16, 80/81 tests passing, and a packaged run producing HTML plus six feedback files with the expected totals. That is recorded teammate evidence, not a new independent agent run or clean Windows build; B2 records its test failure.
 
-## Main findings
+## Implemented revision and checks
+
+The main agent integrated the grading helpers/CSV writer and documentation, reviewed delegated changes, and kept the public contracts and shared models intact. One bounded Luna/xhigh agent implemented HTML then feedback helpers; another implemented identity then configuration helpers and direct config tests. No agents edited overlapping files, ran concurrent builds or spawned further agents. No unmerged teammate branch was included; Gabriel retains ownership of the already-merged feedback feature.
+
+| Facade | Before / after physical lines | Collaborators now responsible for extracted work |
+| --- | ---: | --- |
+| `OfflineHtmlReportGenerator` | 681 / 100 | Summary, submission table/details, cases, analysis, escaping, decimal formatting and shared submission presentation; immutable `QuestionSection` |
+| `AppConfig` | 611 / 240 | `AppConfigLoader`, `AssessmentConfigLoader`, `ConfigPathPolicy`, `PropertyParsers` |
+| `IdentityResolver` | 578 / 116 | `IdentityEvidenceCollector`, `RosterIdentityMatcher`, `HeaderCorrectionPlanner`, `HeaderCorrectionApplier`, immutable `IdentityEvidence` transfer data |
+| `GradingPipeline` | 193 / 187 | `GradingDiagnosticsWriter`; focused per-submission/per-question and compilation-failure helpers |
+| `MarkdownFeedbackGenerator` | 397 / 336 | `MarkdownDiagnosticFormatter`, `FeedbackFileWriter`; section composition retained |
+
+The branch has 69 application Java files (5,990 physical lines) and 18 test files (2,778 lines). The increase is 21 package-private collaborators/value containers plus their imports and boundaries; it is not a new feature. CSS/JavaScript, public APIs, assessment inputs, adapters, dependencies and operational settings remain unchanged.
+
+Actual commands, from the repository root:
+
+```sh
+/tmp/cs102-modularisation-tools/apache-maven-3.9.16/bin/mvn -Dmaven.repo.local=/tmp/cs102-modularisation-maven-repository clean verify
+java -jar target/auto-grading-system-1.0-SNAPSHOT.jar config.properties
+```
+
+- Clean verification passed 86 tests across 18 suites, with zero failures/errors/skips. Five new `AppConfigTest` scenarios cover config-relative paths, configured order/weights, immutable collections and representative duplicate-list, regex, overlap and numeric failures. The first sandboxed attempt stopped at dependency DNS resolution before tests; the exact authorised command succeeded with network access and a temporary Maven repository
+- The packaged sample exited successfully: Chee 12, David 10, Fen 10, Jing 0, Ping 20, Xing 1; six submissions, 120 case rows, `dashboard.html` and six Markdown files in `build/grading/run-13212618080201842227`
+- All 63 non-metadata Project input files and the four protected handoff/build/settings files matched the 71-path pre-edit snapshot; its four Project `.DS_Store` entries are excluded from that claim. Unrelated root `.DS_Store` changes remain preserved and uncommitted
+- Verification used Temurin JDK 25 with Java 17 compiler target. Actual Java 17 runtime, Windows and a new real-browser pass were not performed. The existing Windows-invalid hostile-ID fixture (B2) remains unchanged; this macOS pass does not resolve it
+
+The saved pre-edit JAR and verified target JAR produced 10 byte-identical deterministic artifacts totalling 95,036 bytes: three HTML reports, three Markdown files, three blocked-batch CSVs and a config/assessment snapshot. Synthetic fixtures exercised empty/all-withheld batches, all six statuses, decimal scores, duplicate identities, hostile text, corrections, supplied analysis, unmatched question IDs, JVM-notice filtering, dynamic fences, bounded diagnostics, compiler-path redaction, missing-source explanation and repeated safe filename allocation. The CSV fixtures used the actual configuration/instructor cases with two duplicate blockers and one unresolved identity (60 NOT_RUN rows); they did not compile student code. This comparison establishes exact output preservation for those fixtures, not all possible inputs or actual browser behaviour. Harness/output: `/tmp/cs102-modularisation-differential/`; fixture compiled with `--release 17` and executed on Temurin 25.0.4.
+
+Static checks compared 49 public class surfaces (48 original top-level application classes plus `IdentityResolver.Resolution`) with `javap -public`: zero signature/declaration mismatches. All 21 new helpers/value containers are package-private and all 27 changed/new Java files have one top-level owner. A declaration scan of 240 methods/constructors in those files found only the documented 51-line `AppConfig` constructor above the method trigger. No new wildcard imports or AI-attribution comments were found. Markdown checks passed 107 local links/anchors, 25 tables and balanced code fences; `git diff --check` passed.
+
+Temporary local logs are `/tmp/cs102-modularisation-verify.log` and `/tmp/cs102-modularisation-sample.log`; these are execution evidence, not repository deliverables. Human clean-build/behaviour acceptance and teammate review remain pending. Existing accepted MVP/dashboard status is retained.
+
+### Justified size exceptions
+
+| File/method | Size and convention | Responsibility and reason to keep it together | Checks and limits |
+| --- | --- | --- | --- |
+| `MarkdownFeedbackGenerator.java` | 336 total physical lines | Composes the existing Markdown sections in one readable sequence after diagnostic formatting and filesystem work have been extracted; further arbitrary section classes would add indirection | Existing feedback/App tests passed; human acceptance pending |
+| `AppConfig` constructor, lines 49-99 | 51 nonblank/noncomment lines, declaration through closing brace | Initialises the immutable aggregate and makes defensive copies; retain the aggregate/getter contract rather than introducing unrelated grouped configuration objects | Five direct config tests and existing ingestion/config/pipeline checks passed |
+| `QuestionOutcome` constructor, lines 49-97 | 47 nonblank/noncomment lines | Existing coherent calculation of one immutable question outcome, counts and band; untouched in this revision | Outcome and renderer tests passed; existing browser/platform limits remain |
+| `App.run`, lines 35-88 | 52 nonblank/noncomment lines | Existing linear CLI startup/preparation/grading/report flow and error boundary; untouched in this revision | CLI/pipeline tests and sample run passed |
+
+## Source-review findings
 
 | ID | Priority | Finding | Proposed treatment |
 | --- | --- | --- | --- |
@@ -27,9 +68,9 @@ The accepted MVP/original-dashboard evidence and completed heatmap agent evidenc
 
 No other material correctness defect was established in the reviewed evidence. This is not a guarantee that no defects exist. The known controlled-course execution limits remain documented; changing them is outside this modularisation proposal. Feedback currently derives its withholding notice from NOT_RUN cases rather than receiving the run's authoritative map; M5 records that contract limitation without claiming a proven export discrepancy in the current pipeline.
 
-## Proposed extraction boundaries
+## Reviewed extraction boundaries
 
-Class names below are concrete proposed names for the later implementation plan. All implementation collaborators should be package-private unless a genuine caller outside the package needs them. Keep shared APIs/models and runtime dependencies unchanged initially. Use composition; retain the current Java 17/Maven layout. Each batch requires its concrete plan and approval before Java edits.
+The following records the boundary decisions used for M1-M5 and the original source line references at `c769fa9`. The collaborators are now package-private, use composition and retain the Java 17/Maven layout. Follow-up substantial changes still require their own approved plan; these historical recommendations do not authorise additional work.
 
 ### M1: report rendering
 
@@ -90,7 +131,7 @@ Keep batch sequencing, blockers and infrastructure withholding in `GradingPipeli
 
 ### M5: newly merged Markdown feedback
 
-Gabriel owns feature 5, recorded REVIEW. Review its modularisation proposals with him before scheduling edits; its merge does not imply a separately captured human completion gate. Keep the public `FeedbackGenerator.generate(StudentGrade, Path)` contract and `MarkdownFeedbackGenerator` facade initially. Two cohesive candidate collaborators in `autograder.report.feedback` are `MarkdownDiagnosticFormatter` (bounded output, launcher-notice filtering, dynamic fences and workspace-path redaction) and `FeedbackFileWriter` (sanitised basename, suffix allocation and CREATE_NEW persistence). Keep section composition readable; extract additional sections only where their responsibilities justify it.
+Gabriel owns feature 5, recorded REVIEW; its merge does not imply a separately captured human completion gate. Boey directly authorised the bounded helper extraction from the already-merged implementation; no feature claim or public feedback-contract change was made. Coordinate future shared changes with its owner. Keep the public `FeedbackGenerator.generate(StudentGrade, Path)` contract and `MarkdownFeedbackGenerator` facade initially. Two cohesive candidate collaborators in `autograder.report.feedback` are `MarkdownDiagnosticFormatter` (bounded output, launcher-notice filtering, dynamic fences and workspace-path redaction) and `FeedbackFileWriter` (sanitised basename, suffix allocation and CREATE_NEW persistence). Keep section composition readable; extract additional sections only where their responsibilities justify it.
 
 Preserve recorded statuses/marks, line-limit notices, missing-file explanations, roster formatting, Markdown escaping, question/case order and continued generation after one student's write failure. `FeedbackConfig` is a small cohesive record/loader and should remain intact. The changed `App` invokes HTML then feedback and returns nonzero if either optional report fails; retain that sequence and the independent report attempts.
 
@@ -129,7 +170,7 @@ Proposed separately approved fix: give that synthetic tester path a portable bas
 - Dashboard CSS has a 390px minimum body width; arbitrarily narrow layout, network-disabled demonstrations and real browser keyboard behaviour remain unverified, as already documented
 - Some model constructors rely on validated upstream data and allow nullable preparation paths. Document those contracts before considering stricter validation; changing invalid-input behaviour is separate from extraction
 
-## Proposed verification and publication for later refactoring
+## Verification rationale and separate follow-ups
 
 | Batch | Targeted existing checks | New checks justified by extraction |
 | --- | --- | --- |
@@ -141,19 +182,19 @@ Proposed separately approved fix: give that synthetic tester path a portable bas
 | B1 (separate approval) | `ExecutionConfigTest` | Case variants of reserved names rejected; valid custom name remains accepted |
 | B2 (separate approval) | `OfflineHtmlReportGeneratorTest` | Portable synthetic paths with unchanged hostile-text coverage; actual Windows confirmation separately recorded |
 
-After approved Java batches, run `mvn clean verify` and `java -jar target/auto-grading-system-1.0-SNAPSHOT.jar config.properties` once at final integration. Expected supplied totals remain Chee 12, David 10, Fen 10, Jing 0, Ping 20 and Xing 1, with six submissions and 120 case records. Compare semantic decisions/statuses/fields across independent runs; timings and run paths can vary. Existing fixtures assert the three completed CSVs remain byte-identical during HTML rendering. Check supplied-input hashes and record actual platform/runtime/browser limits.
+The implementation used one successful clean verification and one packaged sample run at final integration, as recorded above. Expected supplied totals remain Chee 12, David 10, Fen 10, Jing 0, Ping 20 and Xing 1, with six submissions and 120 case records. Compare semantic decisions/statuses/fields across independent runs; timings and run paths can vary. Existing fixtures assert the three completed CSVs remain byte-identical during HTML rendering. Check supplied-input hashes and record actual platform/runtime/browser limits.
 
 Keep refactoring and bug fixes in focused branches/PRs and coordinate shared-file ownership. Publish reviewed approved files to `main` through a PR, give Boey its URL and ask him to contact the group. Human clean-build/behaviour acceptance remains required for substantial implemented revisions. No automatic merge, teammate messages, optional enhancements, bonus claim changes or human disclosure writing are authorised by this review.
 
 ## Brief/rubric alignment
 
-The actual `CS102-Project-Auto Grading System.pdf` was read, and relevant pages were rechecked before planning. Page 6 calls for separated major responsibilities, focused methods, clear packages, consistent conventions, external configuration and understandable class relationships; M1-M4 address those concerns through composition and explicit boundaries. Page 7's edge-case handling/usability criteria motivate preserving identity, export, failure and navigation behaviour through observable regression checks. Page 1's demonstration expectations favour a stable rehearsable pipeline and explainable design. Page 3 permits Maven and only free/open-source libraries; no new runtime or style-tool dependency is proposed. Human attribution/AI Use disclosure remains a release duty under the repository's explicit agent exception.
+The actual `CS102-Project-Auto Grading System.pdf` was read, and relevant pages were rechecked before planning. Page 6 calls for separated major responsibilities, focused methods, clear packages, consistent conventions, external configuration and understandable class relationships; M1-M5 address those concerns through composition and explicit boundaries. Page 7's edge-case handling/usability criteria motivate preserving identity, export, failure and navigation behaviour through observable regression checks. Page 1's demonstration expectations favour a stable rehearsable pipeline and explainable design. Page 3 permits Maven and only free/open-source libraries; no new runtime or style-tool dependency is proposed. Human attribution/AI Use disclosure remains a release duty under the repository's explicit agent exception.
 
 See [CODING_STYLE.md](CODING_STYLE.md) for future coding rules. The inventory below includes deliberate keep decisions; class count and line count alone do not measure design quality.
 
-## Complete reviewed-file inventory
+## Complete source-baseline reviewed-file inventory
 
-Line counts are physical lines at the extended source baseline `c769fa9`; paths resolve from the repository root. Each listed file was read by main or its bounded reviewer and integrated into this report. Test size is assessed by scenario readability rather than a production-file cap.
+This historical inventory is not the post-refactor file list. Line counts are physical lines at the extended source baseline `c769fa9`; paths resolve from the repository root. Each listed file was read by main or its bounded reviewer and integrated into this report. Test size is assessed by scenario readability rather than a production-file cap.
 
 ### Application Java
 

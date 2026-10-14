@@ -150,7 +150,7 @@ Maven is explicitly permitted by the project brief. Use these Maven commands wit
 This fallback is for Boey's existing machine only, while its temporary installation remains available:
 
 ```sh
-/tmp/apache-maven-3.9.9/bin/mvn -Dmaven.repo.local=/tmp/cs102-maven-repository clean verify
+/tmp/cs102-modularisation-tools/apache-maven-3.9.16/bin/mvn -Dmaven.repo.local=/tmp/cs102-modularisation-maven-repository clean verify
 ```
 
 Teammates should install Maven locally and use `mvn clean verify`; their machines will not inherit Boey's `/tmp` paths.
@@ -185,7 +185,7 @@ The process exits successfully when the grading batch and reports complete, even
 | `docs/ARCHITECTURE.md` | Component responsibilities, shared contracts, and execution decisions |
 | `docs/TEAM_WORKFLOW.md` | Human review, safe division of work, build confirmation, and presentation preparation |
 | `docs/CODING_STYLE.md` | Responsibilities, class/method size review guidelines and future agent coding rules |
-| `docs/CODE_REVIEW.md` | Merged-main file inventory, modularisation proposals and separate correctness findings |
+| `docs/CODE_REVIEW.md` | Source-baseline review inventory, implemented class boundaries, verification and separate correctness findings |
 | `src/main/java/autograder` | Application code and extension contracts |
 | `src/test/java/autograder` | Automated regression tests with temporary synthetic inputs |
 | `Project/student-submission` | Six supplied ZIP submissions |
@@ -275,6 +275,10 @@ The interfaces exist so implementations share common inputs and outputs. HTML re
 
 ## Latest verification
 
+The behaviour-preserving modularisation revision is **REVIEW** pending Boey's clean-build/behaviour acceptance and teammate review. Agent clean verification passed **86 tests, zero failures/errors/skips** on JDK 25 targeting Java 17; the packaged sample retained the six totals below and 120 cases, producing HTML and six Markdown files in `build/grading/run-13212618080201842227`. Ten deterministic before/after artifacts (HTML, Markdown, blocked-batch CSVs and configuration snapshot) matched byte-for-byte. Public APIs, settings, scoring and withholding rules remain intact. Actual Java 17 runtime, Windows and a new real-browser pass were not performed; the existing Windows fixture defect remains separately listed. See [CODE_REVIEW.md](docs/CODE_REVIEW.md) for exact evidence and size exceptions.
+
+The following MVP record is historical accepted evidence.
+
 The remaining MVP is **DONE**. Boey supplied a successful clean build on 2026-10-10 with **48 tests, zero failures/errors/skips**, followed by the expected six-submission grading output (12, 10, 10, 0, 20, 1). The human build-confirmation gate is satisfied. `mvn clean verify` passed **48 tests, zero failures/errors**. After final diagnostic wording/formatting fixes, the affected execution suite passed **7/7** and the executable JAR was rebuilt successfully. The packaged CLI graded all six supplied submissions in one fresh run, producing 120 case records (20 per submission). All scores reconciled between case points, submission summaries and exported CSV numerators. All **67** supplied-file hashes in the new snapshot remained unchanged.
 
 | Student | Q1a | Q1b | Q2a | Q2b | Q3 | Total |
@@ -292,7 +296,7 @@ Verification includes original-tester equivalence on Ping (20/20), wrong-answer 
 
 ## Review rules
 
-Read [docs/CODING_STYLE.md](docs/CODING_STYLE.md) before generating or editing code. Production Java files above 300 total lines and methods/constructors above 40 nonblank, noncomment lines trigger a responsibility review with justified exceptions. The [merged-main review](docs/CODE_REVIEW.md) records proposed class boundaries and checks; Java refactoring still requires its concrete approved plan. Report discovered bugs separately from behaviour-preserving refactoring.
+Read [docs/CODING_STYLE.md](docs/CODING_STYLE.md) before generating or editing code. Production Java files above 300 total lines and methods/constructors above 40 nonblank, noncomment lines trigger a responsibility review with justified exceptions. The [merged-main review](docs/CODE_REVIEW.md) records the implemented M1-M5 class boundaries and checks. Further substantial refactoring requires a concrete approved plan. Report discovered bugs separately from behaviour-preserving refactoring.
 
 Keep the Java code readable, with clear responsibilities, meaningful names, ordinary loops, and operational settings in configuration. Minimal comments must be lowercase and have no full stops. Agents must not add AI attribution comments: after reviewing and modifying code, the human team will manually add the declarations required by the brief and the presentation AI Use appendix. This remains a final submission requirement.
 

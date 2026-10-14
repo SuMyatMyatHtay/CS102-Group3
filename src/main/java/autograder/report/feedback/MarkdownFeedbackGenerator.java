@@ -11,11 +11,8 @@ import autograder.model.TestCaseResult;
 import autograder.model.TestStatus;
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -25,15 +22,7 @@ import java.util.Objects;
 import java.util.Set;
 
 public final class MarkdownFeedbackGenerator implements FeedbackGenerator {
-    private static final String FILE_EXTENSION = ".md";
-    private static final String FALLBACK_FILE_NAME = "submission";
-    private static final String ARCHIVE_EXTENSION = ".zip";
-    private static final int MAX_FILE_NAME_LENGTH = 100;
-    private static final int MAX_FILE_NAME_ATTEMPTS = 1000;
-    private static final int MIN_FENCE_LENGTH = 3;
     private static final String MARKDOWN_SPECIAL_CHARACTERS = "\\`*_[]<>#|!~";
-    private static final String COMPILE_WORKSPACE_PATH = "\\S*[/\\\\]src[/\\\\](?=[^/\\\\\\s]+\\.java)";
-    private static final String JVM_OPTIONS_NOTICE = "Picked up (JAVA_TOOL_OPTIONS|_JAVA_OPTIONS|JDK_JAVA_OPTIONS):.*";
 
     private final AssessmentDefinition assessment;
     private final long caseTimeoutMillis;
@@ -59,18 +48,7 @@ public final class MarkdownFeedbackGenerator implements FeedbackGenerator {
         Files.createDirectories(outputDirectory);
         String content = render(grade);
         String baseName = baseFileName(grade.getSubmission());
-        for (int attempt = 1; attempt <= MAX_FILE_NAME_ATTEMPTS; attempt++) {
-            String suffix = attempt == 1 ? "" : "-" + attempt;
-            Path file = outputDirectory.resolve(baseName + suffix + FILE_EXTENSION);
-            try {
-                Files.writeString(file, content, StandardCharsets.UTF_8,
-                        StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
-                return file;
-            } catch (FileAlreadyExistsException exception) {
-                // another submission already uses this name, so try the next suffix
-            }
-        }
-        throw new IOException("could not choose a unique feedback file name for " + baseName);
+        return FeedbackFileWriter.write(outputDirectory, baseName, content);
     }
 
     String render(StudentGrade grade) {
@@ -168,7 +146,8 @@ public final class MarkdownFeedbackGenerator implements FeedbackGenerator {
         }
         markdown.append("This part did not compile, so every case in it scores zero. Compiler output:\n\n");
         // grading workspace paths mean nothing to the student, so keep only the file name
-        appendDiagnostic(markdown, result.getStandardError().replaceAll(COMPILE_WORKSPACE_PATH, ""));
+        appendDiagnostic(markdown,
+                MarkdownDiagnosticFormatter.redactCompileWorkspacePaths(result.getStandardError()));
     }
 
     private void appendCaseExplanation(StringBuilder markdown, TestCaseResult result) {
@@ -194,11 +173,11 @@ public final class MarkdownFeedbackGenerator implements FeedbackGenerator {
     }
 
     private void appendCapturedOutput(StringBuilder markdown, TestCaseResult result) {
-        if (!withoutJvmNotices(result.getStandardOutput()).isBlank()) {
+        if (!MarkdownDiagnosticFormatter.withoutJvmNotices(result.getStandardOutput()).isBlank()) {
             markdown.append("Program output:\n\n");
             appendDiagnostic(markdown, result.getStandardOutput());
         }
-        if (!withoutJvmNotices(result.getStandardError()).isBlank()) {
+        if (!MarkdownDiagnosticFormatter.withoutJvmNotices(result.getStandardError()).isBlank()) {
             markdown.append("Error output:\n\n");
             appendDiagnostic(markdown, result.getStandardError());
         }
@@ -223,30 +202,7 @@ public final class MarkdownFeedbackGenerator implements FeedbackGenerator {
     }
 
     private void appendDiagnostic(StringBuilder markdown, String text) {
-        String[] lines = withoutJvmNotices(text).strip().split("\\R", -1);
-        int shown = Math.min(lines.length, maxDiagnosticLines);
-        List<String> kept = new ArrayList<>();
-        for (int index = 0; index < shown; index++) {
-            kept.add(lines[index]);
-        }
-        String body = String.join("\n", kept);
-        String fence = "`".repeat(Math.max(MIN_FENCE_LENGTH, longestBacktickRun(body) + 1));
-        markdown.append(fence).append("text\n").append(body).append('\n').append(fence).append("\n\n");
-        if (lines.length > shown) {
-            markdown.append("(").append(lines.length - shown)
-                    .append(" more lines omitted; see cases.csv for the full recorded output)\n\n");
-        }
-    }
-
-    // the jvm prints these launcher notices for every process, so they are not student evidence
-    private static String withoutJvmNotices(String text) {
-        List<String> kept = new ArrayList<>();
-        for (String line : text.split("\\R", -1)) {
-            if (!line.matches(JVM_OPTIONS_NOTICE)) {
-                kept.add(line);
-            }
-        }
-        return String.join("\n", kept);
+        MarkdownDiagnosticFormatter.appendDiagnostic(markdown, text, maxDiagnosticLines);
     }
 
     private Map<String, List<TestCaseResult>> resultsByQuestion(StudentGrade grade) {
@@ -346,16 +302,9 @@ public final class MarkdownFeedbackGenerator implements FeedbackGenerator {
     }
 
     static String baseFileName(SubmissionResult submission) {
-        StudentRecord student = submission.getIdentity().getStudentRecord();
-        String name = student != null ? student.getUsername() : archiveName(submission);
-        if (student == null && name.toLowerCase().endsWith(ARCHIVE_EXTENSION)) {
-            name = name.substring(0, name.length() - ARCHIVE_EXTENSION.length());
-        }
-        String safe = name.replaceAll("[^A-Za-z0-9._-]", "_").replaceAll("^[._-]+", "");
-        if (safe.length() > MAX_FILE_NAME_LENGTH) {
-            safe = safe.substring(0, MAX_FILE_NAME_LENGTH);
-        }
-        return safe.isEmpty() ? FALLBACK_FILE_NAME : safe;
+        String archive = submission.getIdentity().getStudentRecord() == null
+                ? archiveName(submission) : null;
+        return FeedbackFileWriter.baseFileName(submission, archive);
     }
 
     static String escape(String text) {
@@ -371,16 +320,6 @@ public final class MarkdownFeedbackGenerator implements FeedbackGenerator {
             }
         }
         return escaped.toString();
-    }
-
-    private static int longestBacktickRun(String text) {
-        int longest = 0;
-        int current = 0;
-        for (char character : text.toCharArray()) {
-            current = character == '`' ? current + 1 : 0;
-            longest = Math.max(longest, current);
-        }
-        return longest;
     }
 
     private static String firstLine(String text) {

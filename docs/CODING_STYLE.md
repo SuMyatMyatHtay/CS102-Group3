@@ -88,4 +88,4 @@ Main retains architecture, shared decisions and integration. Delegate bounded us
 
 Before publication, review responsibilities, size exceptions, API compatibility, preserved behaviour, actual test evidence and documentation. Commit only intended files, excluding supplied inputs, generated output, local handoffs and unrelated metadata. Publish approved reviewed work through a PR into `main`, give the driver its URL and ask them to contact the group. Teammate messages and merging require explicit authorisation.
 
-The current review is recorded in [CODE_REVIEW.md](CODE_REVIEW.md). Its recommendations require the later implementation plan and approval; these guidelines do not approve optional bonuses or broad rewrites.
+The current review is recorded in [CODE_REVIEW.md](CODE_REVIEW.md). Boey directly approved the M1-M5 behaviour-preserving implementation; its code and checks are recorded there. Further substantial recommendations require their own plan and approval. These guidelines do not approve optional bonuses or broad rewrites.
