@@ -1,5 +1,6 @@
 package autograder.grading;
 
+import autograder.api.PlagiarismDetector;
 import autograder.config.AppConfig;
 import autograder.config.ExecutionConfig;
 import autograder.csv.CsvCodec;
@@ -17,16 +18,26 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public final class GradingPipeline {
+    public static final String SIMILARITY_REPORT = "similarity.csv";
+
     private final AppConfig app;
     private final ExecutionConfig execution;
     private final List<TestCaseDefinition> cases;
+    private final PlagiarismDetector plagiarismDetector;
 
     public GradingPipeline(AppConfig app, ExecutionConfig execution) throws IOException {
+        this(app, execution, (submissions, assessment) -> List.of());
+    }
+
+    public GradingPipeline(AppConfig app, ExecutionConfig execution,
+                           PlagiarismDetector plagiarismDetector) throws IOException {
         this.app = app;
         this.execution = execution;
+        this.plagiarismDetector = plagiarismDetector;
         this.cases = new InstructorTestCaseProvider().load(app.getAssessment());
     }
 
@@ -117,7 +128,8 @@ public final class GradingPipeline {
             }
             grades.add(new StudentGrade(submission, results));
         }
-        BatchResult batch = new BatchResult(app.getAssessment(), grades, List.of(), List.of());
+        BatchResult batch = new BatchResult(app.getAssessment(), grades, List.of(),
+                compareSimilarity(submissions));
         GradingRun result = new GradingRun(batch, run, withheld);
         writeReports(result);
         return result;
@@ -156,6 +168,16 @@ public final class GradingPipeline {
         return false;
     }
 
+    // similarity is advisory, so a detector failure is reported without blocking scores
+    private List<SimilarityFinding> compareSimilarity(List<SubmissionResult> submissions) {
+        try {
+            return plagiarismDetector.compare(submissions, app.getAssessment());
+        } catch (IOException | RuntimeException exception) {
+            System.err.println("similarity check skipped: " + exception.getMessage());
+            return List.of();
+        }
+    }
+
     private void writeReports(GradingRun run) throws IOException {
         List<List<String>> caseRows = new ArrayList<>();
         caseRows.add(List.of("Archive", "Username", "Case", "Status", "Score", "Maximum",
@@ -186,8 +208,29 @@ public final class GradingPipeline {
         }
         Files.writeString(run.directory().resolve("cases.csv"), CsvCodec.write(caseRows));
         Files.writeString(run.directory().resolve("submissions.csv"), CsvCodec.write(submissionRows));
+        Files.writeString(run.directory().resolve(SIMILARITY_REPORT), CsvCodec.write(similarityRows(run)));
         ScoreSheet sheet = new ScoreSheetRepository(app.getScoreSheetPath(),
                 app.getScoreSheetColumns()).load();
         new CsvScoreReportWriter().write(sheet, scores, run.directory().resolve(execution.reportFile()));
+    }
+
+    private List<List<String>> similarityRows(GradingRun run) {
+        Map<Path, String> usernames = new HashMap<>();
+        for (StudentGrade grade : run.batch().getGrades()) {
+            StudentRecord student = grade.getSubmission().getIdentity().getStudentRecord();
+            usernames.put(grade.getSubmission().getArchivePath(), student == null ? "" : student.getUsername());
+        }
+        List<List<String>> rows = new ArrayList<>();
+        rows.add(List.of("FirstArchive", "FirstUsername", "SecondArchive", "SecondUsername",
+                "Similarity", "Evidence"));
+        for (SimilarityFinding finding : run.batch().getSimilarities()) {
+            rows.add(List.of(finding.getFirstArchive().getFileName().toString(),
+                    usernames.getOrDefault(finding.getFirstArchive(), ""),
+                    finding.getSecondArchive().getFileName().toString(),
+                    usernames.getOrDefault(finding.getSecondArchive(), ""),
+                    String.format(Locale.ROOT, "%.3f", finding.getSimilarity()),
+                    String.join("\n", finding.getEvidence())));
+        }
+        return rows;
     }
 }

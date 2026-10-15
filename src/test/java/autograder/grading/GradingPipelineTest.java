@@ -109,6 +109,10 @@ class GradingPipelineTest {
         List<List<String>> submissionRows = CsvCodec.parse(
                 Files.readString(run.directory().resolve("submissions.csv")));
         assertEquals(3, submissionRows.size());
+        List<List<String>> similarityRows = CsvCodec.parse(
+                Files.readString(run.directory().resolve(GradingPipeline.SIMILARITY_REPORT)));
+        assertEquals(List.of("FirstArchive", "FirstUsername", "SecondArchive", "SecondUsername",
+                "Similarity", "Evidence"), similarityRows.get(0));
         List<List<String>> reportRows = CsvCodec.parse(
                 Files.readString(run.directory().resolve("grade-report.csv")));
         int idColumn = reportRows.get(0).indexOf("OrgDefinedId");

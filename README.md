@@ -104,6 +104,7 @@ The terminal prints the exact new `build/grading/run-*` directory containing:
 - `scorereport.csv`: scores in the required roster format
 - `cases.csv`: individual test statuses, marks and diagnostic output
 - `submissions.csv`: export/withholding decisions and preparation warnings
+- `similarity.csv`: student pairs whose code for a question reaches the similarity threshold, with matching line ranges (advisory only; never changes scores)
 - `dashboard.html`: self-contained offline dashboard when `grading.html.enabled=true`
 
 Each run creates a fresh directory. `mvn clean` removes `target`, but does not remove old `build` workspaces or appended preparation logs. Supplied input files remain unchanged. See the execution policy below before using submissions outside the supplied sample.
@@ -220,6 +221,9 @@ All paths in this table are beneath `src/main/java/autograder/`.
 | `submission/WorkingCopyPreparer.java` | Builds separate correctly named copies and records folder corrections |
 | `submission/CorrectionLog.java` | Saves a history of corrections |
 | `util/AnomalyLog.java` | Saves problems and prints warnings |
+| `plagiarism/NGramPlagiarismDetector.java` | Compares each pair of students per question using normalized 5-token sequences, excluding starter code |
+| `plagiarism/JavaTokenizer.java` / `NGramBuilder.java` / `SimilarityCalculator.java` | Normalize source tokens, build n-grams and compute Jaccard similarity |
+| `config/PlagiarismConfig.java` | Reads and validates the `plagiarism.*` settings |
 | `roster/ScoreSheetRepository.java` | Reads the class list without discarding the CSV's original fields |
 | `csv/CsvCodec.java` | Reads/writes CSV quoting, commas, and line breaks correctly |
 | `report/CsvScoreReportWriter.java` | Fills supplied scores into a new score sheet without overwriting the original |
@@ -231,6 +235,7 @@ The model classes are forms for storing and passing information, not separate ap
 
 ## Configuration and another assessment
 
+`plagiarism.enabled`, `plagiarism.ngram.size`, `plagiarism.threshold` (above 0, at most 1), `plagiarism.min.ngrams` and `plagiarism.starter.directory` control the similarity check. Relative paths resolve against the properties file's directory. `execution.java` and `execution.javac` accept `JDK` (the running JDK's tools), an executable on PATH, or a path. Compilation defaults to 15 seconds per part, execution to 2 seconds per case, and captured output to 65,536 bytes per stream. Both streams keep draining after the capture limit. These settings live in `config.properties`.
 Relative paths resolve against the properties file's directory. `execution.java` and `execution.javac` accept `JDK` (the running JDK's tools), an executable on PATH, or a path. Compilation defaults to 15 seconds per part, execution to 2 seconds per case, and captured output to 65,536 bytes per stream. Both streams keep draining after the capture limit. These settings live in `config.properties`. `grading.feedback.enabled`, `grading.feedback.directory` and `grading.feedback.max.diagnostic.lines` control the per-student Markdown feedback files (feature 5, in review) written to `build/grading/run-*/feedback`.
 
 `assessment.question.ids` describes independently scored parts, source files, instructor testers, case counts, weights, support classes, and fixtures. The current fixed adapters support the supplied Q1a (3 cases), Q1b (3), Q2a (5), Q2b (5), and Q3 (4) testers. Weights remain configurable and the roster denominator must agree. The provider verifies the original tester content so an edited tester cannot silently use an outdated adapter. Supporting a different tester requires a new reviewed adapter/provider; preparation's configurable metadata alone does not provide general-purpose test ingestion. William's parameterized-case bonus remains separate.
