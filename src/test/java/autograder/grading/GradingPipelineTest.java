@@ -3,6 +3,8 @@ package autograder.grading;
 import autograder.config.AppConfig;
 import autograder.config.ExecutionConfig;
 import autograder.csv.CsvCodec;
+import autograder.model.GradingReportContext;
+import autograder.report.html.OfflineHtmlReportGenerator;
 import autograder.model.StudentIdentity;
 import autograder.model.StudentRecord;
 import autograder.model.SubmissionResult;
@@ -60,11 +62,34 @@ class GradingPipelineTest {
     void keepsPassLoopPassMarksAndIsolatesCompilationFailureToItsQuestion() throws Exception {
         AppConfig app = AppConfig.load(PROJECT_ROOT.resolve("config.properties"));
         Map<Path, byte[]> protectedInputs = snapshotInputs();
-        SubmissionResult looping = submission("looping", student("#01400001", "looping"), true, LOOPING_Q1A);
+        SubmissionResult looping = submission("looping", student("#01400001", "looping"), true,
+                LOOPING_Q1A).withReviewAnomaly("review warning from HTML fixture");
         SubmissionResult broken = submission("broken", student("#01400002", "broken"), true,
                 "public class Q1a { broken }");
 
         GradingRun run = new GradingPipeline(app, execution()).grade(List.of(looping, broken));
+        byte[] scoreCsv = Files.readAllBytes(run.directory().resolve("grade-report.csv"));
+        byte[] casesCsv = Files.readAllBytes(run.directory().resolve("cases.csv"));
+        byte[] submissionsCsv = Files.readAllBytes(run.directory().resolve("submissions.csv"));
+        Path htmlReport = new OfflineHtmlReportGenerator("dashboard.html").generate(
+                new GradingReportContext(run.batch(), run.withheld()), run.directory());
+        String html = Files.readString(htmlReport);
+        assertTrue(html.contains("looping.zip"));
+        assertTrue(html.contains("review warning from HTML fixture"));
+        assertTrue(html.contains("REVIEW_REQUIRED"));
+        assertTrue(html.contains("EXPORTED"));
+        assertTrue(html.contains("TIMED_OUT"));
+        assertTrue(html.contains("COMPILE_ERROR"));
+        assertTrue(html.contains("href=\"#submission-1-question-1\""));
+        assertTrue(html.contains("id=\"submission-1-question-1\""));
+        assertTrue(html.contains("href=\"#submission-2-question-1\""));
+        assertTrue(html.contains("id=\"submission-2-question-1\""));
+        assertTrue(java.util.Arrays.equals(scoreCsv,
+                Files.readAllBytes(run.directory().resolve("grade-report.csv"))));
+        assertTrue(java.util.Arrays.equals(casesCsv,
+                Files.readAllBytes(run.directory().resolve("cases.csv"))));
+        assertTrue(java.util.Arrays.equals(submissionsCsv,
+                Files.readAllBytes(run.directory().resolve("submissions.csv"))));
 
         Map<String, TestStatus> loopingCases = statuses(run, "looping");
         assertEquals(TestStatus.PASSED, loopingCases.get("Q1a-1"));
@@ -112,6 +137,32 @@ class GradingPipelineTest {
 
         GradingRun run = new GradingPipeline(app, execution()).grade(
                 List.of(duplicateA, duplicateB, unresolved, missing, runtime));
+        byte[] scoreCsv = Files.readAllBytes(run.directory().resolve("grade-report.csv"));
+        byte[] casesCsv = Files.readAllBytes(run.directory().resolve("cases.csv"));
+        byte[] submissionsCsv = Files.readAllBytes(run.directory().resolve("submissions.csv"));
+        Path htmlReport = new OfflineHtmlReportGenerator("dashboard.html").generate(
+                new GradingReportContext(run.batch(), run.withheld()), run.directory());
+        String html = Files.readString(htmlReport);
+        assertTrue(html.contains("duplicate-a.zip"));
+        assertTrue(html.contains("duplicate-b.zip"));
+        assertTrue(html.contains("unresolved.zip"));
+        assertTrue(html.contains("WITHHELD"));
+        assertTrue(html.contains("duplicate submissions for the same student"));
+        assertTrue(html.contains("NOT_RUN"));
+        assertTrue(html.contains("missing-source.zip"));
+        assertTrue(html.contains("COMPILE_ERROR"));
+        assertTrue(html.contains("runtime.zip"));
+        assertTrue(html.contains("RUNTIME_ERROR"));
+        for (int ordinal = 1; ordinal <= 3; ordinal++) {
+            assertTrue(html.contains("href=\"#submission-" + ordinal + "-question-1\""));
+            assertTrue(html.contains("id=\"submission-" + ordinal + "-question-1\""));
+        }
+        assertTrue(java.util.Arrays.equals(scoreCsv,
+                Files.readAllBytes(run.directory().resolve("grade-report.csv"))));
+        assertTrue(java.util.Arrays.equals(casesCsv,
+                Files.readAllBytes(run.directory().resolve("cases.csv"))));
+        assertTrue(java.util.Arrays.equals(submissionsCsv,
+                Files.readAllBytes(run.directory().resolve("submissions.csv"))));
 
         assertTrue(run.withheld().containsKey(duplicateA));
         assertTrue(run.withheld().containsKey(duplicateB));
