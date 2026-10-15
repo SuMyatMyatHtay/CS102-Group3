@@ -110,6 +110,36 @@ class AppTest {
         return run(List.of());
     }
 
+    @Test
+    void starterFindingsReachHtmlWithoutChangingScoresWithholdingOrExistingCsvs() throws Exception {
+        GradingRun original = run(List.of(grade("first.zip"), grade("second.zip")));
+        for (String file : List.of("scorereport.csv", "cases.csv", "submissions.csv")) {
+            Files.writeString(temporaryDirectory.resolve(file), "original " + file);
+        }
+        var config = new autograder.config.BoilerplateConfig(true, temporaryDirectory, 0.98, 1024, 100);
+        GradingRun analyzed = App.analyzeStarter(original, config, (submission, starter) -> {
+            if (submission.getArchivePath().toString().equals("first.zip")) {
+                throw new IOException("unreadable starter");
+            }
+            return List.of(new autograder.model.AnalysisFinding("UNCHANGED_STARTER", Path.of("answer.java"),
+                    "second.zip: <unchanged> code; marks unchanged"));
+        });
+        assertEquals(original.batch().getGrades(), analyzed.batch().getGrades());
+        assertEquals(original.withheld(), analyzed.withheld());
+        assertEquals(2, analyzed.batch().getFindings().size());
+        assertEquals("STARTER_COMPARISON_UNAVAILABLE", analyzed.batch().getFindings().get(0).getCode());
+        assertTrue(Files.readString(temporaryDirectory.resolve("starter-analysis.csv")).contains("second.zip"));
+        Path html = new autograder.report.html.OfflineHtmlReportGenerator("dashboard.html").generate(
+                new autograder.model.GradingReportContext(analyzed.batch(), analyzed.withheld()), temporaryDirectory);
+        assertTrue(Files.readString(html).contains("&lt;unchanged&gt;"));
+        for (String file : List.of("scorereport.csv", "cases.csv", "submissions.csv")) {
+            assertEquals("original " + file, Files.readString(temporaryDirectory.resolve(file)));
+        }
+        assertEquals(original, App.analyzeStarter(original,
+                new autograder.config.BoilerplateConfig(false, temporaryDirectory, 0.98, 1024, 100),
+                (submission, starter) -> { throw new AssertionError("disabled detector invoked"); }));
+    }
+
     private GradingRun run(List<StudentGrade> grades) {
         QuestionDefinition question = new QuestionDefinition("Q1a", "Q1", "Q1a.java", Path.of("Q1aTester.java"),
                 1, 1, List.of(), List.of(), List.of());

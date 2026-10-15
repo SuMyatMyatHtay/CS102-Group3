@@ -24,7 +24,7 @@ Before proposing any new implementation, review the relevant brief sections and 
 | --- | --- | --- |
 | 1: Token-based plagiarism detection | Kiya | TODO |
 | 2: Offline HTML dashboard | Boey | DONE |
-| 3: Starter code / boilerplate diff detector | Sera (locked) | TODO |
+| 3: Starter code / boilerplate diff detector | Sera (locked) | REVIEW |
 | 4: Dynamic parameterized test ingestion | William (locked) | TODO |
 | 5: Markdown student feedback | Gabriel | REVIEW |
 | 6: ANSI terminal dashboard | Unclaimed | TODO |
@@ -52,6 +52,14 @@ Move implemented features to REVIEW. Provide exact Maven commands for compilatio
 Opening a PR does not mark a feature DONE or merge it. Before merging, require the documented checks, human build/behavior acceptance and review by another teammate. Existing accepted work remains DONE while a separate enhancement can remain REVIEW. Recommend protecting `main` with a required approving review and required build checks when available; changing repository protection settings requires explicit authorization.
 
 ## Current Context
+
+- 2026-10-15: feature 3 implemented locally; clean Maven verification passed 91 tests with zero failures/errors/skips on Windows 11, Temurin 25.0.4, Java 17 compiler target and Maven 3.9.9. Fixed the existing dashboard test's Windows-invalid tester filename while preserving hostile question-ID data. Sera's human clean-build/run acceptance is pending, so feature 3 is REVIEW
+- Feature 3 packaged sample run succeeded at `build/grading/run-12291164739131086006`: 11 unchanged-starter findings, 120 case records, HTML dashboard and six feedback files; scores remain 12,10,10,0,20,1. All 67 supplied-file hashes match the pre-implementation snapshot. No real-browser acceptance is claimed
+- Sera explicitly requested no Git publication for this work; do not commit, push or open a PR. Testing instructions are in `docs/STARTER_CODE_TESTING.md`. Temporary Maven: `& "$env:TEMP\cs102-sera-tools\apache-maven-3.9.9\bin\mvn.cmd" clean verify`; run: `java -jar target/auto-grading-system-1.0-SNAPSHOT.jar config.properties`
+
+- 2026-10-14: validated driver Sera for feature 3; approved the starter-comparison plan with “Yes I approve please implement”. Branch `codex/sera-feature-3-boilerplate` starts from fetched `origin/main` at 9d81dc6 (Sera's fork). Existing locked ownership is preserved
+- Feature 3 file ownership: this agent owns `autograder.analysis.boilerplate`, `BoilerplateConfig`, their tests, the small App analysis hook/AppTest, configuration and feature documentation. No concurrent agents are editing
+- Feature 3 compares configured answers and student-written companions only, preserves literals while ignoring comments/formatting, reports token edit evidence and unavailable comparisons, and never changes marks or withholding. Human clean-build/run acceptance and teammate review remain required
 
 - Date: 2026-10-14 (Asia/Singapore); validated driver: Boey in this ongoing workflow
 - Boey requested the branch/PR workflow above and creation of an `offline-html-dashboard` -> `main` PR for group review. Committing/pushing this workflow update and opening the PR are authorized; merging into `main` is not

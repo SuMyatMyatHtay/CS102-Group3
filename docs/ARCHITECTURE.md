@@ -27,6 +27,8 @@ Small immutable data classes pass results between components. Lists exposed by r
 
 ## Bonus connections
 
+Feature 3 implements `BoilerplateDetector` with `StarterCodeDetector` in `autograder.analysis.boilerplate`. It compares only configured answer sources and student-written companions, reading bounded UTF-8 inputs and reporting per-file failures without stopping other comparisons. `JavaSourceTokens` ignores comments/formatting outside literals and computes token edit distance. `BoilerplateConfig` validates external enablement, starter path, similarity threshold and resource limits. After grading/CSV export, the App hook attaches immutable findings to a new `BatchResult`, writes `starter-analysis.csv` and supplies those findings to the existing HTML renderer. Grades, withholding, shared interfaces and the grading pipeline are unchanged. High whole-file similarity is a review heuristic; Unicode escapes and unsupported/malformed input require manual comparison. Feature 3 is REVIEW pending Sera's acceptance; see [testing instructions](STARTER_CODE_TESTING.md).
+
 | Contract | Input | Output |
 | --- | --- | --- |
 | PlagiarismDetector | Submissions and assessment | Similarity findings with evidence |
