@@ -22,7 +22,7 @@ Before proposing any new implementation, review the relevant brief sections and 
 
 | Feature | Owner | Status |
 | --- | --- | --- |
-| 1: Token-based plagiarism detection | Kiya | TODO |
+| 1: Token-based plagiarism detection | Kiya | REVIEW |
 | 2: Offline HTML dashboard | Boey | DONE |
 | 3: Starter code / boilerplate diff detector | Sera (locked) | TODO |
 | 4: Dynamic parameterized test ingestion | William (locked) | TODO |
@@ -61,15 +61,17 @@ Use [docs/BUGS.md](docs/BUGS.md) as the known-bug register before proposing fixe
 
 ## Current Context
 
-- Date: 2026-10-14 (Asia/Singapore); validated driver: Boey in this ongoing workflow
-- Boey approved a merged-main code review and coding-style/documentation phase, using the branch `code-modularisation` without a `codex/` prefix. Review began at `a99190f`; main advanced while it was in progress, so PR #3's accepted merge was preserved and the review baseline extended to `c769fa93fc25b28b2a8b1af6806949e72de97979`
-- Boey subsequently directly requested actual behaviour-preserving modularisation and one replacement code-change PR. PR #4 was closed unmerged; retain its coding guidelines and review evidence in `code-modularisation`. Implement the reviewed renderer/configuration/identity/pipeline boundaries and bounded feedback helper extraction, preserving public contracts and existing behaviour
-- Completed implementation file ownership: renderer agent owns `autograder/report/html` Java classes; identity/configuration agent owns `autograder/submission/IdentityResolver.java`, its new package-local collaborators, and then `autograder/config/AppConfig.java`/new loader helpers and focused config tests. The renderer agent also completed bounded feedback helper extraction. Main owns pipeline/diagnostic-writer integration, shared documentation and final review. No implementation agents remain actively editing. Agents do not edit overlapping files, run concurrent builds or spawn agents
-- PR #2 was accepted by Boey and externally merged on 2026-10-14. The original MVP/dashboard remain accepted DONE. Heatmap implementation and recorded agent verification are complete and included in that merge; a separate new human heatmap build/display transcript remains uncaptured. Historical REVIEW evidence is retained without inventing acceptance observations
-- PR #3 merged Gabriel's Markdown feedback into main during this review. Preserve its recorded Gabriel/REVIEW ownership and uncaptured human completion gate. Feature 6 remains unclaimed with Kai Cong's intent recorded; coordinate before claiming it. This review does not implement or claim bonuses
-- The merged upstream record reports a Windows run with 80/81 tests passing and an InvalidPathException in the existing heatmap test fixture. The review lists that portability defect and the case-variant CSV-name collision separately; both fixes remain outside this pure modularisation approval
-- Modularisation checks: clean verify passed 86 tests, zero failures/errors/skips, on JDK 25 targeting Java 17; packaged sample produced the expected six scores, 120 cases, HTML and six Markdown files. Actual Java 17 runtime, Windows and new real-browser checks were not performed. See docs/CODE_REVIEW.md for exact commands, preservation evidence and size exceptions
-- Preserve supplied inputs, unrelated `.DS_Store` changes and the single ignored `BOEY_FEATURE2_HANDOFF.local.md`. Shared `HANDOFF.md` stays absent. Approved verified implementation will be published through a replacement PR containing code and documentation, with human clean-build/behaviour acceptance pending; no merge or teammate message is authorised
+- Date: 2026-10-16 (Asia/Singapore); validated driver: Boey in this ongoing workflow
+- Boey approved implementing the PR #5 merge conflict resolution, documenting it thoroughly, and preparing one replacement PR. The active branch is code-modularisation; PR #5 is its existing live draft. No identity reconfirmation or new plan approval is needed for this continuation.
+- The modularisation revision is based on c769fa93fc25b28b2a8b1af6806949e72de97979; its branch head before integration was 08269bcd56286c067c97058ac6ffcd47100de36b. Main advanced to 268f4315e3f3de26d0deaaf82ecba4d5b3a52b9b when Kiya's feature-1 PR #1 merged on 2026-10-15. Git integration is paused in a normal no-commit merge with one reported conflict in GradingPipeline.java; no merge commit exists yet.
+- Git agent owns merge/index/commit/push and PR publication. Java agent owns App.java, GradingPipeline.java, GradingDiagnosticsWriter.java, focused tests and builds. Documentation agent owns this context and the shared docs. Preserve strict file ownership.
+- Feature-1 detector integration preserves the two-argument GradingPipeline constructor (delegating to a no-op detector) and the three-argument overload (accepting an injected PlagiarismDetector), compares once after grading against the original full submission list and assessment, and catches comparison I/O/runtime failures so grading continues with empty findings. Its CSV is written after submissions and before score export, with a header-only output when empty. The exact schema and formatting are in [the PR #5 merge record](docs/PR5_MERGE_RESOLUTION.md).
+- Upstream App.java contains a duplicate grading-local declaration and an early return that makes HTML/Markdown reports unreachable. The Java integration will restore a single reachable configured grading/report flow to keep the merged application buildable.
+- Historical modularisation evidence remains distinct: 86 tests passed; sample totals 12,10,10,0,20,1 with 120 cases, HTML and six Markdown files; 10 synthetic artifacts were byte-identical; 49 public API surfaces matched. These are not post-merge checks. Focused detector/integration tests, clean verification, sample run and input-preservation checks are pending.
+- PR #5 remains a draft pending those checks, Boey's clean-build/behaviour acceptance and another teammate's review. No merge to main is authorized. Sera's open unmerged PR #6 is excluded and is not evidence that B2 is fixed. No optional bonus or bug fix is included.
+- Preserve supplied inputs, current .DS_Store bytes and the single ignored BOEY_FEATURE2_HANDOFF.local.md; do not stage the handoff or recreate shared HANDOFF.md. .DS_Store differed between the pre-backup and merge retry without an intentional agent write; exclude it from exact preservation claims.
+
+See [docs/PR5_MERGE_RESOLUTION.md](docs/PR5_MERGE_RESOLUTION.md) for the resolution scope, contracts, pending evidence and release gates.
 
 ### Historical PR creation context (before the accepted merge)
 
@@ -150,3 +152,10 @@ The following three entries predate the accepted dashboard and approved heatmap;
 - Feature 5 implemented on branch markdown-student-feedback: agent-side mvn clean verify passed 62 tests, zero failures/errors/skips; packaged run wrote 6 feedback files under build/grading/run-*/feedback whose totals match scorereport.csv (12, 10, 10, 0, 20, 1); awaiting Gabriel's own clean-build confirmation before DONE
 - 2026-10-14: Gabriel had main (including the merged offline HTML dashboard) merged into markdown-student-feedback; App runs the HTML dashboard then feedback and returns nonzero if either fails; config keeps both grading.html.* and grading.feedback.*. Windows 11 (Temurin 25.0.4, Maven 3.9.16): 80 of 81 tests passed; OfflineHtmlReportGeneratorTest.linksQuestionScoresToGroupedEvidenceAndKeepsUnmatchedCasesVisible errors on Windows only (InvalidPathException for '<' in a test tester filename; dashboard test code identical to main, flagged for Boey). Packaged run wrote dashboard.html and 6 feedback files; totals match scorereport.csv (12, 10, 10, 0, 20, 1)
 - Next chat: read this board, README.md and the project docs; confirm the driver using the full member list, inspect relevant reporting contracts and the PDF rubric, then propose a concise feature 2 plan for approval
+
+- 2026-10-13: Kiya confirmed identity and approved the feature 1 plan (n-gram Jaccard similarity) with "yes run build"; branch kayra-ngram-similarity
+- Feature 1 implemented in autograder.plagiarism (Token, LineRange, JavaTokenizer, NGramBuilder, SimilarityCalculator, NGramPlagiarismDetector) plus autograder.config.PlagiarismConfig; status REVIEW pending Kiya's clean-build confirmation
+- Shared changes: GradingPipeline gained an optional PlagiarismDetector constructor and writes similarity.csv; App prints a similarity summary; ExecutionConfig rejects similarity.csv as the score filename; config.properties gained plagiarism.* settings
+- Similarity is advisory: findings never change scores or export decisions; starter n-grams are excluded; detector failures are reported and skipped
+- Agent verification: clean verify passed 70 tests (48 existing + 22 new), zero failures/errors/skips; real run unchanged scores 12, 10, 10, 0, 20, 1 and 0 pairs at threshold 0.80
+- Sample similarity with threshold 0.01: highest Chee/David Q1a 0.663, then Chee/Fen Q2a 0.467; no sample pair is flagged at the default 0.80

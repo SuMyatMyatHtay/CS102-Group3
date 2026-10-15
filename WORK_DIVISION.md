@@ -1,8 +1,8 @@
 # Bonus work division
 
-Updated 2026-10-10 after reconciling the September planning commits with the completed MVP. The original proposals remain available in Git history. This document describes the current integration points; algorithms and implementation details still require an approved feature plan.
+Updated 2026-10-16 after PR #1 merged and PR #5 began integrating feature 1 with modularisation. The original proposals remain available in Git history. This document describes the current integration points; algorithms and implementation details still require an approved feature plan.
 
-[agents.md](agents.md) is the authoritative ownership/status board. Start with the [README kickoff](README.md#start-here-teammate-agent-kickoff), confirm identity and coordinate claims before editing. The core MVP is DONE following Boey's successful 48-test build and grading run. Feature 2 is DONE after Boey's 59-test clean build/run and displayed-dashboard acceptance. Gabriel's feature 5 is implemented and merged into main, with its recorded status REVIEW; other bonuses remain TODO. See [the dashboard architecture](offline_html_dashboard_architecture.md).
+[agents.md](agents.md) is the authoritative ownership/status board. Start with the [README kickoff](README.md#start-here-teammate-agent-kickoff), confirm identity and coordinate claims before editing. The core MVP and feature 2 are DONE. Feature 1 (Kiya) merged to main in PR #1 and is REVIEW while its integration is completed in PR #5. Feature 5 (Gabriel) is merged and remains REVIEW pending its recorded human completion gate. Features 3 and 4 remain locked TODO; feature 6 is unclaimed with Kai Cong's intent recorded. See [the dashboard architecture](offline_html_dashboard_architecture.md).
 
 | Feature | Owner | Goal | Existing contract in autograder.api |
 | --- | --- | --- | --- |
@@ -13,7 +13,7 @@ Updated 2026-10-10 after reconciling the September planning commits with the com
 | 5: Markdown student feedback | Gabriel | Explain scores and failure reasons in individual student reports | FeedbackGenerator.generate(grade, outputDirectory) returns a report path |
 | 6: ANSI terminal dashboard | Unclaimed | Display grading progress with a readable plain-text fallback | ProgressListener.onProgress(stage, item, completed, total) |
 
-Kiya's feature 1 assignment is preserved from the remote September work-division document. Boey has claimed feature 2. Gabriel has claimed feature 5. Feature 6 remains available for Kai Cong. Coordinate any reassignment rather than overwriting a teammate's claim.
+Kiya owns feature 1; its PR #1 is merged, while the combined PR #5 integration checks remain pending. Boey owns feature 2. Gabriel owns feature 5. Sera and William retain locked ownership of features 3 and 4. Feature 6 remains unclaimed with Kai Cong's intent recorded. Coordinate any reassignment rather than overwriting a teammate's claim.
 
 ## Implementation boundaries
 

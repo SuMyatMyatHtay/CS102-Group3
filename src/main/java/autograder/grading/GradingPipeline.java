@@ -1,5 +1,6 @@
 package autograder.grading;
 
+import autograder.api.PlagiarismDetector;
 import autograder.config.AppConfig;
 import autograder.config.ExecutionConfig;
 import autograder.execution.CaseExecutor;
@@ -8,6 +9,7 @@ import autograder.execution.ProcessRunner;
 import autograder.execution.StudentCompiler;
 import autograder.model.BatchResult;
 import autograder.model.QuestionDefinition;
+import autograder.model.SimilarityFinding;
 import autograder.model.StudentGrade;
 import autograder.model.StudentRecord;
 import autograder.model.SubmissionResult;
@@ -25,13 +27,22 @@ import java.util.List;
 import java.util.Map;
 
 public final class GradingPipeline {
+    public static final String SIMILARITY_REPORT = "similarity.csv";
+
     private final AppConfig app;
     private final ExecutionConfig execution;
     private final List<TestCaseDefinition> cases;
+    private final PlagiarismDetector plagiarismDetector;
 
     public GradingPipeline(AppConfig app, ExecutionConfig execution) throws IOException {
+        this(app, execution, (submissions, assessment) -> List.of());
+    }
+
+    public GradingPipeline(AppConfig app, ExecutionConfig execution,
+                           PlagiarismDetector plagiarismDetector) throws IOException {
         this.app = app;
         this.execution = execution;
+        this.plagiarismDetector = plagiarismDetector;
         this.cases = new InstructorTestCaseProvider().load(app.getAssessment());
     }
 
@@ -68,10 +79,21 @@ public final class GradingPipeline {
             index++;
             grades.add(gradeSubmission(submission, identities, run, index, submissions.size(), withheld));
         }
-        BatchResult batch = new BatchResult(app.getAssessment(), grades, List.of(), List.of());
+        BatchResult batch = new BatchResult(app.getAssessment(), grades, List.of(),
+                compareSimilarity(submissions));
         GradingRun result = new GradingRun(batch, run, withheld);
         new GradingDiagnosticsWriter(app, execution).write(result);
         return result;
+    }
+
+    // similarity is advisory, so a detector failure must not block score export
+    private List<SimilarityFinding> compareSimilarity(List<SubmissionResult> submissions) {
+        try {
+            return plagiarismDetector.compare(submissions, app.getAssessment());
+        } catch (IOException | RuntimeException exception) {
+            System.err.println("similarity check skipped: " + exception.getMessage());
+            return List.of();
+        }
     }
 
     private Map<String, Integer> identityCounts(List<SubmissionResult> submissions) {

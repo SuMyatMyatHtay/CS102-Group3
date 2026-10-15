@@ -62,6 +62,10 @@ Feature 2 is DONE after Boey's clean-build/run and displayed-dashboard acceptanc
 
 Boey approved a question heatmap revision on 2026-10-12. A package-private immutable `QuestionOutcome` assembles report-local scores, status counts, case-count evidence and a credit-band classification from existing models. The renderer uses it in the existing question columns and groups recorded diagnostics by configured question order. Safe ordinal/index anchors let browser code open and focus the matching group without changing active controls. Missing/mismatched evidence and all-NOT_RUN questions receive neutral treatment; every recorded case remains available, including unexpected question IDs. This revision changes presentation only: the shared models, eligibility decisions, CSV reports and pipeline contracts retain their existing responsibilities.
 
+## Similarity analysis (feature 1, REVIEW)
+
+The merged Kiya implementation tokenizes Java source and composes token, n-gram and similarity helpers under the plagiarism package. The detector integration preserves the two-argument GradingPipeline constructor, which delegates to a no-op detector, and the three-argument GradingPipeline overload, which accepts an injected PlagiarismDetector. During pipeline integration, compare once after grading using the original full submission list and assessment. Similarity findings are written to their dedicated CSV after submissions.csv and before score export. This optional analysis does not affect scoring or export eligibility; I/O or runtime comparison failures are reported and grading continues with no findings. See [PR5_MERGE_RESOLUTION.md](PR5_MERGE_RESOLUTION.md) for the exact CSV schema, conflict record and verification status.
+
 ## Scoring foundation
 
 `TestCaseDefinition` names a globally unique test, question, runner class, arguments, and configured maximum points. `TestCaseResult` distinguishes pass, fail, timeout, compilation error, runtime error, and not-run. Only a passed case earns its configured points. `StudentGrade` sums recorded case scores using decimal arithmetic and rejects duplicate case identifiers. `BatchResult` groups assessment, grades and analysis findings for report features.
@@ -84,7 +88,7 @@ These processes are not a security sandbox. The supported setting is controlled 
 
 ## Configuration and simplicity
 
-Follow [CODING_STYLE.md](CODING_STYLE.md) for class/method responsibilities and size review guidelines. [CODE_REVIEW.md](CODE_REVIEW.md) records the merged-main review and proposed extraction boundaries; M1-M5 are implemented in the current modularisation revision, with agent checks passed and human acceptance pending.
+Follow [CODING_STYLE.md](CODING_STYLE.md) for class/method responsibilities and size review guidelines. [CODE_REVIEW.md](CODE_REVIEW.md) records the merged-main review and proposed extraction boundaries; M1-M5 were implemented and checked before PR #1 integration; the current PR #5 merge verification and human acceptance are pending. See [PR5_MERGE_RESOLUTION.md](PR5_MERGE_RESOLUTION.md).
 
 Externalize settings the instructor or team may change: paths, assessment identifiers, required files, case counts, marks, matching rules, extraction limits, and execution limits. Language/protocol mechanics such as zero-based indexes, CSV quoting characters, and a success exit code are not configurable grading policy. Keep comments minimal, lowercase, and without full stops; agents must not add AI attribution comments.
 
