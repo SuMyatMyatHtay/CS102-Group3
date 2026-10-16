@@ -24,7 +24,7 @@ Before proposing any new implementation, review the relevant brief sections and 
 | --- | --- | --- |
 | 1: Token-based plagiarism detection | Kiya | REVIEW |
 | 2: Offline HTML dashboard | Boey | DONE |
-| 3: Starter code / boilerplate diff detector | Sera (locked) | TODO |
+| 3: Starter code / boilerplate diff detector | Sera (locked) | REVIEW |
 | 4: Dynamic parameterized test ingestion | William (locked) | TODO |
 | 5: Markdown student feedback | Gabriel | REVIEW |
 | 6: ANSI terminal dashboard | Unclaimed | TODO |
@@ -61,6 +61,17 @@ Use [docs/BUGS.md](docs/BUGS.md) as the known-bug register before proposing fixe
 
 ## Current Context
 
+- 2026-10-16: Sera requested local fixes for PR #6's duplicate `grading` declaration and starter-analysis CSV failure stopping later reports, cross-checked against team main c7554e8. The clean local `sera-feature-3-boilerplate` branch was fast-forwarded from cfbd811 to its existing PR head e84c30d; no team-main merge, commit or push was performed by this agent
+- PR #6 fix ownership: this agent owns App.java, package-private StarterAnalysis.java, AppTest.java and the focused resolution/testing documentation. No other agent is editing these files. Preserve the three-argument plagiarism-aware GradingPipeline constructor, shared APIs, other feature logic and supplied inputs
+- Starter CSV write failure now retains in-memory findings, attempts HTML and Markdown reports and returns nonzero. Regression checks include a directory blocking the CSV destination and simultaneous starter/HTML failures. Focused verification passed 28 tests; clean verification passed 123 tests with zero failures/errors/skips. Packaged sample exited 0 at `build/grading/run-386097544236335647`, retaining scores 12,10,10,0,20,1, 120 cases, 11 starter findings, similarity.csv, HTML and six Markdown files. All 67 supplied-file hashes are unchanged; feature 3 remains REVIEW. Keep these fixes local and uncommitted for Sera's review before publication; see `docs/PR6_FIX_REVIEW.md`
+
+- 2026-10-15: feature 3 implemented locally; clean Maven verification passed 91 tests with zero failures/errors/skips on Windows 11, Temurin 25.0.4, Java 17 compiler target and Maven 3.9.9. Fixed the existing dashboard test's Windows-invalid tester filename while preserving hostile question-ID data. Sera's human clean-build/run acceptance is pending, so feature 3 is REVIEW
+- Feature 3 packaged sample run succeeded at `build/grading/run-12291164739131086006`: 11 unchanged-starter findings, 120 case records, HTML dashboard and six feedback files; scores remain 12,10,10,0,20,1. All 67 supplied-file hashes match the pre-implementation snapshot. No real-browser acceptance is claimed
+- Sera explicitly requested no Git publication for this work; do not commit, push or open a PR. Testing instructions are in `docs/STARTER_CODE_TESTING.md`. Temporary Maven: `& "$env:TEMP\cs102-sera-tools\apache-maven-3.9.9\bin\mvn.cmd" clean verify`; run: `java -jar target/auto-grading-system-1.0-SNAPSHOT.jar config.properties`
+
+- 2026-10-14: validated driver Sera for feature 3; approved the starter-comparison plan with “Yes I approve please implement”. Branch `codex/sera-feature-3-boilerplate` starts from fetched `origin/main` at 9d81dc6 (Sera's fork). Existing locked ownership is preserved
+- Feature 3 file ownership: this agent owns `autograder.analysis.boilerplate`, `BoilerplateConfig`, their tests, the small App analysis hook/AppTest, configuration and feature documentation. No concurrent agents are editing
+- Feature 3 compares configured answers and student-written companions only, preserves literals while ignoring comments/formatting, reports token edit evidence and unavailable comparisons, and never changes marks or withholding. Human clean-build/run acceptance and teammate review remain required
 - Date: 2026-10-16 (Asia/Singapore); validated driver: Boey in this ongoing workflow
 - Boey approved implementing the PR #5 merge conflict resolution, documenting it thoroughly, and preparing one replacement PR. The active branch is code-modularisation; PR #5 is its existing live draft. No identity reconfirmation or new plan approval is needed for this continuation.
 - The modularisation revision is based on c769fa93fc25b28b2a8b1af6806949e72de97979; its branch head before integration was 08269bcd56286c067c97058ac6ffcd47100de36b. Main advanced to 268f4315e3f3de26d0deaaf82ecba4d5b3a52b9b when Kiya's feature-1 PR #1 merged on 2026-10-15. Git integration is paused in a normal no-commit merge with one reported conflict in GradingPipeline.java; no merge commit exists yet.

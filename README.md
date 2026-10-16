@@ -269,6 +269,8 @@ The grading pipeline supplies scores only for eligible students after recording 
 
 ## Six bonus extension points
 
+Sera's starter-code comparison (feature 3) is implemented locally and in REVIEW, pending human build/run acceptance. It writes `starter-analysis.csv`, terminal warnings and HTML analysis findings without changing marks. See [the feature 3 testing guide](docs/STARTER_CODE_TESTING.md) for commands, configuration, expected outcomes and limitations. This status supersedes older blanket statements that other bonus implementations are TODO.
+
 | Feature | Java interface | Owner |
 | --- | --- | --- |
 | 1: token-based similarity | PlagiarismDetector | Kiya |
