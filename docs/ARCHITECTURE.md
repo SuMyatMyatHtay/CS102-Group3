@@ -9,13 +9,13 @@ The archive and supplied inputs are evidence. Extraction output is a raw copy. C
 ## Responsibilities
 
 - `App`: accepts the config filename, shows progress and the final summary
-- `AppConfig`: loads paths, identity rules, extraction limits, CSV column mappings, and assessment settings
+- `AppConfig`: immutable settings and public loading facade; `AppConfigLoader` coordinates loading, `AssessmentConfigLoader` reads assessment definitions, `PropertyParsers` validates values, and `ConfigPathPolicy` protects input/output paths
 - `AssessmentDefinition` / `QuestionDefinition`: describe the assessment without fixed Java question names or marks
 - `ScoreSheetRepository`: validates the supplied class list and retains its original CSV data
 - `SafeZipExtractor`: bounded ZIP extraction with unsafe path and corruption rejection
 - `SubmissionProcessor`: coordinates the batch and records per-submission outcomes
 - `SubmissionValidator`: selects an unambiguous question root and checks question folders
-- `IdentityResolver`: checks required sources/headers and matches identity evidence against the roster
+- `IdentityResolver`: coordinates evidence collection, roster matching, correction planning and working-copy application through focused collaborators
 - `WorkingCopyPreparer`: creates a canonical copy under the roster username and applies approved identity repairs
 - `CorrectionLog` / `AnomalyLog`: keep corrections separate from problems
 - `SubmissionResult`: shares the original/working locations, identity, status, problems, and corrections
@@ -24,6 +24,20 @@ The archive and supplied inputs are evidence. Extraction output is a raw copy. C
 - `MarkdownFeedbackGenerator` / `FeedbackConfig` (feature 5, in review): write one Markdown feedback file per graded submission from recorded case results, preparation problems and corrections; a failed feedback file is reported without affecting grading or CSV exports
 
 Small immutable data classes pass results between components. Lists exposed by result models cannot be modified by consumers. Composition keeps responsibilities separate. Interfaces allow later feature implementations to fit into the pipeline without changing its core responsibilities. Java class inheritance is not being added artificially; the supplied instructor tester classes themselves extend student question classes, which the later compilation design must respect.
+
+## Modularisation boundaries
+
+The public entry points remain stable. Implementation collaborators are package-private within their existing packages; shared domain models and bonus contracts retain their original signatures.
+
+| Package | Coordinator | Focused collaborators |
+| --- | --- | --- |
+| `config` | `AppConfig.load` / `AppConfigLoader` | Assessment loading, property parsing and symlink-aware path policy |
+| `submission` | `IdentityResolver` | `IdentityEvidenceCollector`, `RosterIdentityMatcher`, `HeaderCorrectionPlanner`, `HeaderCorrectionApplier`; copied `IdentityEvidence` transfer data |
+| `grading` | `GradingPipeline` | Private per-submission/per-question execution helpers and `GradingDiagnosticsWriter` for completed CSV projections; eligibility stays in the pipeline |
+| `report.html` | `OfflineHtmlReportGenerator` | Summary, table/details, cases and analysis renderers; one escaper, decimal formatter, submission presentation helper and immutable `QuestionSection` |
+| `report.feedback` | `MarkdownFeedbackGenerator` | `MarkdownDiagnosticFormatter` for recorded diagnostics and `FeedbackFileWriter` for safe unique filenames/CREATE_NEW persistence |
+
+The generator still embeds the same CSS and JavaScript. Report classes render completed evidence; they do not rerun cases, alter scores or decide export eligibility. The Markdown facade retains its existing NOT_RUN-derived notice because its public contract does not include the run's withholding map. Section composition remains a justified size exception; see [CODE_REVIEW.md](CODE_REVIEW.md) for checks and other exceptions.
 
 ## Bonus connections
 
@@ -38,7 +52,7 @@ Feature 3 implements `BoilerplateDetector` with `StarterCodeDetector` in `autogr
 | FeedbackGenerator | Student grading results and output directory | Feedback file path |
 | ProgressListener | Stage, item, completed count and total | Display update |
 
-Feature 2 implements HTML reporting; the other bonus implementations remain TODO. Sera and William retain ownership of their implementation logic. The current runners are explicit source resources; a TestCaseDefinition describes the runner class and arguments to execute, not a general Java source parser.
+Feature 2 implements HTML reporting; Gabriel's feature 5 implements Markdown feedback and remains REVIEW after its merge into main. The other bonus implementations remain TODO. Sera and William retain ownership of their implementation logic. The current runners are explicit source resources; a TestCaseDefinition describes the runner class and arguments to execute, not a general Java source parser.
 
 ## Offline HTML reporting
 
@@ -49,6 +63,10 @@ After the pipeline has written its CSVs, `App` supplies the immutable `GradingRe
 Feature 2 is DONE after Boey's clean-build/run and displayed-dashboard acceptance. See [offline_html_dashboard_architecture.md](../offline_html_dashboard_architecture.md) for implementation details, actual OOP principles and Slide Deck Talking Points.
 
 Boey approved a question heatmap revision on 2026-10-12. A package-private immutable `QuestionOutcome` assembles report-local scores, status counts, case-count evidence and a credit-band classification from existing models. The renderer uses it in the existing question columns and groups recorded diagnostics by configured question order. Safe ordinal/index anchors let browser code open and focus the matching group without changing active controls. Missing/mismatched evidence and all-NOT_RUN questions receive neutral treatment; every recorded case remains available, including unexpected question IDs. This revision changes presentation only: the shared models, eligibility decisions, CSV reports and pipeline contracts retain their existing responsibilities.
+
+## Similarity analysis (feature 1, REVIEW)
+
+The merged Kiya implementation tokenizes Java source and composes token, n-gram and similarity helpers under the plagiarism package. The detector integration preserves the two-argument GradingPipeline constructor, which delegates to a no-op detector, and the three-argument GradingPipeline overload, which accepts an injected PlagiarismDetector. During pipeline integration, compare once after grading using the original full submission list and assessment. Similarity findings are written to their dedicated CSV after submissions.csv and before score export. This optional analysis does not affect scoring or export eligibility; I/O or runtime comparison failures are reported and grading continues with no findings. See [PR5_MERGE_RESOLUTION.md](PR5_MERGE_RESOLUTION.md) for the exact CSV schema, conflict record and verification status.
 
 ## Scoring foundation
 
@@ -71,6 +89,8 @@ The pipeline records all expected cases, including NOT_RUN for withheld submissi
 These processes are not a security sandbox. The supported setting is controlled course grading; hostile code can use the current account's privileges, tamper with files/protocol or launch children. Strong adversarial isolation must be supplied externally. Descendant cleanup is best effort where the OS permits enumeration and termination. Fixed adapters also intentionally reset student static state per case to make timeouts fair; a stateful answer can differ from the original tester's single-process run.
 
 ## Configuration and simplicity
+
+Follow [CODING_STYLE.md](CODING_STYLE.md) for class/method responsibilities and size review guidelines. [CODE_REVIEW.md](CODE_REVIEW.md) records the merged-main review and proposed extraction boundaries; M1-M5 were implemented and checked before PR #1 integration; the current PR #5 merge verification and human acceptance are pending. See [PR5_MERGE_RESOLUTION.md](PR5_MERGE_RESOLUTION.md).
 
 Externalize settings the instructor or team may change: paths, assessment identifiers, required files, case counts, marks, matching rules, extraction limits, and execution limits. Language/protocol mechanics such as zero-based indexes, CSV quoting characters, and a success exit code are not configurable grading policy. Keep comments minimal, lowercase, and without full stops; agents must not add AI attribution comments.
 

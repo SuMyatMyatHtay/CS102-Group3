@@ -2,7 +2,7 @@
 
 ## Session protocol
 
-At the start of each new workflow, read this file, README.md, docs/REQUIREMENTS.md, docs/ARCHITECTURE.md, docs/TEAM_WORKFLOW.md and the project brief `CS102-Project-Auto Grading System.pdf`. Read-only context gathering and a concise project/bonus summary may precede identity confirmation. Show all six bonus features with their purpose, current owner, status and availability from this board, then ask:
+At the start of each new workflow, read this file, README.md, docs/REQUIREMENTS.md, docs/ARCHITECTURE.md, docs/TEAM_WORKFLOW.md, docs/CODING_STYLE.md and the project brief `CS102-Project-Auto Grading System.pdf`. Read-only context gathering and a concise project/bonus summary may precede identity confirmation. Show all six bonus features with their purpose, current owner, status and availability from this board, then ask:
 
 "Who am I speaking with? Please choose your recorded team name: Boey, Sera, William, Kai Cong, Kiya, or Gabriel."
 
@@ -22,7 +22,7 @@ Before proposing any new implementation, review the relevant brief sections and 
 
 | Feature | Owner | Status |
 | --- | --- | --- |
-| 1: Token-based plagiarism detection | Kiya | TODO |
+| 1: Token-based plagiarism detection | Kiya | REVIEW |
 | 2: Offline HTML dashboard | Boey | DONE |
 | 3: Starter code / boilerplate diff detector | Sera (locked) | REVIEW |
 | 4: Dynamic parameterized test ingestion | William (locked) | TODO |
@@ -39,7 +39,7 @@ Keep shared configuration, domain models, interfaces, Maven setup, and pipeline 
 
 ## Feature branches and pull requests
 
-All members must create and work on each feature in their own feature branch, never directly on `main`. Start new branches from the latest `origin/main` after checking and preserving local changes. Use one branch per feature or focused follow-up task, for example `codex/kiya-feature-1-plagiarism`; existing feature branches such as Boey's `offline-html-dashboard` may be reused. Branches isolate edits but do not replace ownership coordination for shared files.
+All members must create and work on each feature in their own feature branch, never directly on `main`. Start new branches from the latest `origin/main` after checking and preserving local changes. Use short, descriptive names without the `codex/` prefix, for example `code-modularisation` or `kiya-feature-1-plagiarism`. Use one branch per feature or focused follow-up task; existing feature branches such as Boey's `offline-html-dashboard` may be reused. Branches isolate edits but do not replace ownership coordination for shared files.
 
 After approved implementation and proportionate verification, commit and push only the feature's reviewed files to its branch and create a pull request with that branch as the head and `main` as the base. This workflow authorizes those publication steps for approved feature work; it does not authorize merging into `main`, force-pushing, discarding local work or publishing unrelated changes. Check for an existing PR first and update it rather than creating a duplicate. Use a draft PR when required verification or human acceptance is still pending.
 
@@ -51,6 +51,14 @@ Move implemented features to REVIEW. Provide exact Maven commands for compilatio
 
 Opening a PR does not mark a feature DONE or merge it. Before merging, require the documented checks, human build/behavior acceptance and review by another teammate. Existing accepted work remains DONE while a separate enhancement can remain REVIEW. Recommend protecting `main` with a required approving review and required build checks when available; changing repository protection settings requires explicit authorization.
 
+## Coding style and code review
+
+Before generating or editing application code, read [docs/CODING_STYLE.md](docs/CODING_STYLE.md). Keep each class responsible for one coherent concern and each method focused on one logical operation. Production Java files above 300 total lines and methods/constructors above 40 nonblank, noncomment lines require a responsibility review, not an automatic split. Record justified exceptions in the PR or review report. Preserve existing public contracts unless an approved plan explicitly changes them; prefer composition and package-private implementation collaborators.
+
+Use [docs/CODE_REVIEW.md](docs/CODE_REVIEW.md) for the merged-main review, proposed extraction boundaries, known evidence limits and separately listed correctness findings. A review recommendation is not implementation approval. Behaviour-preserving refactoring must retain grading, identity, input protection, CSV and offline-report semantics; newly discovered bugs require separate approval. Do not split supplied assessment files or introduce tooling/dependencies simply to enforce line counts.
+
+Use [docs/BUGS.md](docs/BUGS.md) as the known-bug register before proposing fixes. It records B1 (shared grading/configuration; Boey coordinates, implementing human owner unassigned) and B2 (feature-2 dashboard fixture; Boey). Documentation does not assign another teammate or approve a fix; coordinate shared ownership and preserve the recorded evidence limits.
+
 ## Current Context
 
 - 2026-10-15: feature 3 implemented locally; clean Maven verification passed 91 tests with zero failures/errors/skips on Windows 11, Temurin 25.0.4, Java 17 compiler target and Maven 3.9.9. Fixed the existing dashboard test's Windows-invalid tester filename while preserving hostile question-ID data. Sera's human clean-build/run acceptance is pending, so feature 3 is REVIEW
@@ -60,6 +68,19 @@ Opening a PR does not mark a feature DONE or merge it. Before merging, require t
 - 2026-10-14: validated driver Sera for feature 3; approved the starter-comparison plan with “Yes I approve please implement”. Branch `codex/sera-feature-3-boilerplate` starts from fetched `origin/main` at 9d81dc6 (Sera's fork). Existing locked ownership is preserved
 - Feature 3 file ownership: this agent owns `autograder.analysis.boilerplate`, `BoilerplateConfig`, their tests, the small App analysis hook/AppTest, configuration and feature documentation. No concurrent agents are editing
 - Feature 3 compares configured answers and student-written companions only, preserves literals while ignoring comments/formatting, reports token edit evidence and unavailable comparisons, and never changes marks or withholding. Human clean-build/run acceptance and teammate review remain required
+- Date: 2026-10-16 (Asia/Singapore); validated driver: Boey in this ongoing workflow
+- Boey approved implementing the PR #5 merge conflict resolution, documenting it thoroughly, and preparing one replacement PR. The active branch is code-modularisation; PR #5 is its existing live draft. No identity reconfirmation or new plan approval is needed for this continuation.
+- The modularisation revision is based on c769fa93fc25b28b2a8b1af6806949e72de97979; its branch head before integration was 08269bcd56286c067c97058ac6ffcd47100de36b. Main advanced to 268f4315e3f3de26d0deaaf82ecba4d5b3a52b9b when Kiya's feature-1 PR #1 merged on 2026-10-15. Git integration is paused in a normal no-commit merge with one reported conflict in GradingPipeline.java; no merge commit exists yet.
+- Git agent owns merge/index/commit/push and PR publication. Java agent owns App.java, GradingPipeline.java, GradingDiagnosticsWriter.java, focused tests and builds. Documentation agent owns this context and the shared docs. Preserve strict file ownership.
+- Feature-1 detector integration preserves the two-argument GradingPipeline constructor (delegating to a no-op detector) and the three-argument overload (accepting an injected PlagiarismDetector), compares once after grading against the original full submission list and assessment, and catches comparison I/O/runtime failures so grading continues with empty findings. Its CSV is written after submissions and before score export, with a header-only output when empty. The exact schema and formatting are in [the PR #5 merge record](docs/PR5_MERGE_RESOLUTION.md).
+- Upstream App.java contains a duplicate grading-local declaration and an early return that makes HTML/Markdown reports unreachable. The Java integration will restore a single reachable configured grading/report flow to keep the merged application buildable.
+- Historical modularisation evidence remains distinct: 86 tests passed; sample totals 12,10,10,0,20,1 with 120 cases, HTML and six Markdown files; 10 synthetic artifacts were byte-identical; 49 public API surfaces matched. These are not post-merge checks. Focused detector/integration tests, clean verification, sample run and input-preservation checks are pending.
+- PR #5 remains a draft pending those checks, Boey's clean-build/behaviour acceptance and another teammate's review. No merge to main is authorized. Sera's open unmerged PR #6 is excluded and is not evidence that B2 is fixed. No optional bonus or bug fix is included.
+- Preserve supplied inputs, current .DS_Store bytes and the single ignored BOEY_FEATURE2_HANDOFF.local.md; do not stage the handoff or recreate shared HANDOFF.md. .DS_Store differed between the pre-backup and merge retry without an intentional agent write; exclude it from exact preservation claims.
+
+See [docs/PR5_MERGE_RESOLUTION.md](docs/PR5_MERGE_RESOLUTION.md) for the resolution scope, contracts, pending evidence and release gates.
+
+### Historical PR creation context (before the accepted merge)
 
 - Date: 2026-10-14 (Asia/Singapore); validated driver: Boey in this ongoing workflow
 - Boey requested the branch/PR workflow above and creation of an `offline-html-dashboard` -> `main` PR for group review. Committing/pushing this workflow update and opening the PR are authorized; merging into `main` is not
@@ -138,3 +159,10 @@ The following three entries predate the accepted dashboard and approved heatmap;
 - Feature 5 implemented on branch markdown-student-feedback: agent-side mvn clean verify passed 62 tests, zero failures/errors/skips; packaged run wrote 6 feedback files under build/grading/run-*/feedback whose totals match scorereport.csv (12, 10, 10, 0, 20, 1); awaiting Gabriel's own clean-build confirmation before DONE
 - 2026-10-14: Gabriel had main (including the merged offline HTML dashboard) merged into markdown-student-feedback; App runs the HTML dashboard then feedback and returns nonzero if either fails; config keeps both grading.html.* and grading.feedback.*. Windows 11 (Temurin 25.0.4, Maven 3.9.16): 80 of 81 tests passed; OfflineHtmlReportGeneratorTest.linksQuestionScoresToGroupedEvidenceAndKeepsUnmatchedCasesVisible errors on Windows only (InvalidPathException for '<' in a test tester filename; dashboard test code identical to main, flagged for Boey). Packaged run wrote dashboard.html and 6 feedback files; totals match scorereport.csv (12, 10, 10, 0, 20, 1)
 - Next chat: read this board, README.md and the project docs; confirm the driver using the full member list, inspect relevant reporting contracts and the PDF rubric, then propose a concise feature 2 plan for approval
+
+- 2026-10-13: Kiya confirmed identity and approved the feature 1 plan (n-gram Jaccard similarity) with "yes run build"; branch kayra-ngram-similarity
+- Feature 1 implemented in autograder.plagiarism (Token, LineRange, JavaTokenizer, NGramBuilder, SimilarityCalculator, NGramPlagiarismDetector) plus autograder.config.PlagiarismConfig; status REVIEW pending Kiya's clean-build confirmation
+- Shared changes: GradingPipeline gained an optional PlagiarismDetector constructor and writes similarity.csv; App prints a similarity summary; ExecutionConfig rejects similarity.csv as the score filename; config.properties gained plagiarism.* settings
+- Similarity is advisory: findings never change scores or export decisions; starter n-grams are excluded; detector failures are reported and skipped
+- Agent verification: clean verify passed 70 tests (48 existing + 22 new), zero failures/errors/skips; real run unchanged scores 12, 10, 10, 0, 20, 1 and 0 pairs at threshold 0.80
+- Sample similarity with threshold 0.01: highest Chee/David Q1a 0.663, then Chee/Fen Q2a 0.467; no sample pair is flagged at the default 0.80
