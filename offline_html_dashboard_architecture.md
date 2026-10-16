@@ -2,7 +2,7 @@
 
 Feature 2 — owner: Boey — status: DONE
 
-The original dashboard was accepted on 10 October 2026 after Boey supplied a clean 59-test build, the expected sample grading run and confirmation that the displayed dashboard looked good. Boey approved the separate question heatmap revision on 12 October 2026; it is REVIEW pending his clean-build and local display/interaction acceptance. Attention overview and score-distribution charts remain outside the approved scope.
+The original dashboard was accepted on 10 October 2026 after Boey supplied a clean 59-test build, the expected sample grading run and confirmation that the displayed dashboard looked good. Boey approved the separate question heatmap revision on 12 October 2026. Its implementation and agent verification are complete and included in accepted PR #2, which GitHub confirmed merged on 14 October 2026; a separately captured human heatmap clean-build/display transcript remains unavailable. Attention overview and score-distribution charts remain outside the approved scope.
 
 ## Purpose and flow
 
@@ -27,7 +27,14 @@ The report consumes completed results. It does not compile submissions, execute 
 | `HtmlReportGenerator` | Defines the HTML output contract and returns the generated path |
 | `GradingReportContext` | Carries the batch and an immutable copy of authoritative withholding reasons; rejects unrelated submissions and blank reasons |
 | `HtmlReportConfig` | Loads enablement and validates a safe `.html` filename |
-| `OfflineHtmlReportGenerator` | Renders assessment information, summaries, submission details and analysis evidence; escapes text and writes the report |
+| `OfflineHtmlReportGenerator` | Validates the output, composes the document/resources and writes the UTF-8 report |
+| `HtmlSummaryRenderer` | Formats exported-only statistics and received/exported/withheld/warning counts |
+| `HtmlSubmissionTableRenderer` | Composes controls, headers and paired rows; allocates safe ordinals/sections |
+| `HtmlSubmissionDetailsRenderer` | Renders recorded identity, paths, warnings and corrections |
+| `HtmlCaseRenderer` | Formats question cells, grouped case evidence and unmatched records |
+| `HtmlAnalysisRenderer` | Displays only supplied analysis and similarity findings |
+| `HtmlEscaper` / `HtmlScoreFormatter` | Centralise safe text/attribute escaping and unchanged decimal presentation |
+| `HtmlSubmissionPresentation` / `QuestionSection` | Shared submission display helpers and immutable grouped-case view data |
 | `QuestionOutcome` | Immutable report-local view data for question scores, recorded status counts, evidence warnings and credit bands |
 | `dashboard.css` | Styles the report, readable statuses, focus indicators and scrollable tables |
 | `dashboard.js` | Searches, filters and sorts existing rows; opens and focuses submission details |
@@ -70,7 +77,7 @@ HTML escaping protects report presentation. It does not change the core grader's
 
 ## Actual OOP principles used
 
-- **Encapsulation and single responsibility:** configuration validation, reporting context and rendering have separate responsibilities. Private renderer helpers handle summaries, rows, corrections, cases, analysis and escaping.
+- **Encapsulation and single responsibility:** configuration validation, reporting context and rendering have separate responsibilities. Package-private collaborators handle summaries, table/details, cases, analysis, escaping and formatting; the public generator coordinates them.
 - **Immutable view data:** `QuestionOutcome` groups recorded evidence and classifies presentation without changing shared result models or their scoring policy. The renderer handles HTML formatting separately.
 - **Abstraction:** App invokes the `HtmlReportGenerator` contract rather than requiring callers to know template or resource mechanics.
 - **Polymorphism:** `generateHtmlReport` accepts the interface; the production generator and test generators are dispatched through the same contract. Tests substitute a failing generator to verify CLI failure handling.
@@ -92,7 +99,7 @@ The following 59-test record is the accepted original dashboard. The heatmap rev
 
 For the heatmap revision on 12 October 2026, focused tests passed 14/14 and the final clean build passed 67 tests with zero failures/errors/skips. Tests cover exact decimal credit boundaries, mixed statuses, missing/excess/absent records, all-NOT_RUN, unusable maximums/out-of-range scores, safe question anchors and retained hostile/unmatched case evidence, alongside existing withholding/empty/duplicate/identity tests. Pipeline assertions verify generated question links and unchanged CSV bytes. A built-in-Node DOM API fixture passed 2/2 scenarios against the actual script; it checks navigation/focus/control preservation but does not establish actual browser rendering or keyboard behavior. Scoped text contrast is at least 5.45:1 and cell focus contrast at least 3.84:1 across the six bands.
 
-The revised packaged run produced `build/grading/run-3551798997316566219/dashboard.html`, the same six scores, six submissions and 120 cases. HTML checks verified all 30 links resolve to unique question headings and each recorded case is retained once; Ping has full-credit cells and Xing's Q2a shows 1/5 with one pass/four timeouts. All 67 Project files matched the new input snapshot. No real-browser, Java 17 runtime or Windows check was performed; Boey's new clean-build/display acceptance is pending. No commit/push/merge or branch synchronization occurred.
+The revised packaged run produced `build/grading/run-3551798997316566219/dashboard.html`, the same six scores, six submissions and 120 cases. HTML checks verified all 30 links resolve to unique question headings and each recorded case is retained once; Ping has full-credit cells and Xing's Q2a shows 1/5 with one pass/four timeouts. All 67 Project files matched the new input snapshot. No real-browser, Java 17 runtime or Windows check was performed; At that verification point, Boey's new clean-build/display acceptance was pending, and no commit/push/merge or branch synchronization had occurred. PR #2 was later accepted and merged; that event does not supply the separate human observations.
 
 Build and run from the repository root:
 
@@ -101,7 +108,13 @@ mvn clean verify
 java -jar target/auto-grading-system-1.0-SNAPSHOT.jar config.properties
 ```
 
-Boey's available temporary Maven fallback is `/tmp/apache-maven-3.9.9/bin/mvn -Dmaven.repo.local=/tmp/cs102-maven-repository clean verify`.
+The 14 October modularisation checks used `/tmp/cs102-modularisation-tools/apache-maven-3.9.16/bin/mvn -Dmaven.repo.local=/tmp/cs102-modularisation-maven-repository clean verify`. This is a temporary local fallback; teammates should use their own Maven installation.
+
+### Behaviour-preserving modularisation revision (REVIEW)
+
+Boey directly requested the code extraction and replacement PR on 14 October 2026. The renderer components above now implement that split; `QuestionOutcome`, CSS, JavaScript and public reporting contracts remain unchanged. The original dashboard remains accepted DONE. This refactor has its own human clean-build/behaviour gate.
+
+Clean verification passed 86 tests with zero failures/errors/skips. The packaged sample retained the same totals and 120 case rows, and produced the dashboard plus six Markdown files in `build/grading/run-13212618080201842227`. Three deterministic HTML fixtures matched the saved pre-refactor JAR byte-for-byte, covering empty, complex and all-withheld contexts. [docs/CODE_REVIEW.md](docs/CODE_REVIEW.md) records complete refactor evidence, preservation checks and limits. No new actual-browser, Windows or Java 17 runtime verification is claimed; the previously reported Windows fixture defect remains a separate unapproved fix.
 
 ## Slide Deck Talking Points
 
@@ -110,7 +123,7 @@ Boey's available temporary Maven fallback is `/tmp/apache-maven-3.9.9/bin/mvn -D
 - Scan the question heatmap, then activate Xing's Q2a 1/5 cell to reach its one pass and four timeouts. Explain that color represents credit, while the recorded status counts explain the outcome. Show that search/filter/sort settings survive the navigation.
 - Filter preparation warnings and explain why David/Xing can be exported while still requiring review. Use synthetic duplicate/partial-score fixtures to explain withholding.
 - Explain how escaping and DOM text handling keep student-controlled content from becoming executable HTML/JavaScript.
-- Show interface abstraction, composition and private rendering responsibilities; explain the choice of standard-library Java plus inline browser assets.
+- Show interface abstraction, composition and package-private rendering responsibilities; explain the choice of standard-library Java plus inline browser assets.
 - Present the actual 59-test/build/run evidence and its browser/platform verification limits accurately. Rehearse the local-file, network-disabled and narrow-window demonstrations before presentation.
 
 Human team review, method-level attribution and the presentation AI Use appendix remain release responsibilities under the project brief. This document does not complete those declarations for the team.

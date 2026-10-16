@@ -1,15 +1,13 @@
 package autograder;
 
-import autograder.api.PlagiarismDetector;
-import autograder.config.AppConfig;
-import autograder.config.ExecutionConfig;
-import autograder.config.PlagiarismConfig;
 import autograder.api.FeedbackGenerator;
 import autograder.api.HtmlReportGenerator;
+import autograder.api.PlagiarismDetector;
 import autograder.config.AppConfig;
 import autograder.config.ExecutionConfig;
 import autograder.config.FeedbackConfig;
 import autograder.config.HtmlReportConfig;
+import autograder.config.PlagiarismConfig;
 import autograder.grading.GradingPipeline;
 import autograder.grading.GradingRun;
 import autograder.model.GradingReportContext;
@@ -59,7 +57,6 @@ public final class App {
             GradingPipeline grading = new GradingPipeline(config, execution, detector);
             HtmlReportConfig html = HtmlReportConfig.load(Path.of(args[0]));
             FeedbackConfig feedback = FeedbackConfig.load(Path.of(args[0]));
-            GradingPipeline grading = new GradingPipeline(config, execution);
             grading.validateEnvironment();
             System.out.println("Preparing submissions for " + config.getAssessment().getName());
             SubmissionProcessor processor = new SubmissionProcessor(config,
@@ -85,7 +82,6 @@ public final class App {
                     + run.directory().resolve("submissions.csv"));
             System.out.println("Withheld or absent students retain their original score-sheet rows");
             printSimilarity(run, plagiarism);
-            return 0;
             int htmlExit = generateHtmlReport(run, html, new OfflineHtmlReportGenerator(html.file()));
             int feedbackExit = generateFeedback(run, feedback, new MarkdownFeedbackGenerator(
                     config.getAssessment(), execution.caseTimeoutMillis(), feedback.maxDiagnosticLines(),
