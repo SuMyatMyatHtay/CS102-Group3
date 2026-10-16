@@ -2,6 +2,8 @@
 
 The implementation compares configured answer files and student-written companions against the starter directory. It reports warnings in the terminal, `starter-analysis.csv` and the HTML dashboard's **Analysis findings** section. It does not change scores, preparation status or export eligibility.
 
+On the PR #6 follow-up, a failed starter CSV write returns a nonzero process status while keeping in-memory findings available to HTML and still attempting Markdown feedback. The completed grading and similarity CSVs are preserved. `AppTest` blocks the CSV destination with a directory to verify this failure path portably, and also tests combined starter/HTML failures. Normal output still uses the same starter CSV schema.
+
 ## Build and run
 
 Run from the repository root:

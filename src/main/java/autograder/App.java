@@ -1,15 +1,12 @@
 package autograder;
 
-import autograder.api.FeedbackGenerator;
-import autograder.api.BoilerplateDetector;
 import autograder.analysis.boilerplate.StarterCodeDetector;
-import autograder.config.BoilerplateConfig;
-import autograder.csv.CsvCodec;
-import autograder.model.AnalysisFinding;
-import autograder.model.BatchResult;
+import autograder.api.BoilerplateDetector;
+import autograder.api.FeedbackGenerator;
 import autograder.api.HtmlReportGenerator;
 import autograder.api.PlagiarismDetector;
 import autograder.config.AppConfig;
+import autograder.config.BoilerplateConfig;
 import autograder.config.ExecutionConfig;
 import autograder.config.FeedbackConfig;
 import autograder.config.HtmlReportConfig;
@@ -28,8 +25,6 @@ import autograder.ui.ConsoleProgressListener;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Files;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -66,7 +61,6 @@ public final class App {
             HtmlReportConfig html = HtmlReportConfig.load(Path.of(args[0]));
             FeedbackConfig feedback = FeedbackConfig.load(Path.of(args[0]));
             BoilerplateConfig boilerplate = BoilerplateConfig.load(Path.of(args[0]));
-            GradingPipeline grading = new GradingPipeline(config, execution);
             grading.validateEnvironment();
             System.out.println("Preparing submissions for " + config.getAssessment().getName());
             SubmissionProcessor processor = new SubmissionProcessor(config,
@@ -80,7 +74,6 @@ public final class App {
             System.out.println("Diagnostics: " + config.getAnomalyLog());
             System.out.println("Corrections: " + config.getCorrectionLog());
             GradingRun run = grading.grade(results);
-            run = analyzeStarter(run, boilerplate, new StarterCodeDetector(config.getAssessment(), boilerplate));
             for (StudentGrade grade : run.batch().getGrades()) {
                 String reason = run.withheld().get(grade.getSubmission());
                 System.out.println(grade.getSubmission().getIdentity().getLabel() + " | "
@@ -93,12 +86,10 @@ public final class App {
                     + run.directory().resolve("submissions.csv"));
             System.out.println("Withheld or absent students retain their original score-sheet rows");
             printSimilarity(run, plagiarism);
-            int htmlExit = generateHtmlReport(run, html, new OfflineHtmlReportGenerator(html.file()));
-            int feedbackExit = generateFeedback(run, feedback, new MarkdownFeedbackGenerator(
+            return generateReports(run, boilerplate, new StarterCodeDetector(config.getAssessment(), boilerplate),
+                    html, new OfflineHtmlReportGenerator(html.file()), feedback, new MarkdownFeedbackGenerator(
                     config.getAssessment(), execution.caseTimeoutMillis(), feedback.maxDiagnosticLines(),
                     config.getRosterPrefix(), config.getRosterLastNamePlaceholder()));
-            // each optional report runs even if the other failed, and either failure is reported
-            return Math.max(htmlExit, feedbackExit);
         } catch (Exception exception) {
             if (exception instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
@@ -108,36 +99,13 @@ public final class App {
         }
     }
 
-    static GradingRun analyzeStarter(GradingRun run, BoilerplateConfig config,
-                                     BoilerplateDetector detector) throws IOException {
-        if (!config.enabled()) {
-            return run;
-        }
-        List<AnalysisFinding> findings = new ArrayList<>(run.batch().getFindings());
-        List<List<String>> rows = new ArrayList<>();
-        rows.add(List.of("Archive", "SourceFile", "Code", "Message"));
-        for (StudentGrade grade : run.batch().getGrades()) {
-            SubmissionResult submission = grade.getSubmission();
-            List<AnalysisFinding> detected;
-            try {
-                detected = detector.analyze(submission, config.starterDirectory());
-            } catch (IOException | RuntimeException exception) {
-                detected = List.of(new AnalysisFinding("STARTER_COMPARISON_UNAVAILABLE",
-                        submission.getArchivePath(), "Comparison failed: " + exception.getMessage()));
-            }
-            findings.addAll(detected);
-            for (AnalysisFinding finding : detected) {
-                rows.add(List.of(submission.getArchivePath().getFileName().toString(),
-                        finding.getSourceFile().toString(), finding.getCode(), finding.getMessage()));
-                System.out.println("Starter review: " + finding.getCode() + " | " + finding.getMessage());
-            }
-        }
-        Files.writeString(run.directory().resolve("starter-analysis.csv"), CsvCodec.write(rows));
-        System.out.println("Starter comparison: " + (rows.size() - 1) + " findings; "
-                + run.directory().resolve("starter-analysis.csv"));
-        BatchResult batch = new BatchResult(run.batch().getAssessment(), run.batch().getGrades(),
-                findings, run.batch().getSimilarities());
-        return new GradingRun(batch, run.directory(), run.withheld());
+    static int generateReports(GradingRun run, BoilerplateConfig boilerplate, BoilerplateDetector detector,
+                               HtmlReportConfig html, HtmlReportGenerator htmlGenerator,
+                               FeedbackConfig feedback, FeedbackGenerator feedbackGenerator) {
+        StarterAnalysis.Result analysis = StarterAnalysis.analyze(run, boilerplate, detector);
+        int htmlExit = generateHtmlReport(analysis.run(), html, htmlGenerator);
+        int feedbackExit = generateFeedback(analysis.run(), feedback, feedbackGenerator);
+        return Math.max(analysis.exitCode(), Math.max(htmlExit, feedbackExit));
     }
 
     static int generateFeedback(GradingRun run, FeedbackConfig config, FeedbackGenerator generator) {
