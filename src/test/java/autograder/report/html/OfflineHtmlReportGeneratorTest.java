@@ -304,7 +304,7 @@ class OfflineHtmlReportGeneratorTest {
     }
 
     private QuestionDefinition question(String id, int cases, double pointsPerCase) {
-        return new QuestionDefinition(id, id, "Main.java", temporaryDirectory.resolve(id + "Tester.java"),
+        return new QuestionDefinition(id, id, "Main.java", temporaryDirectory.resolve("FixtureTester.java"),
                 cases, pointsPerCase, List.of(), List.of(), List.of());
     }
 
