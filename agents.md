@@ -25,7 +25,7 @@ Before proposing any new implementation, review the relevant brief sections and 
 | 1: Token-based plagiarism detection | Kiya | TODO |
 | 2: Offline HTML dashboard | Boey | TODO |
 | 3: Starter code / boilerplate diff detector | Sera (locked) | TODO |
-| 4: Dynamic parameterized test ingestion | William (locked) | TODO |
+| 4: Dynamic parameterized test ingestion | William (locked) | REVIEW |
 | 5: Markdown student feedback | Unclaimed | TODO |
 | 6: ANSI terminal dashboard | Unclaimed | TODO |
 
@@ -66,7 +66,7 @@ Move implemented features to REVIEW. Provide exact Maven commands for compilatio
 - Ownership: main integrated configuration, pipeline, CLI and docs; delegated adapters/provider/tests and process services/tests are complete; no agents actively editing
 - Original ZIPs, instructor tests, starter files and source score sheet remain unchanged
 - Do not add AI-attribution comments to Java; Boey retained that rule and humans own review/modification and brief-required declarations before submission
-- All six bonuses remain TODO; Kiya owns feature 1, Sera owns feature 3 and William feature 4; Boey owns feature 2; available features 5, 6
+- Bonuses: feature 4 (William) is in REVIEW; features 1 (Kiya), 2 (Boey), 3 (Sera) remain TODO; features 5, 6 unclaimed
 - No bonus is DONE; no per-bonus architecture document is due
 - Maven is temporarily available at /tmp/apache-maven-3.9.9/bin/mvn with -Dmaven.repo.local=/tmp/cs102-maven-repository
 - Exact commands: mvn clean verify; java -jar target/auto-grading-system-1.0-SNAPSHOT.jar config.properties
@@ -83,3 +83,5 @@ Move implemented features to REVIEW. Provide exact Maven commands for compilatio
 - Boey claimed feature 2 (offline HTML dashboard) on 2026-10-10; owner recorded, status TODO because implementation has not started
 - Current authorized work is claim documentation and continuation handoff only; feature 2 implementation plan still needs explicit approval
 - Next chat: read HANDOFF.md feature 2 continuation sections, confirm driver using the full member list, inspect the relevant reporting contracts and PDF rubric, then propose a concise plan
+
+- 2026-10-18: William's feature 4 (Dynamic parameterized test ingestion) implemented and moved to REVIEW. It was previously committed but broken (DynamicTestRunner errored on every case). Replaced the answer-key approach with property-based / metamorphic testing so the team does NOT act as an oracle (only Project/ is supplied, so the team cannot code expected-answer adapters). A default-package `DynamicRunner` (compiled alongside student code by `StudentCompiler`) generates random inputs and asserts question invariants for all five parts (Q1a, Q1b, Q2a, Q2b, Q3); `DynamicTestCaseProvider` emits 5 seeded dynamic cases per question (args: questionId, seed). Verified: `GradingPipelineTest` both methods PASS (45 cases = 20 fixed + 25 dynamic run end-to-end), and a standalone harness confirms correct implementations → PASSED and hard-coded "memorized" implementations → FAILED across seeds 7/42/99 for every question. Not yet marked DONE pending human clean-build confirmation.

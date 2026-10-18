@@ -49,6 +49,19 @@ public final class StudentCompiler {
         }
         sources.add(adapterPath);
 
+        // Dynamic test runner (Feature 4) is compiled into the student classes directory so it can
+        // be executed on the same classpath. It uses reflection only, so it has no compile-time
+        // dependency on any student class and compiles for every question part.
+        String dynamicRunnerName = "DynamicRunner.java";
+        Path dynamicRunnerPath = sourceDirectory.resolve(dynamicRunnerName);
+        try (InputStream dynamicRunner =
+                     StudentCompiler.class.getResourceAsStream(ADAPTER_RESOURCE + dynamicRunnerName)) {
+            if (dynamicRunner != null) {
+                Files.copy(dynamicRunner, dynamicRunnerPath, StandardCopyOption.REPLACE_EXISTING);
+                sources.add(dynamicRunnerPath);
+            }
+        }
+
         List<String> command = new ArrayList<>();
         command.add(javacExecutable);
         command.add("-proc:none");

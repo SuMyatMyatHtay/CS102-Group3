@@ -284,3 +284,23 @@ Boey's explicit exception concerns what agents produce automatically: do not ins
 - No agents are actively editing; this small documentation task was handled directly
 - No commit/push performed for this task; the next human action may publish the claim so teammates see the updated availability
 - On resuming, inspect the real Git status and use the current live board instead of treating historical text as a lock
+
+## 11. Feature 4 continuation (2026-10-18) — Dynamic parameterized test ingestion, REVIEW
+
+William's feature 4 was committed earlier but was broken in production: `DynamicTestRunner` required four command-line args and called `System.exit(1)` when it received three, so every dynamic case errored (`RUNTIME_ERROR`); Q2a/Q2b/Q3 had no runner cases and placeholder expected outputs. Fixed 2026-10-18.
+
+**Design decision (resolves the instructor-oracle concern):** only `Project/` is supplied to the team, so the team cannot write answer-key adapters/oracles for the instructor's questions. Feature 4 therefore uses **property-based / metamorphic testing** instead of expected-answer comparison. A default-package `DynamicRunner` is compiled alongside the student's code by `StudentCompiler` and invoked via reflection; it generates random inputs (seeded for reproducibility) and asserts a question invariant/property the spec guarantees — never a pre-computed expected answer. This catches "memorized"/hard-coded solutions without the team acting as an oracle.
+
+**What changed:**
+- `src/main/resources/autograder/adapters/DynamicRunner.java` (NEW): reflection-based runner covering all five parts — Q1a (isogram filter), Q1b (sum of even integers), Q2a (mean age for a surname, probing only non-fixed surnames), Q2b (top student for a course, probing only non-fixed courses), Q3 (permutation of inputs sorted by descending area). Writes `PASSED`/`FAILED`/`ERROR`.
+- `src/main/java/autograder/grading/DynamicTestCaseProvider.java` (REWRITTEN): emits 5 seeded dynamic cases per question with args `[questionId, seed]` and runner `DynamicRunner`; removed broken serialization/expected-output logic.
+- `src/main/java/autograder/grading/DynamicTestRunner.java` (DELETED): obsolete packaged runner that could never run on the student subprocess classpath.
+- `src/main/java/autograder/execution/StudentCompiler.java` (EDITED): also compiles `DynamicRunner.java` into the student classes directory so the subprocess can load it.
+- `src/test/java/autograder/grading/GradingPipelineTest.java` (EDITED): asserts fixed-only Q1a score still 2.0 and that dynamic cases now run (no longer `NOT_RUN`/`COMPILE_ERROR`); 45 results per submission (20 fixed + 25 dynamic).
+
+**Verification:**
+- `GradingPipelineTest` both methods PASS (full pipeline compiles and runs all 45 cases end-to-end, including Q3 with reference support classes).
+- Standalone harness (`scratch/verify.sh`) confirms for every question and seeds 7/42/99: correct implementations → PASSED, hard-coded "memorized" implementations → FAILED.
+- No supplied `Project/` inputs were modified; the oracle-free design is compatible with "only Project/ provided".
+
+**Status:** REVIEW. Not DONE pending human clean-build confirmation (`mvn clean verify` or the fallback Maven command). On DONE, create `dynamic_test_architecture.md` with actual OOP principles and slide talking points per the completion gate.
