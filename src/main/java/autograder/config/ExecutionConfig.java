@@ -36,7 +36,8 @@ public record ExecutionConfig(Path directory, String reportFile, String javaExec
         String report = required(properties, "grading.report.file");
         if (!report.endsWith(".csv") || report.contains("/") || report.contains("\\")
                 || report.contains(":")
-                || report.equals("cases.csv") || report.equals("submissions.csv")) {
+                || report.equals("cases.csv") || report.equals("submissions.csv")
+                || report.equals("similarity.csv") || report.equalsIgnoreCase("starter-analysis.csv")) {
             throw new IllegalArgumentException("grading.report.file must be a distinct CSV filename");
         }
         long outputBytes = positive(properties, "execution.output.max.bytes");

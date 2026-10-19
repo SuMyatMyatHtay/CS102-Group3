@@ -90,7 +90,7 @@ class InstructorTestCaseProviderTest {
         Path converted = Files.createTempFile("Q1aTester-crlf", ".java");
         try {
             String source = Files.readString(original.getTesterFile());
-            Files.writeString(converted, source.replace("\n", "\r\n"));
+            Files.writeString(converted, source.replace("\r\n", "\n").replace("\n", "\r\n"));
             windowsLineEndings.set(0, new QuestionDefinition(original.getId(), original.getFolder(),
                     original.getSourceFile(), converted, original.getCaseCount(),
                     original.getPointsPerCase(), original.getSupportFiles(), original.getFixtures(),

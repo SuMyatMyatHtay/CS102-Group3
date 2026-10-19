@@ -13,7 +13,8 @@ Read these files in order:
 3. docs/REQUIREMENTS.md — project requirements and completion evidence
 4. docs/ARCHITECTURE.md — component responsibilities and bonus integration contracts
 5. docs/TEAM_WORKFLOW.md — collaboration, review and human submission responsibilities
-6. CS102-Project-Auto Grading System.pdf — full project brief, highest grade-band rubric descriptors and restrictions (not Project/IS442-ExamSample.pdf)
+6. docs/CODING_STYLE.md — class/method responsibilities, size review guidelines and behaviour-preserving refactoring rules
+7. CS102-Project-Auto Grading System.pdf — full project brief, highest grade-band rubric descriptors and restrictions (not Project/IS442-ExamSample.pdf)
 Also inspect git status --short to identify existing changes without altering them. Resolve all paths from this clone; do not assume Boey's machine paths or temporary Maven installation exist. Avoid broad source-code exploration until a feature is selected. If required context is missing or materially contradictory, explain the gap and ask for clarification instead of guessing.
 
 Before planning new implementations, review the relevant brief sections and highest grade-band rubric descriptors. Cite the relevant PDF pages in the implementation plan, explain how the work and its verification address those criteria, and check scope, permitted tools/libraries, deliverables and submission restrictions. The actual brief governs course requirements; summaries do not replace it. If the PDF is unreadable or requirements materially conflict, ask before dependent implementation. Aim for the highest-band criteria without adding unrequested complexity or promising a grade. Check the finished implementation against the same criteria.
@@ -29,12 +30,20 @@ Then give a short, plain-language onboarding summary:
 Finish by asking: "Who am I speaking with? Please choose your recorded team name: Boey, Sera, William, Kai Cong, Kiya, or Gabriel."
 Do not infer my identity from the machine username, Git identity or previous driver. If I give a nickname or ambiguous variation, ask me to confirm the corresponding listed name. Wait for my answer before proceeding.
 
-After identity is confirmed, reread the feature board. For Sera or William, confirm their locked feature assignment. For anyone else, confirm an existing claim or ask them to select an available feature. Do not automatically assign or overwrite ownership; coordinate claims with teammates before recording them. Keep shared interfaces/configuration/pipeline changes coordinated, preserve supplied inputs and unrelated changes, and follow the repository's approval and build-confirmation gates. Keep the human-owned AI declarations as a release task; do not add AI-attribution comments to Java. Do not commit or push unless explicitly requested.
+After identity is confirmed, reread the feature board. For Sera or William, confirm their locked feature assignment. For anyone else, confirm an existing claim or ask them to select an available feature. Do not automatically assign or overwrite ownership; coordinate claims with teammates before recording them. Keep shared interfaces/configuration/pipeline changes coordinated, preserve supplied inputs and unrelated changes, and follow the repository's approval and build-confirmation gates. Keep the human-owned AI declarations as a release task; do not add AI-attribution comments to Java. All members must create and work on their features in their own branches, starting new branches from current main. Follow docs/TEAM_WORKFLOW.md: after approved implementation and verification, commit/push only the reviewed feature files and create or update a PR targeting main. Use a draft if required checks or human acceptance are pending. Give me the PR URL and ask me to contact the group to review it. This workflow authorizes feature-branch publication, not merging into main, force-pushing, unrelated changes or messaging teammates.
 ```
 
 A Java application being built to prepare and grade student submissions against instructor tests, then fill the supplied CSV score sheet.
 
-**Current stage: core MVP DONE; Boey confirmed a successful clean build and grading run on 2026-10-10.** The command prepares submissions, compiles each part, runs the 20 instructor cases separately with deadlines, and exports real scores. The accepted foundation remains intact. Bonus implementations remain TODO and require individual claims, approved plans and their own build confirmations.
+**Current stage: core MVP and feature 2 DONE; features 1 and 5 are in REVIEW.** The command prepares submissions, compiles each part, runs the 20 instructor cases separately with deadlines, exports real scores and generates optional HTML and Markdown reports. Boey confirmed the original dashboard build/run/display on 2026-10-10. The question heatmap was merged in PR #2; its historical agent checks are recorded, while a separate human heatmap build/display transcript remains uncaptured. Gabriel's feature 5 is merged and remains REVIEW pending its human completion gate. See [the dashboard architecture](offline_html_dashboard_architecture.md) for its implementation and presentation talking points.
+
+Kiya's feature-1 plagiarism detector merged in PR #1 on 2026-10-15 and is REVIEW. Its integration with the code-modularisation branch is being completed in draft PR #5; focused integration checks passed 10 tests, while clean verification, packaged sample execution and human acceptance remain pending. See [the PR #5 merge resolution record](docs/PR5_MERGE_RESOLUTION.md) for scope and evidence status.
+
+## Feature branches and pull requests
+
+Everyone works on their own feature branch; keep one branch per feature or focused follow-up task. Start new branches from the latest `main`, coordinate ownership and shared files, and keep `main` for reviewed changes. Use descriptive names without the `codex/` prefix, such as `code-modularisation` or `kiya-feature-1-plagiarism`. Existing branches, including `offline-html-dashboard`, can be reused for their current feature.
+
+After implementation and the appropriate checks, commit/push the reviewed feature files and open a PR **from the feature branch into `main`**. The PR should explain the change, give exact build/run commands and actual verification evidence, and list remaining checks. Use a draft while required verification or human acceptance is pending. Tell the driver that the PR was created, share its URL, and ask them to contact the group for review; a teammate can use their AI assistant to help, while a human owns acceptance. Address feedback in the same PR. Merge only after another teammate's approval, required checks and human build/behavior acceptance, with explicit merge authorization. See [the detailed team workflow](docs/TEAM_WORKFLOW.md#feature-branches-and-pull-requests).
 
 ## Setup, build and run
 
@@ -81,7 +90,7 @@ mvn clean verify
 
 This removes the previous `target` output, compiles the application, runs the tests and builds `target/auto-grading-system-1.0-SNAPSHOT.jar`. The first build downloads Maven plugins/test dependencies and needs internet access. No separate application libraries need to be downloaded manually.
 
-Wait for **BUILD SUCCESS** before running the application. The accepted MVP baseline has **48 tests, zero failures/errors/skips**; the count may increase as features are added. Messages about deliberately broken archives, missing files or timeouts during tests are expected when the final test summary passes. Detailed test reports are in `target/surefire-reports`.
+Wait for **BUILD SUCCESS** before running the application. The heatmap revision's agent build passed **67 tests, zero failures/errors/skips**; the accepted original dashboard had 59 tests and the accepted MVP baseline had 48 tests. Messages about deliberately broken archives, missing files or timeouts during tests are expected when the final test summary passes. Detailed test reports are in `target/surefire-reports`.
 
 ### 4. Grade the supplied sample submissions
 
@@ -96,6 +105,8 @@ The terminal prints the exact new `build/grading/run-*` directory containing:
 - `scorereport.csv`: scores in the required roster format
 - `cases.csv`: individual test statuses, marks and diagnostic output
 - `submissions.csv`: export/withholding decisions and preparation warnings
+- `similarity.csv`: student pairs whose code for a question reaches the similarity threshold, with matching line ranges (advisory only; never changes scores)
+- `dashboard.html`: self-contained offline dashboard when `grading.html.enabled=true`
 
 Each run creates a fresh directory. `mvn clean` removes `target`, but does not remove old `build` workspaces or appended preparation logs. Supplied input files remain unchanged. See the execution policy below before using submissions outside the supplied sample.
 
@@ -104,6 +115,20 @@ To display help without grading:
 ```sh
 java -jar target/auto-grading-system-1.0-SNAPSHOT.jar --help
 ```
+
+### Offline HTML dashboard
+
+Open the HTML file printed by the command directly in your browser. It contains its own styles and scripts and needs no server or internet connection. Search by name, username or archive, filter by export decision and warnings, sort by name or score, and expand a submission to see question marks, preparation corrections and per-case diagnostics.
+
+Question-score cells form a heatmap: darker blue means a larger share of the configured marks, while the score and recorded case-status counts remain visible. The legend explains the six credit bands. Click a question score to open that submission's details at the matching question group; active search, filters and sorting stay in place. Withheld cells explicitly label their points diagnostic. Missing or mismatched case records, questions whose recorded cases were all not run, and unusable score ranges receive neutral styling with an explanation. All recorded cases remain in the details, including cases for unexpected question IDs.
+
+Summary averages and medians include only exported submissions and identify that denominator. The mean is rounded to four decimal places; individual marks and maxima retain their decimal values. WITHHELD scores are diagnostic totals, not final exported marks. Preparation status is shown separately: a REVIEW_REQUIRED name warning can coexist with an exported score. Rows use matched roster names/usernames and retain reported header values in details. The report covers received submissions, so absent roster rows remain outside the dashboard. Read the score CSV together with `submissions.csv` when examining unchanged template numerators.
+
+The supplied configuration enables the dashboard. To disable it, set `grading.html.enabled=false`. `grading.html.file` defaults to `dashboard.html` and accepts a simple `.html` filename using letters, digits, dots, underscores or hyphens. It is written inside the new grading run directory. Older configuration files without HTML settings keep generation disabled. Invalid settings fail before grading. If enabled HTML generation fails, the command returns nonzero and prints an error and the completed CSV locations; those CSVs remain usable.
+
+Case diagnostics contain recorded stdout/stderr, subject to the configured capture limit. They do not include structured expected/actual assertion values. Empty analysis lists mean analysis data was not supplied; they do not establish that plagiarism or starter comparison ran.
+
+For a demonstration, run the build and grading commands above, then open the printed HTML file directly in a browser. You can use `open -a Safari "<printed dashboard path>"` on macOS. Show the six expected scores, David/Xing's exported review warnings, search by username/archive, warning/export filters, both sort directions, and opening a submission and its stdout/stderr. Wide tables are intentionally scrollable. Boey accepted the displayed dashboard after confirming the clean build/run. Automated rendering/escaping and CSV-preservation tests passed; automated browser testing was unavailable because local-file navigation was blocked and isolated Chrome failed to launch. A network-disabled/narrow-window demonstration can be rehearsed by the team; no automated checks for those browser conditions are claimed.
 
 When requesting feature completion, share the build summary and relevant run results so the clean-build confirmation can be recorded in `agents.md`.
 
@@ -126,7 +151,7 @@ Maven is explicitly permitted by the project brief. Use these Maven commands wit
 This fallback is for Boey's existing machine only, while its temporary installation remains available:
 
 ```sh
-/tmp/apache-maven-3.9.9/bin/mvn -Dmaven.repo.local=/tmp/cs102-maven-repository clean verify
+/tmp/cs102-modularisation-tools/apache-maven-3.9.16/bin/mvn -Dmaven.repo.local=/tmp/cs102-modularisation-maven-repository clean verify
 ```
 
 Teammates should install Maven locally and use `mvn clean verify`; their machines will not inherit Boey's `/tmp` paths.
@@ -160,6 +185,10 @@ The process exits successfully when the grading batch and reports complete, even
 | `docs/REQUIREMENTS.md` | Rubric requirements, evidence targets, bonus checks, and submission checklist |
 | `docs/ARCHITECTURE.md` | Component responsibilities, shared contracts, and execution decisions |
 | `docs/TEAM_WORKFLOW.md` | Human review, safe division of work, build confirmation, and presentation preparation |
+| `docs/CODING_STYLE.md` | Responsibilities, class/method size review guidelines and future agent coding rules |
+| `docs/CODE_REVIEW.md` | Source-baseline review inventory, implemented class boundaries, verification and separate correctness findings |
+| `docs/PR5_MERGE_RESOLUTION.md` | PR #5 conflict scope, preservation contracts, verification status and release gates |
+| `docs/BUGS.md` | Known bugs, evidence, ownership contacts and suggested fix checks |
 | `src/main/java/autograder` | Application code and extension contracts |
 | `src/test/java/autograder` | Automated regression tests with temporary synthetic inputs |
 | `Project/student-submission` | Six supplied ZIP submissions |
@@ -168,7 +197,7 @@ The process exits successfully when the grading batch and reports complete, even
 | `Project/IS442-ScoreSheet.csv` | Original class list and required report format |
 | `build/extracted` | Raw extraction workspaces created by runs |
 | `build/working` | Separate corrected working copies |
-| `build/grading/run-*` | Isolated compilation/case workspaces, scorereport.csv, cases.csv, submissions.csv |
+| `build/grading/run-*` | Isolated compilation/case workspaces, CSV reports and optional dashboard.html |
 | `build/submission-anomalies.log` | Problems found during preparation |
 | `build/submission-corrections.log` | Corrections made to working copies |
 | `target` | Maven-generated classes, test reports, and executable JAR |
@@ -183,6 +212,8 @@ All paths in this table are beneath `src/main/java/autograder/`.
 | --- | --- |
 | `App.java` | Starts the application and prints progress/results |
 | `config/AppConfig.java` / `ExecutionConfig.java` | Read preparation/grading settings and reject invalid combinations |
+| `config/HtmlReportConfig.java` | Validate optional HTML enablement and filename |
+| `report/html/OfflineHtmlReportGenerator.java` | Render the completed results and export decisions as one offline HTML file |
 | `grading/GradingPipeline.java` | Coordinates compilation, cases, score aggregation and reports |
 | `grading/InstructorTestCaseProvider.java` | Maps the supplied instructor cases to individual adapters |
 | `execution/StudentCompiler.java` | Compiles selected student sources and instructor adapter with supplied support classes |
@@ -195,6 +226,9 @@ All paths in this table are beneath `src/main/java/autograder/`.
 | `submission/WorkingCopyPreparer.java` | Builds separate correctly named copies and records folder corrections |
 | `submission/CorrectionLog.java` | Saves a history of corrections |
 | `util/AnomalyLog.java` | Saves problems and prints warnings |
+| `plagiarism/NGramPlagiarismDetector.java` | Compares each pair of students per question using normalized 5-token sequences, excluding starter code |
+| `plagiarism/JavaTokenizer.java` / `NGramBuilder.java` / `SimilarityCalculator.java` | Normalize source tokens, build n-grams and compute Jaccard similarity |
+| `config/PlagiarismConfig.java` | Reads and validates the `plagiarism.*` settings |
 | `roster/ScoreSheetRepository.java` | Reads the class list without discarding the CSV's original fields |
 | `csv/CsvCodec.java` | Reads/writes CSV quoting, commas, and line breaks correctly |
 | `report/CsvScoreReportWriter.java` | Fills supplied scores into a new score sheet without overwriting the original |
@@ -206,7 +240,8 @@ The model classes are forms for storing and passing information, not separate ap
 
 ## Configuration and another assessment
 
-Relative paths resolve against the properties file's directory. `execution.java` and `execution.javac` accept `JDK` (the running JDK's tools), an executable on PATH, or a path. Compilation defaults to 15 seconds per part, execution to 2 seconds per case, and captured output to 65,536 bytes per stream. Both streams keep draining after the capture limit. These settings live in `config.properties`.
+`plagiarism.enabled`, `plagiarism.ngram.size`, `plagiarism.threshold` (above 0, at most 1), `plagiarism.min.ngrams` and `plagiarism.starter.directory` control the similarity check. Relative paths resolve against the properties file's directory. `execution.java` and `execution.javac` accept `JDK` (the running JDK's tools), an executable on PATH, or a path. Compilation defaults to 15 seconds per part, execution to 2 seconds per case, and captured output to 65,536 bytes per stream. Both streams keep draining after the capture limit. These settings live in `config.properties`.
+Relative paths resolve against the properties file's directory. `execution.java` and `execution.javac` accept `JDK` (the running JDK's tools), an executable on PATH, or a path. Compilation defaults to 15 seconds per part, execution to 2 seconds per case, and captured output to 65,536 bytes per stream. Both streams keep draining after the capture limit. These settings live in `config.properties`. `grading.feedback.enabled`, `grading.feedback.directory` and `grading.feedback.max.diagnostic.lines` control the per-student Markdown feedback files (feature 5, in review) written to `build/grading/run-*/feedback`.
 
 `assessment.question.ids` describes independently scored parts, source files, instructor testers, case counts, weights, support classes, and fixtures. The current fixed adapters support the supplied Q1a (3 cases), Q1b (3), Q2a (5), Q2b (5), and Q3 (4) testers. Weights remain configurable and the roster denominator must agree. The provider verifies the original tester content so an edited tester cannot silently use an outdated adapter. Supporting a different tester requires a new reviewed adapter/provider; preparation's configurable metadata alone does not provide general-purpose test ingestion. William's parameterized-case bonus remains separate.
 
@@ -234,18 +269,24 @@ The grading pipeline supplies scores only for eligible students after recording 
 
 ## Six bonus extension points
 
+Sera's starter-code comparison (feature 3) is implemented locally and in REVIEW, pending human build/run acceptance. It writes `starter-analysis.csv`, terminal warnings and HTML analysis findings without changing marks. See [the feature 3 testing guide](docs/STARTER_CODE_TESTING.md) for commands, configuration, expected outcomes and limitations. This status supersedes older blanket statements that other bonus implementations are TODO.
+
 | Feature | Java interface | Owner |
 | --- | --- | --- |
 | 1: token-based similarity | PlagiarismDetector | Kiya |
 | 2: offline HTML report | HtmlReportGenerator | Boey |
 | 3: starter-code comparison | BoilerplateDetector | Sera, locked |
 | 4: parameterized test cases | TestCaseProvider | William, locked |
-| 5: Markdown feedback | FeedbackGenerator | Unclaimed |
+| 5: Markdown feedback | FeedbackGenerator | Gabriel |
 | 6: terminal dashboard | ProgressListener | Unclaimed |
 
-The interfaces exist so implementations share common inputs and outputs. The basic console implements progress reporting; the interactive ANSI dashboard has not been built. Bonus implementation begins only after the core MVP works end to end. Boey has claimed the HTML dashboard (feature 2). Kai Cong and Gabriel can claim features 5 and 6.
+The interfaces exist so implementations share common inputs and outputs. HTML reporting receives `GradingReportContext`, which carries completed batch results and explicit withholding reasons. Kiya's feature-1 detector is merged and in REVIEW; integration verification is pending in PR #5. Boey owns the HTML dashboard (feature 2, DONE). Gabriel's Markdown feedback is merged and in REVIEW. Sera and William retain locked features 3 and 4; feature 6 is unclaimed with Kai Cong's intent recorded.
 
 ## Latest verification
+
+The behaviour-preserving modularisation revision is **REVIEW** pending post-merge checks, Boey's clean-build/behaviour acceptance and teammate review. Its pre-integration verification passed **86 tests, zero failures/errors/skips** on JDK 25 targeting Java 17; the sample retained the six totals below and 120 cases, producing HTML and six Markdown files. Ten deterministic artifacts and 49 public API surfaces matched in the historical comparison. Those results do not verify PR #5's integration. Actual Java 17 runtime, Windows and a new real-browser pass were not performed; the existing Windows fixture defect remains separately listed. See [CODE_REVIEW.md](docs/CODE_REVIEW.md) and the [PR #5 merge record](docs/PR5_MERGE_RESOLUTION.md).
+
+The following MVP record is historical accepted evidence.
 
 The remaining MVP is **DONE**. Boey supplied a successful clean build on 2026-10-10 with **48 tests, zero failures/errors/skips**, followed by the expected six-submission grading output (12, 10, 10, 0, 20, 1). The human build-confirmation gate is satisfied. `mvn clean verify` passed **48 tests, zero failures/errors**. After final diagnostic wording/formatting fixes, the affected execution suite passed **7/7** and the executable JAR was rebuilt successfully. The packaged CLI graded all six supplied submissions in one fresh run, producing 120 case records (20 per submission). All scores reconciled between case points, submission summaries and exported CSV numerators. All **67** supplied-file hashes in the new snapshot remained unchanged.
 
@@ -263,6 +304,8 @@ David and Xing retain name-header warnings while their uniquely matched submissi
 Verification includes original-tester equivalence on Ping (20/20), wrong-answer and expected-exception equivalence, pass–loop–pass retaining 2 points, independent compilation failure, bounded output, interrupted-process cleanup, missing results/System.exit(0), duplicate/unresolved withholding, missing sources, configured-path checks and exact CSV integration. The final reports are under `build/grading/run-10952970798376735826`. Tests ran on the available JDK 25 with Maven's Java 17 compilation target; actual Java 17 runtime and Windows behavior have not been verified.
 
 ## Review rules
+
+Read [docs/CODING_STYLE.md](docs/CODING_STYLE.md) before generating or editing code. Production Java files above 300 total lines and methods/constructors above 40 nonblank, noncomment lines trigger a responsibility review with justified exceptions. The [merged-main review](docs/CODE_REVIEW.md) records the implemented M1-M5 class boundaries and historical checks; [PR5_MERGE_RESOLUTION.md](docs/PR5_MERGE_RESOLUTION.md) records the pending integration. Further substantial refactoring requires a concrete approved plan. Report discovered bugs separately from behaviour-preserving refactoring.
 
 Keep the Java code readable, with clear responsibilities, meaningful names, ordinary loops, and operational settings in configuration. Minimal comments must be lowercase and have no full stops. Agents must not add AI attribution comments: after reviewing and modifying code, the human team will manually add the declarations required by the brief and the presentation AI Use appendix. This remains a final submission requirement.
 

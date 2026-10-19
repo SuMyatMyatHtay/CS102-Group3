@@ -5,7 +5,9 @@ import org.junit.jupiter.api.io.TempDir;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ExecutionConfigTest {
     @TempDir
@@ -36,6 +38,27 @@ class ExecutionConfigTest {
         assertThrows(IllegalArgumentException.class, () -> load(properties, app));
         properties.setProperty("grading.report.file", "cases.csv");
         assertThrows(IllegalArgumentException.class, () -> load(properties, app));
+    }
+
+    @Test
+    void rejectsStarterReportFilenameCaseInsensitively() throws Exception {
+        AppConfig app = AppConfig.load(Path.of("config.properties"));
+        Properties properties = settings();
+        for (String name : new String[] {"starter-analysis.csv", "Starter-Analysis.csv",
+                "STARTER-ANALYSIS.csv", "sTaRtEr-AnAlYsIs.csv"}) {
+            properties.setProperty("grading.report.file", name);
+            assertThrows(IllegalArgumentException.class, () -> load(properties, app), name);
+        }
+    }
+
+    @Test
+    void acceptsDistinctScoreFilenamesIncludingSimilarNames() throws Exception {
+        AppConfig app = AppConfig.load(Path.of("config.properties"));
+        Properties properties = settings();
+        for (String name : new String[] {"scorereport.csv", "scores.csv", "starter-analysis-results.csv"}) {
+            properties.setProperty("grading.report.file", name);
+            assertEquals(name, load(properties, app).reportFile());
+        }
     }
 
     private ExecutionConfig load(Properties properties, AppConfig app) throws Exception {
