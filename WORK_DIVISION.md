@@ -2,7 +2,7 @@
 
 Updated 2026-10-16 after PR #1 merged and PR #5 began integrating feature 1 with modularisation. The original proposals remain available in Git history. This document describes the current integration points; algorithms and implementation details still require an approved feature plan.
 
-[agents.md](agents.md) is the authoritative ownership/status board. Start with the [README kickoff](README.md#start-here-teammate-agent-kickoff), confirm identity and coordinate claims before editing. The core MVP and feature 2 are DONE. Feature 1 (Kiya) merged to main in PR #1 and is REVIEW while its integration is completed in PR #5. Feature 5 (Gabriel) is merged and remains REVIEW pending its recorded human completion gate. Features 3 and 4 remain locked TODO; feature 6 is unclaimed with Kai Cong's intent recorded. See [the dashboard architecture](offline_html_dashboard_architecture.md).
+[agents.md](agents.md) is the authoritative ownership/status board. Start with the [README kickoff](README.md#start-here-teammate-agent-kickoff), confirm identity and coordinate claims before editing. The core MVP and feature 2 are DONE. Feature 1 (Kiya) merged to main in PR #1 and is REVIEW while its integration is completed in PR #5. Feature 4 (William) is in REVIEW. Feature 5 (Gabriel) is merged and remains REVIEW pending its recorded human completion gate. Feature 3 (Sera, locked) remains TODO; feature 6 is unclaimed with Kai Cong's intent recorded. See [the dashboard architecture](offline_html_dashboard_architecture.md).
 
 | Feature | Owner | Goal | Existing contract in autograder.api |
 | --- | --- | --- | --- |
@@ -31,3 +31,7 @@ Kiya owns feature 1; its PR #1 is merged, while the combined PR #5 integration c
 - When a bonus becomes DONE, create its required architecture document with actual OOP principles and slide talking points
 
 Read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) and [docs/TEAM_WORKFLOW.md](docs/TEAM_WORKFLOW.md) for the current design, acceptance criteria and human-owned submission responsibilities.
+
+## Feature 4 status (2026-10-18): REVIEW
+
+William's feature 4 was broken in its earlier commit and is now fixed and in REVIEW. It no longer relies on answer-key comparison (which would require the team to act as an oracle — incompatible with "only Project/ is supplied"). It uses property-based / metamorphic testing: a default-package `DynamicRunner` compiled alongside student code asserts per-question invariants (Q1a isogram filter, Q1b even-sum, Q2a mean-age for probed surnames, Q2b top-student for probed courses, Q3 area-descending permutation) over seeded random inputs. `DynamicTestCaseProvider` emits 5 seeded dynamic cases per question; `StudentCompiler` compiles `DynamicRunner.java` into the student classes directory. Verified by `GradingPipelineTest` (PASS, 45 cases) and a standalone harness (correct → PASSED, hard-coded → FAILED). Pending human clean-build confirmation before DONE.

@@ -25,7 +25,7 @@ Before proposing any new implementation, review the relevant brief sections and 
 | 1: Token-based plagiarism detection | Kiya | REVIEW |
 | 2: Offline HTML dashboard | Boey | DONE |
 | 3: Starter code / boilerplate diff detector | Sera (locked) | REVIEW |
-| 4: Dynamic parameterized test ingestion | William (locked) | TODO |
+| 4: Dynamic parameterized test ingestion | William (locked) | REVIEW |
 | 5: Markdown student feedback | Gabriel | REVIEW |
 | 6: ANSI terminal dashboard | Unclaimed | TODO |
 
@@ -139,7 +139,7 @@ The authorization and Git snapshots below describe earlier sessions. The current
 - Ownership: main integrated configuration, pipeline, CLI and docs; delegated adapters/provider/tests and process services/tests are complete; no agents actively editing
 - Original ZIPs, instructor tests, starter files and source score sheet remain unchanged
 - Do not add AI-attribution comments to Java; Boey retained that rule and humans own review/modification and brief-required declarations before submission
-- Feature 2 is DONE after Boey's clean-build/run and dashboard acceptance; Gabriel owns feature 5 (REVIEW); other bonuses remain TODO; Kiya owns feature 1, Sera owns feature 3 and William feature 4; available feature 6
+- Feature 2 is DONE after Boey's clean-build/run and dashboard acceptance; Gabriel owns feature 5 (REVIEW); Kiya owns feature 1 (REVIEW), Sera owns feature 3 (REVIEW) and William owns feature 4 (REVIEW); available feature 6
 - Feature 2 architecture document is complete; no other per-bonus architecture document is due
 - Maven is temporarily available at /tmp/apache-maven-3.9.9/bin/mvn with -Dmaven.repo.local=/tmp/cs102-maven-repository
 - Exact commands: mvn clean verify; java -jar target/auto-grading-system-1.0-SNAPSHOT.jar config.properties

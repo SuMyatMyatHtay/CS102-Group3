@@ -1,22 +1,14 @@
 package autograder.grading;
 
 import autograder.api.PlagiarismDetector;
+import autograder.api.TestCaseProvider;
 import autograder.config.AppConfig;
 import autograder.config.ExecutionConfig;
 import autograder.execution.CaseExecutor;
 import autograder.execution.ProcessResult;
 import autograder.execution.ProcessRunner;
 import autograder.execution.StudentCompiler;
-import autograder.model.BatchResult;
-import autograder.model.QuestionDefinition;
-import autograder.model.SimilarityFinding;
-import autograder.model.StudentGrade;
-import autograder.model.StudentRecord;
-import autograder.model.SubmissionResult;
-import autograder.model.SubmissionStatus;
-import autograder.model.TestCaseDefinition;
-import autograder.model.TestCaseResult;
-import autograder.model.TestStatus;
+import autograder.model.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -43,7 +35,10 @@ public final class GradingPipeline {
         this.app = app;
         this.execution = execution;
         this.plagiarismDetector = plagiarismDetector;
-        this.cases = new InstructorTestCaseProvider().load(app.getAssessment());
+        TestCaseProvider fixedProvider = new InstructorTestCaseProvider();
+        TestCaseProvider dynamicProvider = new DynamicTestCaseProvider();
+        TestCaseProvider combinedProvider = new CombinedTestCaseProvider(fixedProvider, dynamicProvider);
+        this.cases = combinedProvider.load(app.getAssessment());
     }
 
     public void validateEnvironment() throws IOException, InterruptedException {

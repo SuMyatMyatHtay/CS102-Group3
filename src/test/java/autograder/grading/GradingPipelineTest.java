@@ -7,6 +7,8 @@ import autograder.model.GradingReportContext;
 import autograder.model.SimilarityFinding;
 import autograder.model.StudentIdentity;
 import autograder.model.StudentRecord;
+import autograder.model.StudentGrade;
+import autograder.model.TestCaseResult;
 import autograder.model.SubmissionResult;
 import autograder.model.SubmissionStatus;
 import autograder.model.TestStatus;
@@ -109,14 +111,22 @@ class GradingPipelineTest {
         assertEquals(TestStatus.PASSED, loopingCases.get("Q1a-3"));
         var loopingGrade = run.batch().getGrades().stream()
                 .filter(grade -> grade.getSubmission() == looping).findFirst().orElseThrow();
-        assertEquals(2.0, loopingGrade.getQuestionScore("Q1a"));
+        // Q1a has 3 fixed + 5 dynamic cases (each worth 1 point). The fixed cases are checked above
+        // by id; here we assert the fixed-only sub-score is still 2.0 (the two "ellen"-free cases pass,
+        // the "ellen" case times out). The dynamic cases now actually execute and may add points, so we
+        // do not assert the whole-question total.
+        assertEquals(2.0, fixedQuestionScore(loopingGrade, "Q1a"));
+        // Dynamic cases now run (previously they all errored before this fix).
+        assertTrue(loopingCases.get("Q1a-dynamic-1") != TestStatus.NOT_RUN);
+        assertTrue(loopingCases.get("Q1a-dynamic-1") != TestStatus.COMPILE_ERROR);
         assertEquals(TestStatus.PASSED, loopingCases.get("Q1b-1"));
         Map<String, TestStatus> brokenCases = statuses(run, "broken");
         assertEquals(TestStatus.COMPILE_ERROR, brokenCases.get("Q1a-1"));
         assertEquals(TestStatus.COMPILE_ERROR, brokenCases.get("Q1a-3"));
         assertEquals(TestStatus.PASSED, brokenCases.get("Q1b-1"));
-        assertEquals(20, run.batch().getGrades().get(0).getTestResults().size());
-        assertEquals(20, run.batch().getGrades().get(1).getTestResults().size());
+        // Each submission should now have 45 test results (20 fixed + 25 dynamic)
+        assertEquals(45, run.batch().getGrades().get(0).getTestResults().size());
+        assertEquals(45, run.batch().getGrades().get(1).getTestResults().size());
 
         List<List<String>> submissionRows = CsvCodec.parse(
                 Files.readString(run.directory().resolve("submissions.csv")));
@@ -180,7 +190,7 @@ class GradingPipelineTest {
         assertTrue(run.withheld().containsKey(duplicateB));
         assertTrue(run.withheld().containsKey(unresolved));
         for (var grade : run.batch().getGrades()) {
-            assertEquals(20, grade.getTestResults().size());
+            assertEquals(45, grade.getTestResults().size());
         }
         assertEquals(TestStatus.NOT_RUN, statuses(run, "duplicate-a").get("Q1a-1"));
         assertEquals(TestStatus.COMPILE_ERROR, statuses(run, "missing").get("Q1a-1"));
@@ -343,6 +353,17 @@ class GradingPipelineTest {
         int scoreColumn = rows.get(0).indexOf("Calculated Final Grade Numerator");
         return rows.stream().filter(row -> row.get(idColumn).equals(studentId))
                 .findFirst().orElseThrow().get(scoreColumn);
+    }
+
+    private static double fixedQuestionScore(StudentGrade grade, String questionId) {
+        double total = 0;
+        for (TestCaseResult result : grade.getTestResults()) {
+            String id = result.getTestCase().getId();
+            if (id.startsWith(questionId + "-") && !id.contains("dynamic")) {
+                total += result.getScore();
+            }
+        }
+        return total;
     }
 
     private static Map<String, TestStatus> statuses(GradingRun run, String username) {
