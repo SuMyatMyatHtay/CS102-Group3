@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -206,6 +207,28 @@ class AppTest {
         assertEquals(1, exit);
         assertEquals(List.of("html", "markdown"), attempted);
         assertTrue(Files.isRegularFile(temporaryDirectory.resolve("feedback/first.md")));
+    }
+
+    @Test
+    void existingStarterDestinationIsPreservedAndLaterReportsStillReceiveFindings() throws Exception {
+        GradingRun original = run(List.of(grade("first.zip")));
+        Path destination = temporaryDirectory.resolve("starter-analysis.csv");
+        byte[] scoreBytes = "Username,Score\r\nfirst,1\r\n".getBytes(StandardCharsets.UTF_8);
+        Files.write(destination, scoreBytes);
+        int exit = App.generateReports(original,
+                new autograder.config.BoilerplateConfig(true, temporaryDirectory, 0.98, 1024, 100),
+                (submission, starter) -> List.of(new autograder.model.AnalysisFinding(
+                        "UNCHANGED_STARTER", Path.of("answer.java"), "first.zip: original starter")),
+                new HtmlReportConfig(true, "dashboard.html"),
+                new autograder.report.html.OfflineHtmlReportGenerator("dashboard.html"),
+                new FeedbackConfig(true, "feedback", 10),
+                new autograder.report.feedback.MarkdownFeedbackGenerator(
+                        original.batch().getAssessment(), 2000, 10, "#", "_"));
+        assertEquals(1, exit);
+        assertArrayEquals(scoreBytes, Files.readAllBytes(destination));
+        assertTrue(Files.readString(temporaryDirectory.resolve("dashboard.html")).contains("UNCHANGED_STARTER"));
+        assertTrue(Files.readString(temporaryDirectory.resolve("feedback/first.md")).contains("Total: 1 / 1"));
+        assertEquals(1, original.batch().getGrades().get(0).getTotalScore());
     }
 
     @Test
