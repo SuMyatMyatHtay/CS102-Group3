@@ -11,6 +11,7 @@ import autograder.model.SubmissionResult;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -57,7 +58,8 @@ final class StarterAnalysis {
     private static int writeReport(Path directory, List<List<String>> rows) {
         Path report = directory.resolve("starter-analysis.csv");
         try {
-            Files.writeString(report, CsvCodec.write(rows));
+            Files.writeString(report, CsvCodec.write(rows),
+                    StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
             System.out.println("Starter comparison: " + (rows.size() - 1) + " findings; " + report);
             return 0;
         } catch (IOException | RuntimeException exception) {
