@@ -170,3 +170,5 @@ The following three entries predate the accepted dashboard and approved heatmap;
 - Similarity is advisory: findings never change scores or export decisions; starter n-grams are excluded; detector failures are reported and skipped
 - Agent verification: clean verify passed 70 tests (48 existing + 22 new), zero failures/errors/skips; real run unchanged scores 12, 10, 10, 0, 20, 1 and 0 pairs at threshold 0.80
 - Sample similarity with threshold 0.01: highest Chee/David Q1a 0.663, then Chee/Fen Q2a 0.467; no sample pair is flagged at the default 0.80
+- 2026-10-20: Kiya approved restoring maven-jar-plugin mainClass autograder.App in pom.xml (removed by feature 4 commit 0360801); clean verify passed 126 tests and java -jar --help starts again
+- Open blocker for William/Boey: DynamicTestCaseProvider adds 5 full-point cases per question (maximum 45 vs denominator 20), so the full grading run aborts before writing reports; mark weighting needs William's decision
