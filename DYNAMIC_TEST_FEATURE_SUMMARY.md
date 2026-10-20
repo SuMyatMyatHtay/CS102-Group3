@@ -40,9 +40,9 @@ cases contribute to those marks without allowing a score above the roster denomi
 | --- | --- | --- |
 | Q1a | `getIsogramWords(ArrayList<String>)` | Result is exactly the isogram (no repeated letter) words of the input |
 | Q1b | `getSumOfEvenIntegers(ArrayList<Object>)` | Result equals the sum of the `Integer` values that are even |
-| Q2a | `getAverageAge(String file, String surname)` | Mean age of persons whose surname matches; probes only non-fixed surnames (`TAY, LEE, WONG, ONG`) so memorized constants are exposed |
+| Q2a | `getAverageAge(String file, String surname)` | Mean age of persons whose uppercase surname is the first or last name token; probes only non-fixed surnames so memorized constants are exposed |
 | Q2b | `getTopStudent(String file, String course)` | Highest-GPA student for the course; probes only non-fixed courses (`SMU101, CS101, CS102, CS103`) |
-| Q3 | `sortShapes(List<Shape>)` | Result is a permutation of the inputs **and** sorted by descending area (parsed from each shape's `id=>AREA:PERIMETER` `toString()`) |
+| Q3 | `sortShapes(List<Shape>)` | Result contains exactly the input shapes with area at most 1000, sorted by descending area and then descending perimeter |
 
 ## What was broken (and is now fixed)
 
@@ -76,6 +76,24 @@ sample scores were Chee 9, David 8, Fen 7.375, Jing 0, Ping 15.277777777777777 a
 supplied `Project/` hashes matched the pre-run snapshot. A clean Maven verification was unavailable
 because Maven is not installed in this environment; the human clean-build confirmation remains
 pending.
+
+### Dynamic invariant and score display correction (2026-10-20)
+
+Q2a dynamic candidates now follow the exam statement: uppercase surnames may be at either end of a
+name. Q3 checks the actual `Shape` area/perimeter methods, requires every shape over area 1000 to be
+excluded, and verifies both descending sort keys. Its generated inputs always include one excluded
+circle and an equal-area pair with reversed perimeter order, so both rules are exercised. The score
+sheet numerator is rounded half-up to two decimal places; `cases.csv` and `submissions.csv` retain
+the full computed precision.
+
+`DynamicRunnerTest` passed for Q2a and Q3 across seeds 7, 42 and 99. The score-writer and pipeline
+regressions passed, and all production sources compiled with `javac --release 17`. The six-submission
+run exited 0 at `build/grading/run-15847751552065290169`; Ping's five Q2a and five Q3 dynamic cases
+all passed and his exported mark is 20.00. The other exported marks are Chee 11.50, David 10.50,
+Fen 9.88, Jing 0.00 and Xing 0.50. All six reports were produced, case/submission diagnostics kept
+full precision and all supplied `Project/` files retained their SHA-256 hashes. Maven is unavailable
+in this environment, so `mvn clean verify` and William's human clean-build confirmation remain
+pending; Feature 4 stays REVIEW.
 
 ## Build / run
 

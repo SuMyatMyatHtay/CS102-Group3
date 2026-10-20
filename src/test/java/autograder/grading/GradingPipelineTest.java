@@ -146,7 +146,9 @@ class GradingPipelineTest {
         int scoreColumn = reportRows.get(0).indexOf("Calculated Final Grade Numerator");
         List<String> exportedLooping = reportRows.stream().filter(row -> row.get(idColumn).equals("#01400001"))
                 .findFirst().orElseThrow();
-        assertEquals(Double.toString(loopingGrade.getTotalScore()), exportedLooping.get(scoreColumn));
+        assertEquals(BigDecimal.valueOf(loopingGrade.getTotalScore())
+                .setScale(2, java.math.RoundingMode.HALF_UP).toPlainString(),
+                exportedLooping.get(scoreColumn));
         assertEquals("", protectedScore(reportRows, "#01400005"));
         assertProtectedInputsUnchanged(protectedInputs);
     }
