@@ -98,7 +98,7 @@ Wait for **BUILD SUCCESS** before running the application. The heatmap revision'
 java -jar target/auto-grading-system-1.0-SNAPSHOT.jar config.properties
 ```
 
-The default configuration processes the six supplied archives. A verified Feature 4 run produced Chee **9**, David **8**, Fen **7.375**, Jing **0**, Ping **15.277777777777777**, and Xing **0.5** out of 20. These totals include dynamic case results; the historical MVP-only totals were 12, 10, 10, 0, 20, and 1 before dynamic cases contributed marks. David and Xing retain name-header review warnings. A completed run with those warnings is expected; check the reports rather than treating every warning as a build failure.
+The default configuration processes the six supplied archives. The current Feature 4 run produces Chee **11.50**, David **10.50**, Fen **9.88**, Jing **0.00**, Ping **20.00**, and Xing **0.50** out of 20 in the score sheet. These totals include dynamic case results; the historical MVP-only totals were 12, 10, 10, 0, 20, and 1 before dynamic cases contributed marks. David and Xing retain name-header review warnings. A completed run with those warnings is expected; check the reports rather than treating every warning as a build failure.
 
 The terminal prints the exact new `build/grading/run-*` directory containing:
 
@@ -263,7 +263,7 @@ The reusable writer preserves the supplied header order and roster field values:
 OrgDefinedId,Username,Last Name,First Name,Email,Calculated Final Grade Numerator,Calculated Final Grade Denominator,End-of-Line Indicator
 ```
 
-Only explicitly supplied scores change the numerator field; all other rows/fields remain intact. The writer rejects unknown student IDs, invalid/out-of-range marks, and attempts to overwrite the source template. It handles quoted commas, quotes, and line breaks. Byte-for-byte CSV formatting need not be identical, but the schema and field contents are preserved.
+Only explicitly supplied scores change the numerator field; exported scores are rounded half-up to two decimal places. Per-case diagnostics retain full precision. All other rows/fields remain intact. The writer rejects unknown student IDs, invalid/out-of-range marks, and attempts to overwrite the source template. It handles quoted commas, quotes, and line breaks. Byte-for-byte CSV formatting need not be identical, but the schema and field contents are preserved.
 
 The grading pipeline supplies scores only for eligible students after recording every expected case. Each run writes a fresh report; the original template is never the output path.
 

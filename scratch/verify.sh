@@ -4,8 +4,8 @@ ROOT=/c/Users/William/Documents/GitHub/CS102-Group3
 DR=$ROOT/src/main/resources/autograder/adapters/DynamicRunner.java
 SUP=$ROOT/Project/RenameToYourUsername
 TF=$ROOT/Project/Tester-Files
-WORK=/tmp/verify
-rm -rf "$WORK"; mkdir -p "$WORK"
+WORK=$(mktemp -d /tmp/verify.XXXXXX)
+mkdir -p "$WORK"
 JAVAC=javac; JAVA=java
 
 run_one() {
@@ -74,7 +74,9 @@ class Q2a {
         String name = line.substring(0, d).trim();
         int age = Integer.parseInt(line.substring(d + 1).trim());
         String[] t = name.split("\\s+"); if (t.length == 0) continue;
-        if (t[t.length - 1].equalsIgnoreCase(surname)) { sum += age; c++; }
+        if (t[0].equalsIgnoreCase(surname) || t[t.length - 1].equalsIgnoreCase(surname)) {
+          sum += age; c++;
+        }
       }
       return c == 0 ? 0.0 : sum / c;
     } catch (Exception e) { return -1.0; }
@@ -109,8 +111,12 @@ cat > "$WORK/CorrectQ3.java" <<'EOF'
 import java.util.*;
 class Q3 {
   public static List<Shape> sortShapes(List<Shape> shapes) {
-    ArrayList<Shape> r = new ArrayList<>(shapes);
-    r.sort((a, b) -> Double.compare(b.getArea(), a.getArea()));
+    ArrayList<Shape> r = new ArrayList<>();
+    for (Shape shape : shapes) if (shape.getArea() <= 1000) r.add(shape);
+    r.sort((a, b) -> {
+      int byArea = Double.compare(b.getArea(), a.getArea());
+      return byArea != 0 ? byArea : Double.compare(b.getPerimeter(), a.getPerimeter());
+    });
     return r;
   }
   public static void main(String[] a) {}
