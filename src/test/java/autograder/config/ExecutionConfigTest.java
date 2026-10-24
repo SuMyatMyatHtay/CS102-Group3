@@ -41,11 +41,13 @@ class ExecutionConfigTest {
     }
 
     @Test
-    void rejectsStarterReportFilenameCaseInsensitively() throws Exception {
+    void rejectsEveryReservedReportFilenameCaseInsensitively() throws Exception {
         AppConfig app = AppConfig.load(Path.of("config.properties"));
         Properties properties = settings();
         for (String name : new String[] {"starter-analysis.csv", "Starter-Analysis.csv",
-                "STARTER-ANALYSIS.csv", "sTaRtEr-AnAlYsIs.csv"}) {
+                "STARTER-ANALYSIS.csv", "sTaRtEr-AnAlYsIs.csv", "Cases.csv", "CASES.csv",
+                "Submissions.csv", "SUBMISSIONS.csv", "Similarity.csv",
+                "SIMILARITY.csv"}) {
             properties.setProperty("grading.report.file", name);
             assertThrows(IllegalArgumentException.class, () -> load(properties, app), name);
         }

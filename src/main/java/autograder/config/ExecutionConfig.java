@@ -12,6 +12,10 @@ import java.util.Properties;
 public record ExecutionConfig(Path directory, String reportFile, String javaExecutable,
                               String javacExecutable, long compileTimeoutMillis,
                               long caseTimeoutMillis, int maxOutputBytes) {
+    // compared ignoring case because macos and windows filesystems treat Cases.csv as cases.csv
+    private static final List<String> RESERVED_REPORT_FILES = List.of(
+            "cases.csv", "submissions.csv", "similarity.csv", "starter-analysis.csv");
+
     public static ExecutionConfig load(Path file, AppConfig app) throws IOException {
         Properties properties = new Properties();
         try (InputStream input = Files.newInputStream(file)) {
@@ -35,9 +39,7 @@ public record ExecutionConfig(Path directory, String reportFile, String javaExec
         }
         String report = required(properties, "grading.report.file");
         if (!report.endsWith(".csv") || report.contains("/") || report.contains("\\")
-                || report.contains(":")
-                || report.equals("cases.csv") || report.equals("submissions.csv")
-                || report.equals("similarity.csv") || report.equalsIgnoreCase("starter-analysis.csv")) {
+                || report.contains(":") || isReservedReportFile(report)) {
             throw new IllegalArgumentException("grading.report.file must be a distinct CSV filename");
         }
         long outputBytes = positive(properties, "execution.output.max.bytes");
@@ -48,6 +50,15 @@ public record ExecutionConfig(Path directory, String reportFile, String javaExec
                 executable(properties, "execution.javac", base),
                 positive(properties, "execution.compile.timeout.ms"),
                 positive(properties, "execution.case.timeout.ms"), (int) outputBytes);
+    }
+
+    private static boolean isReservedReportFile(String report) {
+        for (String reserved : RESERVED_REPORT_FILES) {
+            if (reserved.equalsIgnoreCase(report)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static String executable(Properties properties, String key, Path base) {
