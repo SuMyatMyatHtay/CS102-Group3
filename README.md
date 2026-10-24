@@ -37,7 +37,7 @@ A Java application being built to prepare and grade student submissions against 
 
 **Current stage: core MVP and feature 2 DONE; features 1, 4 and 5 are in REVIEW.** The command prepares submissions, compiles each part, runs 20 fixed instructor cases and 25 seeded dynamic property cases separately with deadlines, exports real scores and generates optional HTML and Markdown reports. The combined cases share each question's original maximum, preserving the 20-point assessment total while allowing dynamic results to affect marks. Boey confirmed the original dashboard build/run/display on 2026-10-10. The question heatmap was merged in PR #2; its historical agent checks are recorded, while a separate human heatmap build/display transcript remains uncaptured. Gabriel's feature 5 is merged and remains REVIEW pending its human completion gate. See [the dashboard architecture](offline_html_dashboard_architecture.md) for its implementation and presentation talking points.
 
-Kiya's feature-1 plagiarism detector merged in PR #1 on 2026-10-15 and is REVIEW. Its integration with the code-modularisation branch is being completed in draft PR #5; focused integration checks passed 10 tests, while clean verification, packaged sample execution and human acceptance remain pending. See [the PR #5 merge resolution record](docs/PR5_MERGE_RESOLUTION.md) for scope and evidence status.
+Kiya's feature-1 plagiarism detector merged in PR #1 on 2026-10-15, was integrated with the code-modularisation work in PR #5, and received follow-up fixes in PRs #9 and #12. It is REVIEW pending Kiya's human clean-build confirmation.
 
 ## Feature branches and pull requests
 
@@ -90,7 +90,7 @@ mvn clean verify
 
 This removes the previous `target` output, compiles the application, runs the tests and builds `target/auto-grading-system-1.0-SNAPSHOT.jar`. The first build downloads Maven plugins/test dependencies and needs internet access. No separate application libraries need to be downloaded manually.
 
-Wait for **BUILD SUCCESS** before running the application. The heatmap revision's agent build passed **67 tests, zero failures/errors/skips**; the accepted original dashboard had 59 tests and the accepted MVP baseline had 48 tests. Messages about deliberately broken archives, missing files or timeouts during tests are expected when the final test summary passes. Detailed test reports are in `target/surefire-reports`.
+Wait for **BUILD SUCCESS** before running the application. The current build (2026-10-24, `main` after PR #12) passes **128 tests, zero failures/errors/skips**; earlier milestones had 48 (MVP), 59 (dashboard), 67 (heatmap) and 86 (modularisation). Messages about deliberately broken archives, missing files or timeouts during tests are expected when the final test summary passes. Detailed test reports are in `target/surefire-reports`.
 
 ### 4. Grade the supplied sample submissions
 
@@ -98,7 +98,7 @@ Wait for **BUILD SUCCESS** before running the application. The heatmap revision'
 java -jar target/auto-grading-system-1.0-SNAPSHOT.jar config.properties
 ```
 
-The default configuration processes the six supplied archives. The current Feature 4 run produces Chee **11.50**, David **10.50**, Fen **9.88**, Jing **0.00**, Ping **20.00**, and Xing **0.50** out of 20 in the score sheet. These totals include dynamic case results; the historical MVP-only totals were 12, 10, 10, 0, 20, and 1 before dynamic cases contributed marks. David and Xing retain name-header review warnings. A completed run with those warnings is expected; check the reports rather than treating every warning as a build failure.
+The default configuration processes the six supplied archives. The current Feature 4 run produces Chee **11.50**, David **10.50**, Fen **9.88**, Jing **0.00**, Ping **20.00**, and Xing **0.50** out of 20 in the score sheet. These totals include dynamic case results. The score sheet rounds half-up to two decimal places, so Fen's exact 9.875 is exported as 9.88; `submissions.csv` (ComputedScore) and `cases.csv` keep the exact values. The historical MVP-only totals were 12, 10, 10, 0, 20, and 1 before dynamic cases contributed marks. David and Xing retain name-header review warnings. A completed run with those warnings is expected; check the reports rather than treating every warning as a build failure.
 
 The terminal prints the exact new `build/grading/run-*` directory containing:
 
@@ -280,13 +280,26 @@ Sera's starter-code comparison (feature 3) is implemented locally and in REVIEW,
 | 5: Markdown feedback | FeedbackGenerator | Gabriel |
 | 6: terminal dashboard | ProgressListener | Unclaimed |
 
-The interfaces exist so implementations share common inputs and outputs. HTML reporting receives `GradingReportContext`, which carries completed batch results and explicit withholding reasons. Kiya's feature-1 detector is merged and in REVIEW; integration verification is pending in PR #5. Boey owns the HTML dashboard (feature 2, DONE). Gabriel's Markdown feedback is merged and in REVIEW. Sera and William retain locked features 3 and 4; feature 6 is unclaimed with Kai Cong's intent recorded.
+The interfaces exist so implementations share common inputs and outputs. HTML reporting receives `GradingReportContext`, which carries completed batch results and explicit withholding reasons. Kiya's feature-1 detector is merged (integrated through PR #5) and in REVIEW. Boey owns the HTML dashboard (feature 2, DONE). Gabriel's Markdown feedback is merged and in REVIEW. Sera and William retain locked features 3 and 4; feature 6 is unclaimed with Kai Cong's intent recorded.
 
 ## Latest verification
 
-The behaviour-preserving modularisation revision is **REVIEW** pending post-merge checks, Boey's clean-build/behaviour acceptance and teammate review. Its pre-integration verification passed **86 tests, zero failures/errors/skips** on JDK 25 targeting Java 17; the sample retained the six totals below and 120 cases, producing HTML and six Markdown files. Ten deterministic artifacts and 49 public API surfaces matched in the historical comparison. Those results do not verify PR #5's integration. Actual Java 17 runtime, Windows and a new real-browser pass were not performed; the existing Windows fixture defect remains separately listed. See [CODE_REVIEW.md](docs/CODE_REVIEW.md) and the [PR #5 merge record](docs/PR5_MERGE_RESOLUTION.md).
+Current agent verification on 2026-10-24 (`main` after PR #12, JDK 25 targeting Java 17): `mvn clean verify` passed **128 tests, zero failures/errors/skips**, and the packaged CLI graded the six supplied submissions with exit code 0. Each submission has **45 case records** (20 fixed instructor cases plus 25 seeded dynamic cases), and each question keeps its original maximum. The run wrote the score sheet, `cases.csv`, `submissions.csv`, `similarity.csv` (0 pairs at the 0.80 threshold), `starter-analysis.csv` (11 findings), `dashboard.html` and six feedback files. Human acceptance of features 1, 3, 4 and 5 is still pending.
 
-The following MVP record is historical accepted evidence.
+| Student | Q1a | Q1b | Q2a | Q2b | Q3 | Total | Score sheet |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Chee | 3 | 3 | 5 | 0.5 | 0 | 11.5 | 11.50 |
+| David | 3 | 3 | 4.5 | 0 | 0 | 10.5 | 10.50 |
+| Fen | 0.375 | 0 | 5 | 4.5 | 0 | 9.875 | 9.88 |
+| Jing | 0 | 0 | 0 | 0 | 0 | 0 | 0.00 |
+| Ping | 3 | 3 | 5 | 5 | 4 | 20 | 20.00 |
+| Xing | 0 | 0 | 0.5 | 0 | 0 | 0.5 | 0.50 |
+
+Question maxima are 3, 3, 5, 5 and 4. Each question's marks are shared equally across its fixed and dynamic cases, so case values such as 0.375 are expected. Actual Java 17 runtime and Windows behaviour remain untested.
+
+The following modularisation and MVP records are historical evidence.
+
+The behaviour-preserving modularisation revision (merged in PR #5) was **REVIEW** pending post-merge checks, Boey's clean-build/behaviour acceptance and teammate review. Its pre-integration verification passed **86 tests, zero failures/errors/skips** on JDK 25 targeting Java 17; the sample retained the six totals below and 120 cases, producing HTML and six Markdown files. Ten deterministic artifacts and 49 public API surfaces matched in the historical comparison. Those results do not verify PR #5's integration. Actual Java 17 runtime, Windows and a new real-browser pass were not performed; the existing Windows fixture defect remains separately listed. See [CODE_REVIEW.md](docs/CODE_REVIEW.md) and the [PR #5 merge record](docs/PR5_MERGE_RESOLUTION.md).
 
 The remaining MVP is **DONE**. Boey supplied a successful clean build on 2026-10-10 with **48 tests, zero failures/errors/skips**, followed by the expected six-submission grading output (12, 10, 10, 0, 20, 1). The human build-confirmation gate is satisfied. `mvn clean verify` passed **48 tests, zero failures/errors**. After final diagnostic wording/formatting fixes, the affected execution suite passed **7/7** and the executable JAR was rebuilt successfully. The packaged CLI graded all six supplied submissions in one fresh run, producing 120 case records (20 per submission). All scores reconciled between case points, submission summaries and exported CSV numerators. All **67** supplied-file hashes in the new snapshot remained unchanged.
 
