@@ -60,7 +60,7 @@ classes dir; `GradingPipelineTest.java` updated to assert dynamic cases now exec
 
 - `GradingPipelineTest` checks all 45 cases (20 fixed + 25 dynamic) end-to-end and verifies that the
   original question maxima and 20-point assessment maximum are preserved.
-- Standalone harness (`scratch/verify.sh`) — for **every** question and seeds 7 / 42 / 99:
+- Development harness (`scratch/verify.sh`, now removed from the submission in the repository cleanup; retrievable from Git history at commit `517ad84`) — for **every** question and seeds 7 / 42 / 99:
   - Correct reference implementations → `PASSED`
   - Hard-coded "memorized" implementations → `FAILED`
 
@@ -103,9 +103,8 @@ mvn clean verify
 java -jar target/auto-grading-system-1.0-SNAPSHOT.jar config.properties
 ```
 
-Fallback (Maven not installed): compile main + test sources with JDK 17+ and run
-`autograder.grading.ManualTestLauncher`, or use `scratch/verify.sh` to exercise `DynamicRunner`
-directly against correct / hard-coded implementations.
+The former Maven-free fallbacks (`autograder.grading.ManualTestLauncher` and `scratch/verify.sh`) were
+removed from the submission in the repository cleanup; retrievable from Git history at commit `517ad84`. Install Maven and use `mvn clean verify`.
 
 ## Next step
 

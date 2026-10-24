@@ -188,20 +188,11 @@ maximum remains **20 points**. Individual cases have fractional marks because ea
 original maximum is shared across all its cases. The score-sheet numerator is rounded half-up to two
 decimal places; detailed case and submission diagnostics retain the full computed precision.
 
-### B. Prove it catches hard-coding (fastest, JDK only, no build)
-`scratch/verify.sh` compiles a *correct* and a *hard-coded* reference solution per question and runs
-`DynamicRunner` directly:
-
-```bash
-bash scratch/verify.sh
-```
-
-Expected output: every `correct … -> PASSED` and every `hard … -> FAILED` for seeds 7 / 42 / 99.
-
-### C. Run the pipeline unit test without Maven
-This sandbox has no Maven installed, so the suite was verified by compiling with JDK 17+ and running
-`autograder.grading.ManualTestLauncher`, which invokes the two `GradingPipelineTest` methods directly.
-On a normal machine this is simply `mvn test`.
+### B. Development harnesses (historical)
+During development, `scratch/verify.sh` compiled a *correct* and a *hard-coded* reference solution per
+question and ran `DynamicRunner` directly, and `autograder.grading.ManualTestLauncher` ran the
+`GradingPipelineTest` methods without Maven. Both were removed from the submission in the repository cleanup; retrievable from Git history at commit `517ad84`. `verify.sh` also contained a
+machine-specific path. Use `mvn clean verify` instead.
 
 ---
 
@@ -209,8 +200,8 @@ On a normal machine this is simply `mvn test`.
 
 - `GradingPipelineTest` checks all 45 cases end-to-end and verifies that the question maxima remain
   3, 3, 5, 5 and 4 points (20 overall), including Q3 with the reference support classes.
-- `scratch/verify.sh` confirms, for every question and seeds 7/42/99:
-  correct → `PASSED`, hard-coded → `FAILED`.
+- During development, `scratch/verify.sh` (now removed from the submission in the repository cleanup; retrievable from Git history at commit `517ad84`) confirmed, for every question and seeds
+  7/42/99: correct → `PASSED`, hard-coded → `FAILED`.
 - No supplied `Project/` inputs were modified; the oracle-free design is compatible with
   "only `Project/` is provided".
 
