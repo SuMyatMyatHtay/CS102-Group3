@@ -29,6 +29,11 @@ public record RunSettings(Path configFile, AppConfig app,
                 SanityConfig.defaults());
     }
 
+    public RunSettings withWorkers(int workers) {
+        return new RunSettings(configFile, app, execution.withWorkers(workers),
+                plagiarism, html, feedback, boilerplate, sanity);
+    }
+
     public static RunSettings load(Path configFile,
                                    RuntimePathOverrides overrides)
             throws IOException {

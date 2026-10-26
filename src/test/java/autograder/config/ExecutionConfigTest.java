@@ -86,6 +86,46 @@ class ExecutionConfigTest {
         }
     }
 
+    @Test
+    void resolvesAutoWorkersCaseInsensitivelyThroughLimits() throws Exception {
+        AppConfig app = AppConfig.load(Path.of("config.properties"));
+        Properties properties = settings();
+        for (String value : new String[] {"auto", " AUTO ", "Auto"}) {
+            properties.setProperty("execution.workers", value);
+            assertEquals(2, load(properties, app, new WorkerLimits(() -> 2)).workers(), value);
+            assertEquals(4, load(properties, app, new WorkerLimits(() -> 16)).workers(), value);
+        }
+    }
+
+    @Test
+    void withWorkersCopiesConfigAndValidatesRange() throws Exception {
+        AppConfig app = AppConfig.load(Path.of("config.properties"));
+        ExecutionConfig config = load(settings(), app);
+        ExecutionConfig changed = config.withWorkers(8);
+        assertEquals(8, changed.workers());
+        assertEquals(config.directory(), changed.directory());
+        assertEquals(config.caseTimeoutMillis(), changed.caseTimeoutMillis());
+        assertEquals(32, config.withWorkers(32).workers());
+        assertThrows(IllegalArgumentException.class, () -> config.withWorkers(0));
+        assertThrows(IllegalArgumentException.class, () -> config.withWorkers(-1));
+        IllegalArgumentException tooMany = assertThrows(IllegalArgumentException.class,
+                () -> config.withWorkers(33));
+        assertEquals("execution.workers must be at most 32", tooMany.getMessage());
+    }
+
+    private ExecutionConfig load(Properties properties, AppConfig app,
+                                 WorkerLimits limits) throws Exception {
+        Path path = temporaryDirectory.resolve("execution.properties");
+        try (var output = Files.newOutputStream(path)) {
+            properties.store(output, null);
+        }
+        Properties loaded = new Properties();
+        try (var input = Files.newInputStream(path)) {
+            loaded.load(input);
+        }
+        return ExecutionConfig.load(loaded, temporaryDirectory, app, limits);
+    }
+
     private ExecutionConfig load(Properties properties, AppConfig app) throws Exception {
         Path path = temporaryDirectory.resolve("execution.properties");
         try (var output = Files.newOutputStream(path)) {

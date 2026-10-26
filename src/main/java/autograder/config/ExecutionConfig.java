@@ -12,7 +12,8 @@ import java.util.Properties;
 public record ExecutionConfig(Path directory, String reportFile, String javaExecutable,
                               String javacExecutable, long compileTimeoutMillis,
                               long caseTimeoutMillis, int maxOutputBytes, int workers) {
-    private static final int MAX_WORKERS = 32;
+    public static final int MAX_WORKERS = 32;
+    private static final String AUTO_WORKERS = "auto";
     // compared ignoring case because macos and windows filesystems treat Cases.csv as cases.csv
     private static final List<String> RESERVED_REPORT_FILES = List.of(
             "cases.csv", "submissions.csv", "similarity.csv", "starter-analysis.csv",
@@ -36,6 +37,12 @@ public record ExecutionConfig(Path directory, String reportFile, String javaExec
 
     static ExecutionConfig load(Properties properties, Path baseDirectory, AppConfig app)
             throws IOException {
+        return load(properties, baseDirectory, app, WorkerLimits.system());
+    }
+
+    // limits are a parameter so tests can resolve auto without the real cpu count
+    static ExecutionConfig load(Properties properties, Path baseDirectory, AppConfig app,
+                                WorkerLimits limits) throws IOException {
         Path directory = AppConfig.canonicalize(baseDirectory.resolve(required(properties, "grading.directory")));
         List<Path> protectedPaths = new ArrayList<>(List.of(app.getInputDirectory(),
                 app.getExtractionDirectory(), app.getWorkingDirectory(), app.getScoreSheetPath(),
@@ -63,13 +70,27 @@ public record ExecutionConfig(Path directory, String reportFile, String javaExec
         return new ExecutionConfig(directory, report, executable(properties, "execution.java", baseDirectory),
                 executable(properties, "execution.javac", baseDirectory),
                 positive(properties, "execution.compile.timeout.ms"),
-                positive(properties, "execution.case.timeout.ms"), (int) outputBytes, workers(properties));
+                positive(properties, "execution.case.timeout.ms"), (int) outputBytes, workers(properties, limits));
     }
 
-    private static int workers(Properties properties) {
+    public ExecutionConfig withWorkers(int workers) {
+        if (workers <= 0) {
+            throw new IllegalArgumentException("configuration must be positive: execution.workers");
+        }
+        if (workers > MAX_WORKERS) {
+            throw new IllegalArgumentException("execution.workers must be at most " + MAX_WORKERS);
+        }
+        return new ExecutionConfig(directory, reportFile, javaExecutable, javacExecutable,
+                compileTimeoutMillis, caseTimeoutMillis, maxOutputBytes, workers);
+    }
+
+    private static int workers(Properties properties, WorkerLimits limits) {
         String value = properties.getProperty("execution.workers");
         if (value == null || value.isBlank()) {
             return 1;
+        }
+        if (value.trim().equalsIgnoreCase(AUTO_WORKERS)) {
+            return limits.autoWorkers();
         }
         long workers = positive(properties, "execution.workers");
         if (workers > MAX_WORKERS) {
