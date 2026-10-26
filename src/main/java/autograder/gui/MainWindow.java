@@ -2,6 +2,7 @@ package autograder.gui;
 
 import autograder.RunOutcome;
 import autograder.config.RunSettings;
+import autograder.config.WorkerLimits;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -32,6 +33,7 @@ final class MainWindow extends JFrame {
     private final JPanel advanced = new JPanel(new BorderLayout());
     private final JToggleButton advancedToggle = new JToggleButton(ADVANCED_CLOSED);
     private final ResultsPanel results = new ResultsPanel();
+    private final WorkerChoice workerChoice = new WorkerChoice(WorkerLimits.system());
     private final RunBar bar;
     private GradingRunWorker worker;
     private RunSettings activeSettings;
@@ -48,7 +50,7 @@ final class MainWindow extends JFrame {
         output = new PathRow("Output folder", 'O', true, null, changed);
         config = new PathRow("Config file", 'f', false,
                 new FileNameExtensionFilter("Properties files", "properties"), changed);
-        bar = new RunBar(this::startGrading, this::stopGrading);
+        bar = new RunBar(this::startGrading, this::stopGrading, workerChoice.options());
         buildLayout();
         fill(values);
         setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
@@ -121,6 +123,16 @@ final class MainWindow extends JFrame {
         if (readiness.status(InputField.CONFIG).filter(status -> !status.ok()).isPresent()) {
             setAdvanced(true);
         }
+        showWorkers(readiness.settings());
+    }
+
+    private void showWorkers(RunSettings settings) {
+        if (settings == null) {
+            return;
+        }
+        WorkerChoice.Update update = workerChoice.settingsLoaded(settings.execution().workers());
+        update.selection().ifPresent(bar::selectWorkers);
+        bar.setStatus(update.warning().orElse(""));
     }
 
     private void startGrading() {
@@ -140,7 +152,7 @@ final class MainWindow extends JFrame {
             return;
         }
         preferences.save(inputs());
-        activeSettings = readiness.settings();
+        activeSettings = readiness.settings().withWorkers(bar.selectedWorkers());
         bar.setRunning();
         worker = new GradingRunWorker(activeSettings, bar::showProgress, this::onFinished);
         worker.execute();

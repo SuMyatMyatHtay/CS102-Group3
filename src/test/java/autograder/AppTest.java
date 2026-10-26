@@ -39,6 +39,24 @@ class AppTest {
     }
 
     @Test
+    void workersFlagRejectsBadValuesAndWrongArgumentCounts() {
+        String config = temporaryDirectory.resolve("missing.properties").toString();
+        for (String value : new String[] {"0", "33", "-1", "abc", ""}) {
+            assertEquals(1, App.run(new String[] {"--workers", value, config}), value);
+        }
+        assertEquals(1, App.run(new String[] {"--workers"}));
+        assertEquals(1, App.run(new String[] {"--workers", "2"}));
+        assertEquals(1, App.run(new String[] {"--workers", "2", config, "extra"}));
+    }
+
+    @Test
+    void workersFlagWithValidValueStillFailsCleanlyOnMissingConfig() {
+        String config = temporaryDirectory.resolve("missing.properties").toString();
+        assertEquals(1, App.run(new String[] {"--workers", "2", config}));
+        assertEquals(1, App.run(new String[] {"--workers", "AUTO", config}));
+    }
+
+    @Test
     void missingArgumentsAndMissingConfigFailCleanly() {
         assertEquals(1, App.run(new String[] {}));
         assertEquals(1, App.run(new String[] {

@@ -17,6 +17,7 @@ import autograder.config.HtmlReportConfig;
 import autograder.config.RunSettings;
 import autograder.config.RuntimePathOverrides;
 import autograder.config.SanityConfig;
+import autograder.config.WorkerLimits;
 import autograder.grading.GradingRun;
 import autograder.model.GradingReportContext;
 import autograder.model.StudentGrade;
@@ -24,6 +25,7 @@ import autograder.model.StudentGrade;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.nio.file.Path;
+import java.util.OptionalInt;
 
 public final class App {
     private App() {
@@ -44,13 +46,39 @@ public final class App {
         if (args.length > 0 && args[0].startsWith("--randomized-")) {
             return runRandomized(args);
         }
+        if (args.length > 0 && args[0].equals(WorkersOption.FLAG)) {
+            return runWithWorkersFlag(args);
+        }
         if (args.length != 1) {
             printUsage();
             return 1;
         }
+        return runGrading(Path.of(args[0]), OptionalInt.empty());
+    }
 
+    private static int runWithWorkersFlag(String[] args) {
+        if (args.length != 3) {
+            printUsage();
+            return 1;
+        }
+        int workers;
         try {
-            RunSettings settings = RunSettings.load(Path.of(args[0]), RuntimePathOverrides.none());
+            workers = WorkersOption.parse(args[1], WorkerLimits.system());
+        } catch (IllegalArgumentException exception) {
+            System.err.println(exception.getMessage());
+            printUsage();
+            return 1;
+        }
+        return runGrading(Path.of(args[2]), OptionalInt.of(workers));
+    }
+
+    private static int runGrading(Path configFile, OptionalInt workersOverride) {
+        try {
+            RunSettings settings = RunSettings.load(configFile, RuntimePathOverrides.none());
+            if (workersOverride.isPresent()) {
+                settings = settings.withWorkers(workersOverride.getAsInt());
+            }
+            settings = capWorkers(settings);
             RunOutcome outcome = new GradingService().run(settings, new ConsoleRunListener());
             return report(outcome);
         } catch (Exception exception) {
@@ -60,6 +88,15 @@ public final class App {
             System.err.println("could not complete grading: " + exception.getMessage());
             return 1;
         }
+    }
+
+    private static RunSettings capWorkers(RunSettings settings) {
+        WorkerLimits.Capped capped = WorkerLimits.system().cap(settings.execution().workers());
+        if (capped.warning().isEmpty()) {
+            return settings;
+        }
+        System.err.println(capped.warning().get());
+        return settings.withWorkers(capped.workers());
     }
 
     private static int report(RunOutcome outcome) {
@@ -212,7 +249,7 @@ public final class App {
     }
 
     private static void printUsage() {
-        System.out.println("Usage: java -jar <application.jar> <configuration.properties>");
+        System.out.println("Usage: java -jar <application.jar> [--workers <N|auto>] <configuration.properties>");
         System.out.println("Prepares, compiles and grades submissions using timed instructor cases");
         System.out.println("Usage: java -jar <application.jar> --randomized-resources <question-id> <configuration.properties>");
         System.out.println("Usage: java -jar <application.jar> --randomized-grade <question-id> <submission-folder> "
