@@ -181,7 +181,9 @@ public final class SanityChecker {
             return "no output";
         }
         int newline = text.indexOf('\n');
-        String line = newline < 0 ? text : text.substring(0, newline).strip();
+        // student output must not send control or escape characters to the terminal
+        String first = newline < 0 ? text : text.substring(0, newline);
+        String line = first.replaceAll("\\p{Cntrl}", " ").strip();
         return line.length() > EXCERPT_LIMIT ? line.substring(0, EXCERPT_LIMIT) + "..." : line;
     }
 }

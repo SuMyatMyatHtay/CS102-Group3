@@ -24,19 +24,21 @@ final class SanityAnalysis {
         if (!config.enabled()) {
             return new Result(List.of(), 0);
         }
-        int exitCode = 0;
-        List<SanityFinding> findings = List.of();
+        List<SanityFinding> findings;
         try {
             findings = new SanityChecker().check(run, config);
         } catch (RuntimeException exception) {
+            // no csv or "none" line, so a crashed check never reads as a clean pass
             System.err.println("could not run sanity checks: " + exception.getMessage());
-            exitCode = 1;
+            return new Result(List.of(), 1);
         }
-        return new Result(findings, Math.max(exitCode, write(run.directory(), findings)));
+        Path report = run.directory().resolve(REPORT);
+        int exitCode = write(report, findings);
+        print(findings, exitCode == 0 ? report.toString() : "not saved");
+        return new Result(findings, exitCode);
     }
 
-    private static int write(Path directory, List<SanityFinding> findings) {
-        Path report = directory.resolve(REPORT);
+    private static int write(Path report, List<SanityFinding> findings) {
         try {
             Files.writeString(report, SanityCsvWriter.format(findings),
                     StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE);
@@ -44,11 +46,11 @@ final class SanityAnalysis {
             System.err.println("could not write sanity checks " + report + ": " + exception.getMessage());
             return 1;
         }
-        print(findings, report);
         return 0;
     }
 
-    private static void print(List<SanityFinding> findings, Path report) {
+    // findings are still shown when the csv could not be saved
+    private static void print(List<SanityFinding> findings, String report) {
         if (findings.isEmpty()) {
             System.out.println("Sanity checks: none");
             return;

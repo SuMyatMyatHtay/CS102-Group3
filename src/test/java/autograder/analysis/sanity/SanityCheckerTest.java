@@ -127,6 +127,22 @@ class SanityCheckerTest {
         assertTrue(csv.contains("SHARED_FAILURE,Q1,Q1-1,4,5,\"a, b\""));
     }
 
+    @Test
+    void sharedFailureExcerptStripsControlCharacters() {
+        String noisy = "\u001b[31mwrong\u0007 answer";
+        IntFunction<List<TestCaseResult>> fourOfFive = i -> List.of(result("Q1-1",
+                i < 4 ? TestStatus.FAILED : TestStatus.PASSED, noisy, ""));
+        SanityFinding finding = checker.check(run(5, fourOfFive, Map.of()), CONFIG).stream()
+                .filter(f -> f.getCheck() == SanityCheck.SHARED_FAILURE)
+                .findFirst().orElseThrow();
+        String message = finding.getMessage();
+        assertTrue(message.contains("wrong"));
+        assertFalse(message.contains("\u001b"));
+        for (char character : message.toCharArray()) {
+            assertFalse(character < 0x20, "control character in message: " + (int) character);
+        }
+    }
+
     private static boolean has(List<SanityFinding> findings, SanityCheck check) {
         return findings.stream().anyMatch(f -> f.getCheck() == check);
     }
