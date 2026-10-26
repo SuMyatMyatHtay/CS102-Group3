@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public final class GradingPipeline {
     public static final String SIMILARITY_REPORT = "similarity.csv";
@@ -79,13 +80,20 @@ public final class GradingPipeline {
         Map<String, Integer> identities = identityCounts(submissions);
         Map<SubmissionResult, String> withheld = new LinkedHashMap<>();
         List<StudentGrade> grades = new ArrayList<>();
-        int index = 0;
-        for (SubmissionResult submission : submissions) {
-            index++;
+        int total = submissions.size();
+        AtomicInteger finished = new AtomicInteger();
+        List<GradedSubmission> graded = new SubmissionScheduler(execution.workers()).run(total, index -> {
+            SubmissionResult submission = submissions.get(index);
             String item = submission.getArchivePath().getFileName().toString();
-            notifyProgress(item, index - 1, submissions.size());
-            grades.add(gradeSubmission(submission, identities, run, index, submissions.size(), withheld));
-            notifyProgress(item, index, submissions.size());
+            notifyCount(item, finished, 0, total);
+            Map<SubmissionResult, String> local = new LinkedHashMap<>();
+            StudentGrade grade = gradeSubmission(submission, identities, run, index + 1, total, local);
+            notifyCount(item, finished, 1, total);
+            return new GradedSubmission(grade, local);
+        });
+        for (GradedSubmission item : graded) {
+            grades.add(item.grade());
+            withheld.putAll(item.withheld());
         }
         BatchResult batch = new BatchResult(app.getAssessment(), grades, List.of(),
                 compareSimilarity(submissions));
@@ -94,8 +102,16 @@ public final class GradingPipeline {
         return result;
     }
 
+    private record GradedSubmission(StudentGrade grade, Map<SubmissionResult, String> withheld) {
+    }
+
+    // the count is read under the listener lock so parallel events never go backwards
+    private synchronized void notifyCount(String item, AtomicInteger finished, int step, int total) {
+        notifyProgress(item, finished.addAndGet(step), total);
+    }
+
     // a failing listener must not stop grading
-    private void notifyProgress(String item, int completed, int total) {
+    private synchronized void notifyProgress(String item, int completed, int total) {
         if (progressListener == null) {
             return;
         }

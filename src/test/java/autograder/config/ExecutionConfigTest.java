@@ -63,6 +63,29 @@ class ExecutionConfigTest {
         }
     }
 
+    @Test
+    void defaultsWorkersToOneAndParsesConfiguredValue() throws Exception {
+        AppConfig app = AppConfig.load(Path.of("config.properties"));
+        Properties properties = settings();
+        assertEquals(1, load(properties, app).workers());
+        properties.setProperty("execution.workers", " ");
+        assertEquals(1, load(properties, app).workers());
+        properties.setProperty("execution.workers", "4");
+        assertEquals(4, load(properties, app).workers());
+        properties.setProperty("execution.workers", "32");
+        assertEquals(32, load(properties, app).workers());
+    }
+
+    @Test
+    void rejectsWorkerCountsOutsideOneToThirtyTwo() throws Exception {
+        AppConfig app = AppConfig.load(Path.of("config.properties"));
+        Properties properties = settings();
+        for (String value : new String[] {"0", "-1", "33", "abc"}) {
+            properties.setProperty("execution.workers", value);
+            assertThrows(IllegalArgumentException.class, () -> load(properties, app), value);
+        }
+    }
+
     private ExecutionConfig load(Properties properties, AppConfig app) throws Exception {
         Path path = temporaryDirectory.resolve("execution.properties");
         try (var output = Files.newOutputStream(path)) {

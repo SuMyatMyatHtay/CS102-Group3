@@ -11,11 +11,19 @@ import java.util.Properties;
 
 public record ExecutionConfig(Path directory, String reportFile, String javaExecutable,
                               String javacExecutable, long compileTimeoutMillis,
-                              long caseTimeoutMillis, int maxOutputBytes) {
+                              long caseTimeoutMillis, int maxOutputBytes, int workers) {
+    private static final int MAX_WORKERS = 32;
     // compared ignoring case because macos and windows filesystems treat Cases.csv as cases.csv
     private static final List<String> RESERVED_REPORT_FILES = List.of(
             "cases.csv", "submissions.csv", "similarity.csv", "starter-analysis.csv",
             "sanity-checks.csv");
+
+    public ExecutionConfig(Path directory, String reportFile, String javaExecutable,
+                           String javacExecutable, long compileTimeoutMillis,
+                           long caseTimeoutMillis, int maxOutputBytes) {
+        this(directory, reportFile, javaExecutable, javacExecutable, compileTimeoutMillis,
+                caseTimeoutMillis, maxOutputBytes, 1);
+    }
 
     public static ExecutionConfig load(Path file, AppConfig app) throws IOException {
         Properties properties = new Properties();
@@ -55,7 +63,19 @@ public record ExecutionConfig(Path directory, String reportFile, String javaExec
         return new ExecutionConfig(directory, report, executable(properties, "execution.java", baseDirectory),
                 executable(properties, "execution.javac", baseDirectory),
                 positive(properties, "execution.compile.timeout.ms"),
-                positive(properties, "execution.case.timeout.ms"), (int) outputBytes);
+                positive(properties, "execution.case.timeout.ms"), (int) outputBytes, workers(properties));
+    }
+
+    private static int workers(Properties properties) {
+        String value = properties.getProperty("execution.workers");
+        if (value == null || value.isBlank()) {
+            return 1;
+        }
+        long workers = positive(properties, "execution.workers");
+        if (workers > MAX_WORKERS) {
+            throw new IllegalArgumentException("execution.workers must be at most " + MAX_WORKERS);
+        }
+        return (int) workers;
     }
 
     private static boolean isReservedReportFile(String report) {
