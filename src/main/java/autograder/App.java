@@ -1,6 +1,12 @@
 package autograder;
 
 import autograder.analysis.boilerplate.StarterCodeDetector;
+import autograder.autotester.Question;
+import autograder.autotester.QuestionRegistry;
+import autograder.autotester.RandomizedConfig;
+import autograder.autotester.RandomizedGrader;
+import autograder.autotester.RandomizedResult;
+import autograder.autotester.ResourceGenerator;
 import autograder.api.BoilerplateDetector;
 import autograder.api.FeedbackGenerator;
 import autograder.api.HtmlReportGenerator;
@@ -24,6 +30,7 @@ import autograder.submission.SubmissionProcessor;
 import autograder.ui.ConsoleProgressListener;
 
 import java.io.IOException;
+import java.security.SecureRandom;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
@@ -43,6 +50,9 @@ public final class App {
         if (args.length == 1 && args[0].equals("--help")) {
             printUsage();
             return 0;
+        }
+        if (args.length > 0 && args[0].startsWith("--randomized-")) {
+            return runRandomized(args);
         }
         if (args.length != 1) {
             printUsage();
@@ -97,6 +107,55 @@ public final class App {
             System.err.println("could not complete grading: " + exception.getMessage());
             return 1;
         }
+    }
+
+    private static int runRandomized(String[] args) {
+        try {
+            return switch (args[0]) {
+                case "--randomized-resources" -> generateRandomizedResources(args);
+                case "--randomized-grade" -> gradeRandomizedSubmission(args);
+                default -> {
+                    printUsage();
+                    yield 1;
+                }
+            };
+        } catch (Exception exception) {
+            if (exception instanceof InterruptedException) Thread.currentThread().interrupt();
+            System.err.println("randomized autograder error: " + exception.getMessage());
+            return 1;
+        }
+    }
+
+    private static int generateRandomizedResources(String[] args) throws Exception {
+        if (args.length != 3) {
+            printUsage();
+            return 1;
+        }
+        Question question = QuestionRegistry.find(args[1]);
+        RandomizedConfig config = RandomizedConfig.load(Path.of(args[2]));
+        new ResourceGenerator().generate(question, config.resourcesDirectory(),
+                config.examplesPerCase(), new SecureRandom().nextLong());
+        System.out.println("Student stub: " + config.resourcesDirectory().resolve(question.getClassName() + ".java"));
+        System.out.println("Student tester: " + config.resourcesDirectory()
+                .resolve(question.getClassName() + "Tester.java"));
+        return 0;
+    }
+
+    private static int gradeRandomizedSubmission(String[] args) throws Exception {
+        if (args.length < 4 || args.length > 5) {
+            printUsage();
+            return 1;
+        }
+        Question question = QuestionRegistry.find(args[1]);
+        RandomizedConfig config = RandomizedConfig.load(Path.of(args[3]));
+        long seed = args.length == 5 ? Long.parseLong(args[4]) : new SecureRandom().nextLong();
+        RandomizedGrader grader = new RandomizedGrader();
+        RandomizedResult result = grader.grade(question, Path.of(args[2]), config, seed);
+        Path report = grader.writeResult(question, Path.of(args[2]), config, result);
+        System.out.println((result.passed() ? "PASS" : "FAIL") + " | " + result.passedCount()
+                + "/" + result.totalCount() + " tests | seed=" + result.seed());
+        System.out.println("Result: " + report);
+        return 0;
     }
 
     static int generateReports(GradingRun run, BoilerplateConfig boilerplate, BoilerplateDetector detector,
@@ -200,5 +259,9 @@ public final class App {
     private static void printUsage() {
         System.out.println("Usage: java -jar <application.jar> <configuration.properties>");
         System.out.println("Prepares, compiles and grades submissions using timed instructor cases");
+        System.out.println("Usage: java -jar <application.jar> --randomized-resources <question-id> <configuration.properties>");
+        System.out.println("Usage: java -jar <application.jar> --randomized-grade <question-id> <submission-folder> "
+                + "<configuration.properties> [seed]");
+        System.out.println("Registered randomized questions: " + String.join(", ", QuestionRegistry.questionIds()));
     }
 }

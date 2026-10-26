@@ -1,0 +1,97 @@
+# Randomized question mode
+
+This is an optional second grading mode inside the existing application. The original CS102 lab-test mode remains the default: it still uses the fixed adapters and the existing feature 4 DynamicTestCaseProvider/DynamicRunner. The randomized question mode is selected with its own CLI command and does not replace those cases or change their scores.
+
+The mode provides a reusable question definition that can generate student files and run hidden seeded tests against an instructor reference implementation. Q1 (is-even) and Q2 (array sum) are small examples based on the proposal. They are not a replacement for the actual questions of a second assessment; add that assessment's question classes to the registry when its specifications are available.
+
+## Commands
+
+Generate a stub and example tester:
+
+~~~text
+java -jar target/auto-grading-system-1.0-SNAPSHOT.jar --randomized-resources Q1 config.properties
+~~~
+
+The output directory is randomized.resources.directory (default students/resources, relative to the configuration file). The command writes Q1.java and Q1Tester.java.
+
+Grade a folder containing the student's Q1.java:
+
+~~~text
+java -jar target/auto-grading-system-1.0-SNAPSHOT.jar --randomized-grade Q1 students/submissions/alice config.properties 482910374651
+~~~
+
+The seed is optional. If omitted, the app chooses and prints one. Use the same seed to reproduce the same generated inputs. The result goes to randomized.results.directory (default grading/results) and is named <submission-folder>-<class-name>.txt. A completed grading operation returns process exit code 0 even when the student receives FAIL; invalid configuration, missing files, or grader infrastructure errors return a nonzero exit code.
+
+The first result line is exactly PASS or FAIL. The remaining lines contain the pass count, seed, and up to the configured number of failing inputs. Compile errors, timeouts, crashes, and student exceptions are reported as failures with a reason.
+
+## Student workflow
+
+1. Put the generated Q1.java and Q1Tester.java in the same folder.
+2. Implement the declared public method without changing its class name, method name, parameter types, or return type.
+3. Run javac Q1.java Q1Tester.java followed by java Q1Tester to check the fixed examples.
+4. Submit the implemented question source file. The tester is for practice; grading uses additional generated inputs.
+
+## Adding an instructor question
+
+1. Add a Question subclass under src/main/java/autograder/autotester/.
+2. In its constructor, declare the class/method signature, description, parameters, and test cases. Each test case needs one generator per parameter.
+3. Implement answerKey(List<Object> arguments) in the instructor subclass. It runs in the trusted application process and is never copied into student resources or the student JVM classpath.
+4. Register the question in QuestionRegistry.createQuestions().
+5. Generate the student resources, then grade a correct solution and a deliberately hard-coded or incorrect solution with known seeds.
+
+Example:
+
+~~~java
+public final class Q1 extends Question {
+    public Q1() {
+        signature("Q1", "isEven", boolean.class);
+        describe("Return true when the integer is even.");
+        param("n", int.class);
+        addTestCase("small", new RandomInt(-100, 100));
+        addTestCase("edge", new RandomInt(-3, 3));
+    }
+
+    @Override
+    public Object answerKey(List<Object> arguments) {
+        return ((Integer) arguments.get(0)) % 2 == 0;
+    }
+}
+~~~
+
+Available built-in generators are RandomInt(minimum, maximum) and RandomIntArray(minimumLength, maximumLength, minimumValue, maximumValue). The runner currently supports int, boolean, long, double, String, int[], and String[] parameters/returns, including their boxed primitive types where applicable. It rejects mismatched generated values, invalid Java identifiers, duplicate test-case IDs, missing signatures, unsupported values, and questions without test cases before grading.
+
+Generated testers use a few fixed examples per test case. Expected values are computed when the tester is generated; the reference implementation itself is not written to the tester. Grading generates the configured number of inputs for every case from one Random(seed), computes expected values in the parent process, invokes the student's public method in a separate JVM, and compares results with Objects.deepEquals. Array inputs are serialized to the child process; the answer key receives a separate copy in the parent, so student mutations cannot change the reference calculation.
+
+## Configuration
+
+These optional properties live in the same file passed to either command. Paths are resolved relative to that file.
+
+| Property | Default | Purpose |
+| --- | --- | --- |
+| randomized.resources.directory | students/resources | Generated student stub/tester directory |
+| randomized.results.directory | grading/results | Per-submission result directory and temporary workspace parent |
+| randomized.java.command | java | Java executable for the child runner |
+| randomized.javac.command | javac | Java compiler for student source |
+| randomized.runs.per.case | 50 | Generated grading inputs for each declared case |
+| randomized.timeout.seconds | 10 | Deadline for the complete student run; student compilation has a separate 60-second minimum deadline |
+| randomized.max.failures.shown | 10 | Maximum detailed failures written to the result |
+| randomized.examples.per.case | 2 | Distinct examples requested for each generated tester |
+| randomized.max.output.bytes | 1048576 | Maximum captured compiler/runner output |
+
+The values are range-checked. A grading run is limited to 10,000 trials total and an estimated 16 MiB of generated inputs. If a generator repeatedly produces duplicate examples, the tester contains the distinct examples available within a bounded number of attempts.
+
+## Design and boundaries
+
+| Component | Responsibility |
+| --- | --- |
+| Question | Holds one question's public signature, parameter definitions, generators, and answer-key contract |
+| RandomInt, RandomIntArray | Produce values from the seeded Random supplied by the caller |
+| ResourceGenerator | Writes the student stub and fixed-example tester |
+| RandomizedGrader | Generates the seeded trials, compiles the submission, runs the child JVM, compares outputs, and writes structured result data |
+| RandomizedStudentRunner.java | Standalone child-process entry point; it only sees generated inputs, the student's classes, and the runner |
+| RandomizedConfig | Reads and validates the mode's external settings |
+| QuestionRegistry | Maps question IDs to instructor-authored definitions |
+
+The result file is intentionally separate from scorereport.csv: the new mode grades one selected question/submission at a time and reports PASS/FAIL plus evidence. It does not currently add these results to the existing assessment's batch score sheet. The regular configured batch pipeline remains unchanged.
+
+The child JVM protects the main application from ordinary student exceptions, System.exit, and non-terminating code by running separately with one deadline for the complete run. A loop in one call therefore times out the question's run as a whole. Temporary compilation and protocol files are removed after grading, and the submitted source is copied before compilation. This is not a security sandbox: student code has the grading user's file, network, and process permissions and may tamper with files or launch processes. Use only trusted course submissions unless the child process is additionally restricted by an external container or account policy.

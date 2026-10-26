@@ -47,6 +47,17 @@ After implementation and the appropriate checks, commit/push the reviewed featur
 
 ## Setup, build and run
 
+### Optional randomized question mode
+
+The original assessment pipeline remains the default. The new mode can generate reusable student resources and grade one selected question with seeded inputs:
+
+~~~sh
+java -jar target/auto-grading-system-1.0-SNAPSHOT.jar --randomized-resources Q1 config.properties
+java -jar target/auto-grading-system-1.0-SNAPSHOT.jar --randomized-grade Q1 students/submissions/alice config.properties 482910374651
+~~~
+
+Omit the final seed argument to let the app choose one; the result records it for replay. See [RANDOMIZED_AUTOGRADER.md](RANDOMIZED_AUTOGRADER.md) for the question API, configuration, result format, and process-isolation limits.
+
 ### 1. Install the prerequisites
 
 Each teammate needs Git, a **full JDK 17 or later** (including `javac`) and **Apache Maven 3.9.x** on their own computer. An editor such as VS Code or IntelliJ is optional; the terminal commands below are sufficient. This repository does not include a Maven wrapper.
