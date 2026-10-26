@@ -84,7 +84,7 @@ public final class GradingService {
         AppConfig app = settings.app();
         return App.generateReports(run, settings.boilerplate(),
                 new StarterCodeDetector(app.getAssessment(), settings.boilerplate()),
-                settings.html(), new OfflineHtmlReportGenerator(settings.html().file()),
+                settings.sanity(), settings.html(), new OfflineHtmlReportGenerator(settings.html().file()),
                 settings.feedback(), new MarkdownFeedbackGenerator(
                 app.getAssessment(), settings.execution().caseTimeoutMillis(),
                 settings.feedback().maxDiagnosticLines(), app.getRosterPrefix(),

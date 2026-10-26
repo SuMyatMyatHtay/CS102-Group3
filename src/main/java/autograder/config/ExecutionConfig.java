@@ -15,7 +15,8 @@ public record ExecutionConfig(Path directory, String reportFile, String javaExec
     private static final int MAX_WORKERS = 32;
     // compared ignoring case because macos and windows filesystems treat Cases.csv as cases.csv
     private static final List<String> RESERVED_REPORT_FILES = List.of(
-            "cases.csv", "submissions.csv", "similarity.csv", "starter-analysis.csv");
+            "cases.csv", "submissions.csv", "similarity.csv", "starter-analysis.csv",
+            "sanity-checks.csv");
 
     public ExecutionConfig(Path directory, String reportFile, String javaExecutable,
                            String javacExecutable, long compileTimeoutMillis,

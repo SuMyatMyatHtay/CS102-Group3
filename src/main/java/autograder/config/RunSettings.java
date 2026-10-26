@@ -15,9 +15,18 @@ public record RunSettings(Path configFile, AppConfig app,
                           PlagiarismConfig plagiarism,
                           HtmlReportConfig html,
                           FeedbackConfig feedback,
-                          BoilerplateConfig boilerplate) {
+                          BoilerplateConfig boilerplate,
+                          SanityConfig sanity) {
     public RunSettings {
         configFile = configFile.toAbsolutePath().normalize();
+    }
+
+    // keeps the constructor from before sanity checks existed
+    public RunSettings(Path configFile, AppConfig app, ExecutionConfig execution,
+                       PlagiarismConfig plagiarism, HtmlReportConfig html,
+                       FeedbackConfig feedback, BoilerplateConfig boilerplate) {
+        this(configFile, app, execution, plagiarism, html, feedback, boilerplate,
+                SanityConfig.defaults());
     }
 
     public static RunSettings load(Path configFile,
@@ -41,7 +50,8 @@ public record RunSettings(Path configFile, AppConfig app,
                 PlagiarismConfig.load(properties, base),
                 HtmlReportConfig.load(properties, base),
                 FeedbackConfig.load(properties, base),
-                BoilerplateConfig.load(properties, base));
+                BoilerplateConfig.load(properties, base),
+                SanityConfig.load(properties, base));
     }
 
     private static Properties read(Path file) throws IOException {
