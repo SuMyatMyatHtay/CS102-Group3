@@ -27,14 +27,16 @@ Before proposing any new implementation, review the relevant brief sections and 
 | 3: Starter code / boilerplate diff detector | Sera (locked) | REVIEW |
 | 4: Dynamic parameterized test ingestion | William (locked) | REVIEW |
 | 5: Markdown student feedback | Gabriel | REVIEW |
-| 6: ANSI terminal dashboard | Unclaimed | TODO |
+| 6: ANSI terminal dashboard | Kai Cong | REVIEW |
 | Additional: Java Swing instructor GUI (not a numbered bonus) | Boey | DONE |
+| Additional: parallel grading (improvement idea 6, not bonus 6) | Boey | REVIEW |
+| Additional: score sanity checks (improvement idea 9) | Boey | REVIEW |
 
 Allowed statuses: TODO, IN_PROGRESS, REVIEW, DONE.
 
 ## Gatekeeper and ownership
 
-Boey owns feature 2 (offline HTML dashboard) and approved the original implementation plan on 2026-10-10. Gabriel claimed feature 5 (Markdown student feedback) on 2026-10-10 and approved its plan; implementation is in REVIEW on branch markdown-student-feedback awaiting Gabriel's clean-build confirmation. Available feature: 6 (Gabriel reports Kai Cong intends to take it; Kai Cong should confirm and record the claim). Ask unassigned members to claim an available feature before feature work. Only Sera may claim or implement feature 3; only William may claim or implement feature 4. No bonus implementation begins until the MVP is functional and tested.
+Boey owns feature 2 (offline HTML dashboard) and approved the original implementation plan on 2026-10-10. Gabriel claimed feature 5 (Markdown student feedback) on 2026-10-10 and approved its plan; implementation is in REVIEW on branch markdown-student-feedback awaiting Gabriel's clean-build confirmation. Kai Cong owns feature 6 (ANSI terminal dashboard); Boey recorded on 2026-10-26 that its PR #15 (branch kaicong/6-terminal-dashboard, draft) is awaiting approval. No numbered bonus feature remains available. Ask unassigned members to claim an available feature before feature work. Only Sera may claim or implement feature 3; only William may claim or implement feature 4. No bonus implementation begins until the MVP is functional and tested.
 
 Keep shared configuration, domain models, interfaces, Maven setup, and pipeline integration coordinated by the main agent. Give each bonus implementation its own package after the interfaces are approved. Record file ownership before concurrent edits. Agents must reread this board before claiming work; this file alone does not provide a concurrent locking mechanism.
 
@@ -61,6 +63,8 @@ Use [docs/CODE_REVIEW.md](docs/CODE_REVIEW.md) for the merged-main review, propo
 Use [docs/BUGS.md](docs/BUGS.md) as the known-bug register before proposing fixes. It records B1 (shared grading/configuration; Boey coordinates, implementing human owner unassigned) and B2 (feature-2 dashboard fixture; Boey). Documentation does not assign another teammate or approve a fix; coordinate shared ownership and preserve the recorded evidence limits.
 
 ## Current Context
+
+- 2026-10-26: validated driver Boey approved improvement ideas 6 (parallel grading) and 9 (score sanity checks) and the idea-6 plan; recorded Kai Cong as feature 6 owner (PR #15, draft, awaiting approval). Branch `parallel-grading` was created from `instructor-gui` (stacked on PR #16). Idea 6 adds optional `execution.workers` (1-32, default 1), package-private `grading.SubmissionScheduler` and a scheduler call in `GradingPipeline.grade()`; per-submission grading code is unchanged. Agent verification: `mvn clean verify` 164 tests, zero failures/errors/skips; the previous commit and the new jar with workers absent produced identical normalised stdout, stderr and all 577 run files (only DurationMillis/timings differ); three runs each at 2 and 4 workers matched exactly (270 case rows, no status changes), console line order varies with workers > 1. Sample wall-clock on 10 cores (4 performance): 43 s sequential, about 41 s at 2 and 35 s at 4 workers, limited by the slowest student. Project hashes unchanged. Uncommitted; Boey's clean-build confirmation and teammate review pending. Idea 9 is TODO
 
 - 2026-10-16: Sera requested local fixes for PR #6's duplicate `grading` declaration and starter-analysis CSV failure stopping later reports, cross-checked against team main c7554e8. The clean local `sera-feature-3-boilerplate` branch was fast-forwarded from cfbd811 to its existing PR head e84c30d; no team-main merge, commit or push was performed by this agent
 - PR #6 fix ownership: this agent owns App.java, package-private StarterAnalysis.java, AppTest.java and the focused resolution/testing documentation. No other agent is editing these files. Preserve the three-argument plagiarism-aware GradingPipeline constructor, shared APIs, other feature logic and supplied inputs
