@@ -47,6 +47,20 @@ After implementation and the appropriate checks, commit/push the reviewed featur
 
 ## Setup, build and run
 
+### Optional randomized question mode
+
+The original assessment pipeline remains the default. The optional randomized mode can generate reusable student resources, grade one extracted submission, or grade one question across a folder of ZIPs:
+
+~~~sh
+java -jar target/auto-grading-system-1.0-SNAPSHOT.jar --randomized-resources Q1 config.properties
+java -jar target/auto-grading-system-1.0-SNAPSHOT.jar --randomized-grade Q1 students/submissions/alice config.properties 482910374651
+java -jar target/auto-grading-system-1.0-SNAPSHOT.jar --randomized-grade-batch Q1a C:/courses/CS102/submissions config.properties 482910374651
+~~~
+
+The current lab-test question set (Q1a, Q1b, Q2a, Q2b, Q3) is also available through this mode; for example, substitute `Q1a` in either command. Omit the final seed argument to let the app choose one; the result records it for replay. See [RANDOMIZED_AUTOGRADER.md](RANDOMIZED_AUTOGRADER.md) for signatures, generated fixtures, demo steps, configuration, and process-isolation limits.
+
+Instructors can follow the [randomized lab-test user guide](docs/INSTRUCTOR_USER_GUIDE.md) for step-by-step resource generation and randomized ZIP batch grading. The original ZIP batch grader remains a separate workflow.
+
 ### 1. Install the prerequisites
 
 Each teammate needs Git, a **full JDK 17 or later** (including `javac`) and **Apache Maven 3.9.x** on their own computer. An editor such as VS Code or IntelliJ is optional; the terminal commands below are sufficient. This repository does not include a Maven wrapper.
@@ -88,7 +102,7 @@ If Git reports divergent branches or conflicting local changes, coordinate with 
 mvn clean verify
 ```
 
-This removes the previous `target` output, compiles the application, runs the tests and builds `target/auto-grading-system-1.0-SNAPSHOT.jar`. The first build downloads Maven plugins/test dependencies and needs internet access. No separate application libraries need to be downloaded manually.
+This removes the previous `target` output, compiles the application, runs the tests and builds `target/auto-grading-system-1.0-SNAPSHOT.jar`. The first build downloads Maven plugins and dependencies and needs internet access. The only application libraries are JPlag 4.3.0 (GPL-3.0, the newest release built for Java 17) and its small dependencies; Maven downloads them and bundles them into the JAR, so nothing needs to be installed manually and `java -jar` works on its own.
 
 Wait for **BUILD SUCCESS** before running the application. The current build (2026-10-24, `main` after PR #12) passes **128 tests, zero failures/errors/skips**; earlier milestones had 48 (MVP), 59 (dashboard), 67 (heatmap) and 86 (modularisation). Messages about deliberately broken archives, missing files or timeouts during tests are expected when the final test summary passes. Detailed test reports are in `target/surefire-reports`.
 
@@ -105,7 +119,7 @@ The terminal prints the exact new `build/grading/run-*` directory containing:
 - `scorereport.csv`: scores in the required roster format
 - `cases.csv`: individual test statuses, marks and diagnostic output
 - `submissions.csv`: export/withholding decisions and preparation warnings
-- `similarity.csv`: student pairs whose code for a question reaches the similarity threshold, with matching line ranges (advisory only; never changes scores)
+- `similarity.csv`: student pairs whose code for a question reaches a similarity threshold, one row per algorithm (n-gram and/or JPlag) with matching line ranges (advisory only; never changes scores)
 - `dashboard.html`: self-contained offline dashboard when `grading.html.enabled=true`
 
 Each run creates a fresh directory. `mvn clean` removes `target`, but does not remove old `build` workspaces or appended preparation logs. Supplied input files remain unchanged. See the execution policy below before using submissions outside the supplied sample.
@@ -238,8 +252,10 @@ All paths in this table are beneath `src/main/java/autograder/`.
 | `submission/WorkingCopyPreparer.java` | Builds separate correctly named copies and records folder corrections |
 | `submission/CorrectionLog.java` | Saves a history of corrections |
 | `util/AnomalyLog.java` | Saves problems and prints warnings |
-| `plagiarism/NGramPlagiarismDetector.java` | Compares each pair of students per question using normalized 5-token sequences, excluding starter code |
-| `plagiarism/JavaTokenizer.java` / `NGramBuilder.java` / `SimilarityCalculator.java` | Normalize source tokens, build n-grams and compute Jaccard similarity |
+| `plagiarism/PlagiarismDetectorFactory.java` / `CombinedPlagiarismDetector.java` | Build the configured algorithms and run them together; one failing algorithm does not discard the others |
+| `plagiarism/NGramPlagiarismDetector.java` | Our algorithm: compares each pair of students per question using normalized 5-token sequences and Jaccard similarity, excluding starter code |
+| `plagiarism/JPlagPlagiarismDetector.java` | Runs the JPlag library (greedy string tiling over Java syntax tokens) per question, with the starter files as base code |
+| `plagiarism/JavaTokenizer.java` / `NGramBuilder.java` / `SimilarityCalculator.java` / `QuestionFiles.java` | Normalize source tokens, build n-grams, compute Jaccard similarity and locate each question's files |
 | `config/PlagiarismConfig.java` | Reads and validates the `plagiarism.*` settings |
 | `roster/ScoreSheetRepository.java` | Reads the class list without discarding the CSV's original fields |
 | `csv/CsvCodec.java` | Reads/writes CSV quoting, commas, and line breaks correctly |
@@ -252,7 +268,7 @@ The model classes are forms for storing and passing information, not separate ap
 
 ## Configuration and another assessment
 
-`plagiarism.enabled`, `plagiarism.ngram.size`, `plagiarism.threshold` (above 0, at most 1), `plagiarism.min.ngrams` and `plagiarism.starter.directory` control the similarity check. Relative paths resolve against the properties file's directory. `execution.java` and `execution.javac` accept `JDK` (the running JDK's tools), an executable on PATH, or a path. Compilation defaults to 15 seconds per part, execution to 2 seconds per case, and captured output to 65,536 bytes per stream. Both streams keep draining after the capture limit. These settings live in `config.properties`.
+`plagiarism.enabled` and `plagiarism.algorithms` (`ngram`, `jplag` or both, comma-separated) choose the similarity check. `plagiarism.ngram.size`, `plagiarism.threshold` and `plagiarism.min.ngrams` tune the n-gram algorithm; `plagiarism.jplag.threshold` and `plagiarism.jplag.min.tokens` (shortest matching run JPlag counts) tune JPlag. Thresholds are above 0 and at most 1; each algorithm has its own because JPlag ignores short shared idioms and scores lower. `plagiarism.starter.directory` supplies the starter code both algorithms ignore. Relative paths resolve against the properties file's directory. `execution.java` and `execution.javac` accept `JDK` (the running JDK's tools), an executable on PATH, or a path. Compilation defaults to 15 seconds per part, execution to 2 seconds per case, and captured output to 65,536 bytes per stream. Both streams keep draining after the capture limit. These settings live in `config.properties`.
 Relative paths resolve against the properties file's directory. `execution.java` and `execution.javac` accept `JDK` (the running JDK's tools), an executable on PATH, or a path. Compilation defaults to 15 seconds per part, execution to 2 seconds per case, and captured output to 65,536 bytes per stream. Both streams keep draining after the capture limit. These settings live in `config.properties`. After grading, advisory sanity checks look for signs of a problem in the assessment rather than the students and write `sanity-checks.csv`; they never change marks or export decisions. They flag a question every graded submission fails to compile, a question where at least `grading.sanity.zero.percent` (90) of graded submissions score zero, a case where at least `grading.sanity.same.failure.percent` (80) fail with the same printed output (silent failures are not grouped), a case timed out by at least `grading.sanity.timeout.percent` (50), and a question whose fixed pass rate exceeds its dynamic pass rate by `grading.sanity.fixed.dynamic.gap.points` (40) or more. Withheld submissions are excluded and checks only run with at least `grading.sanity.min.graded` (5) graded submissions; `grading.sanity.enabled=false` turns them off. All keys are optional. `grading.feedback.enabled`, `grading.feedback.directory` and `grading.feedback.max.diagnostic.lines` control the per-student Markdown feedback files (feature 5, in review) written to `build/grading/run-*/feedback`.
 
 `assessment.question.ids` describes independently scored parts, source files, instructor testers, case counts, weights, support classes, and fixtures. The current fixed adapters support the supplied Q1a (3 cases), Q1b (3), Q2a (5), Q2b (5), and Q3 (4) testers. Weights remain configurable and the roster denominator must agree. The provider verifies the original tester content so an edited tester cannot silently use an outdated adapter. Supporting a different tester requires a new reviewed adapter/provider; preparation's configurable metadata alone does not provide general-purpose test ingestion. Feature 4 adds five seeded property checks per question and distributes each question's existing maximum across all its fixed and dynamic cases.

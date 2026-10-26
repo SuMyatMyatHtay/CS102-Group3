@@ -8,7 +8,7 @@ import autograder.config.RunSettings;
 import autograder.grading.GradingPipeline;
 import autograder.grading.GradingRun;
 import autograder.model.SubmissionResult;
-import autograder.plagiarism.NGramPlagiarismDetector;
+import autograder.plagiarism.PlagiarismDetectorFactory;
 import autograder.report.feedback.MarkdownFeedbackGenerator;
 import autograder.report.html.OfflineHtmlReportGenerator;
 import autograder.submission.SubmissionProcessor;
@@ -92,10 +92,7 @@ public final class GradingService {
     }
 
     private static PlagiarismDetector detector(RunSettings settings) {
-        if (settings.plagiarism().enabled()) {
-            return new NGramPlagiarismDetector(settings.plagiarism());
-        }
-        return (submissions, assessment) -> List.of();
+        return PlagiarismDetectorFactory.create(settings.plagiarism());
     }
 
     private static ProgressListener gradingAdapter(RunListener listener) {
