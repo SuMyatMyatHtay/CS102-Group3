@@ -6,16 +6,14 @@ import autograder.model.SubmissionResult;
 
 import javax.swing.table.AbstractTableModel;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /** Read-only table of each student's score and any reason it was withheld. */
 public final class ResultsTableModel extends AbstractTableModel {
     private static final String[] COLUMNS = {"Student", "Score", "Note"};
 
-    /** One table row. */
-    public record Row(String student, double score, String note) {
+    /** One table row; a withheld student has no exported score, so score is null. */
+    public record Row(String student, Double score, String note) {
     }
 
     private final List<Row> rows;
@@ -25,18 +23,15 @@ public final class ResultsTableModel extends AbstractTableModel {
     }
 
     public static ResultsTableModel from(GradingRun run) {
-        Map<String, String> notesByLabel = new HashMap<>();
-        for (Map.Entry<SubmissionResult, String> entry : run.withheld().entrySet()) {
-            notesByLabel.put(entry.getKey().getIdentity().getLabel(), entry.getValue());
-        }
         List<Row> rows = new ArrayList<>();
         for (StudentGrade grade : run.batch().getGrades()) {
-            String label = grade.getSubmission().getIdentity().getLabel();
-            String note = run.withheld().get(grade.getSubmission());
-            if (note == null) {
-                note = notesByLabel.getOrDefault(label, "");
+            // withheld is keyed by the same submission objects the grades hold
+            String reason = run.withheld().get(grade.getSubmission());
+            if (reason == null) {
+                rows.add(new Row(displayName(grade.getSubmission()), grade.getTotalScore(), ""));
+            } else {
+                rows.add(new Row(displayName(grade.getSubmission()), null, "Withheld: " + reason));
             }
-            rows.add(new Row(displayName(grade.getSubmission()), grade.getTotalScore(), note));
         }
         return new ResultsTableModel(rows);
     }

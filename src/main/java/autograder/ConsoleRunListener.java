@@ -10,6 +10,7 @@ import autograder.model.SubmissionResult;
 import autograder.model.SubmissionStatus;
 import autograder.ui.ConsoleProgressListener;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -84,11 +85,16 @@ final class ConsoleRunListener implements RunListener {
             System.out.println("Similarity check: disabled in configuration");
             return;
         }
+        List<String> thresholds = new ArrayList<>();
+        if (plagiarism.uses(PlagiarismConfig.NGRAM)) {
+            thresholds.add(String.format(Locale.ROOT, "n-gram >= %.2f", plagiarism.threshold()));
+        }
+        if (plagiarism.uses(PlagiarismConfig.JPLAG)) {
+            thresholds.add(String.format(Locale.ROOT, "JPlag >= %.2f", plagiarism.jplagThreshold()));
+        }
         int pairs = run.batch().getSimilarities().size();
-        System.out.println("Similarity review: " + pairs + " question pair(s) at or above "
-                + String.format(Locale.ROOT, "%.2f", plagiarism.threshold())
-                + " similarity, starter code excluded: "
-                + run.directory().resolve(GradingPipeline.SIMILARITY_REPORT));
+        System.out.println("Similarity review: " + pairs + " finding(s) (" + String.join(", ", thresholds)
+                + "), starter code excluded: " + run.directory().resolve(GradingPipeline.SIMILARITY_REPORT));
         if (pairs > 0) {
             System.out.println("Similarity needs instructor judgement and is not proof of copying");
         }
