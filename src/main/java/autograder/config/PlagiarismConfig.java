@@ -49,13 +49,18 @@ public record PlagiarismConfig(boolean enabled, List<String> algorithms, int ngr
         try (InputStream input = Files.newInputStream(file)) {
             properties.load(input);
         }
-        Path base = file.toAbsolutePath().normalize().getParent();
+        Path baseDirectory = file.toAbsolutePath().normalize().getParent();
+        return load(properties, baseDirectory);
+    }
+
+    static PlagiarismConfig load(Properties properties, Path baseDirectory)
+            throws IOException {
         String enabled = required(properties, "plagiarism.enabled");
         if (!enabled.equals("true") && !enabled.equals("false")) {
             throw new IllegalArgumentException("plagiarism.enabled must be true or false");
         }
         Path starterDirectory = AppConfig.canonicalize(
-                base.resolve(required(properties, "plagiarism.starter.directory")));
+                baseDirectory.resolve(required(properties, "plagiarism.starter.directory")));
         if (!Files.isDirectory(starterDirectory)) {
             throw new IllegalArgumentException("plagiarism.starter.directory is not a directory: "
                     + starterDirectory);

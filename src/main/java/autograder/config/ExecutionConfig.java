@@ -21,8 +21,13 @@ public record ExecutionConfig(Path directory, String reportFile, String javaExec
         try (InputStream input = Files.newInputStream(file)) {
             properties.load(input);
         }
-        Path base = file.toAbsolutePath().normalize().getParent();
-        Path directory = AppConfig.canonicalize(base.resolve(required(properties, "grading.directory")));
+        Path baseDirectory = file.toAbsolutePath().normalize().getParent();
+        return load(properties, baseDirectory, app);
+    }
+
+    static ExecutionConfig load(Properties properties, Path baseDirectory, AppConfig app)
+            throws IOException {
+        Path directory = AppConfig.canonicalize(baseDirectory.resolve(required(properties, "grading.directory")));
         List<Path> protectedPaths = new ArrayList<>(List.of(app.getInputDirectory(),
                 app.getExtractionDirectory(), app.getWorkingDirectory(), app.getScoreSheetPath(),
                 app.getAnomalyLog(), app.getCorrectionLog()));
@@ -46,8 +51,8 @@ public record ExecutionConfig(Path directory, String reportFile, String javaExec
         if (outputBytes > Integer.MAX_VALUE) {
             throw new IllegalArgumentException("execution.output.max.bytes is too large");
         }
-        return new ExecutionConfig(directory, report, executable(properties, "execution.java", base),
-                executable(properties, "execution.javac", base),
+        return new ExecutionConfig(directory, report, executable(properties, "execution.java", baseDirectory),
+                executable(properties, "execution.javac", baseDirectory),
                 positive(properties, "execution.compile.timeout.ms"),
                 positive(properties, "execution.case.timeout.ms"), (int) outputBytes);
     }
@@ -61,7 +66,7 @@ public record ExecutionConfig(Path directory, String reportFile, String javaExec
         return false;
     }
 
-    private static String executable(Properties properties, String key, Path base) {
+    private static String executable(Properties properties, String key, Path baseDirectory) {
         String value = required(properties, key);
         if (value.equals("JDK")) {
             String name = key.equals("execution.java") ? "java" : "javac";
@@ -71,7 +76,7 @@ public record ExecutionConfig(Path directory, String reportFile, String javaExec
             return Path.of(System.getProperty("java.home"), "bin", name).toString();
         }
         if (value.contains("/") || value.contains("\\")) {
-            return base.resolve(value).normalize().toString();
+            return baseDirectory.resolve(value).normalize().toString();
         }
         return value;
     }

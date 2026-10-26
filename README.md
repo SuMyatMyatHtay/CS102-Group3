@@ -130,6 +130,18 @@ To display help without grading:
 java -jar target/auto-grading-system-1.0-SNAPSHOT.jar --help
 ```
 
+### Instructor GUI (optional)
+
+After `mvn clean verify`, start the desktop window from the repository root:
+
+```sh
+java -cp target/auto-grading-system-1.0-SNAPSHOT.jar autograder.gui.GuiLauncher
+```
+
+An optional configuration path may follow the class name. Without one, the GUI uses the last configuration it ran, then `config.properties` in the current directory, then the one beside the `target` folder. The submissions folder, score sheet and output folder default to the configured values and can be changed with **Choose…**. Each field shows its readiness inline; **Grade** runs a final check, grades in the background with progress, and then shows the scores and buttons for the dashboard, CSVs, feedback and run folder that were actually written. **Stop** interrupts grading: running test processes are terminated and no scores are written. Closing the window during a run asks for confirmation first.
+
+The GUI uses the same grading service, validation, withholding and report order as the command line, and never edits `config.properties`. Last-used paths are remembered with Java Preferences. It needs a desktop session; on a headless machine it prints the command-line alternative and exits with status 1. The `java -jar` command above is unchanged.
+
 ### Offline HTML dashboard
 
 Open the HTML file printed by the command directly in your browser. It contains its own styles and scripts and needs no server or internet connection. Search by name, username or archive, filter by export decision and warnings, sort by name or score, and expand a submission to see question marks, preparation corrections and per-case diagnostics.
