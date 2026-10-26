@@ -56,7 +56,7 @@ java -jar target/auto-grading-system-1.0-SNAPSHOT.jar --randomized-resources Q1 
 java -jar target/auto-grading-system-1.0-SNAPSHOT.jar --randomized-grade Q1 students/submissions/alice config.properties 482910374651
 ~~~
 
-Omit the final seed argument to let the app choose one; the result records it for replay. See [RANDOMIZED_AUTOGRADER.md](RANDOMIZED_AUTOGRADER.md) for the question API, configuration, result format, and process-isolation limits.
+The current lab-test question set (Q1a, Q1b, Q2a, Q2b, Q3) is also available through this mode; for example, substitute `Q1a` in either command. Omit the final seed argument to let the app choose one; the result records it for replay. See [RANDOMIZED_AUTOGRADER.md](RANDOMIZED_AUTOGRADER.md) for signatures, generated fixtures, demo steps, configuration, and process-isolation limits.
 
 ### 1. Install the prerequisites
 

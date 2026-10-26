@@ -16,7 +16,7 @@ public final class RandomizedStudentRunner {
 
     public static void main(String[] args) throws Exception {
         if (args.length < 4) throw new IllegalArgumentException("runner arguments are incomplete");
-        List<Object[]> inputs = readInputs(Path.of(args[2]));
+        List<Object[]> inputs = decodeInputs(args[0], readInputs(Path.of(args[2])));
         Method method;
         Object receiver;
         try {
@@ -78,6 +78,7 @@ public final class RandomizedStudentRunner {
     private static Object[] invoke(Method method, Object receiver, Object[] arguments) {
         try {
             Object result = method.invoke(receiver, arguments);
+            result = normalizeResult(method.getDeclaringClass().getSimpleName(), result);
             if (result != null && !isSupportedValue(result)) {
                 throw new IllegalArgumentException("unsupported return value type: "
                         + result.getClass().getTypeName());
@@ -89,6 +90,43 @@ public final class RandomizedStudentRunner {
         } catch (ReflectiveOperationException | RuntimeException exception) {
             return new Object[] {Boolean.FALSE, describe(exception)};
         }
+    }
+
+    private static List<Object[]> decodeInputs(String questionId, List<Object[]> inputs) throws Exception {
+        if (!questionId.equals("Q3")) return inputs;
+        for (Object[] arguments : inputs) {
+            if (arguments.length == 0 || !(arguments[0] instanceof List<?> encodedShapes)) continue;
+            List<Object> shapes = new ArrayList<>();
+            for (Object encoded : encodedShapes) shapes.add(decodeShape((Object[]) encoded));
+            arguments[0] = shapes;
+        }
+        return inputs;
+    }
+
+    private static Object decodeShape(Object[] encoded) throws Exception {
+        if (encoded.length != 4 || !(encoded[0] instanceof String kind)
+                || !(encoded[1] instanceof String id)
+                || !(encoded[2] instanceof Double first) || !(encoded[3] instanceof Double second)) {
+            throw new IllegalArgumentException("invalid shape test input");
+        }
+        if (kind.equals("circle")) {
+            return Class.forName("Circle").getConstructor(String.class, double.class)
+                    .newInstance(id, first);
+        }
+        if (kind.equals("rectangle")) {
+            return Class.forName("Rectangle").getConstructor(String.class, double.class, double.class)
+                    .newInstance(id, first, second);
+        }
+        throw new IllegalArgumentException("unsupported shape type: " + kind);
+    }
+
+    private static Object normalizeResult(String questionId, Object result) {
+        if (!(result instanceof List<?> values)) return result;
+        List<Object> normalized = new ArrayList<>();
+        for (Object value : values) {
+            normalized.add(questionId.equals("Q3") ? String.valueOf(value) : normalizeResult(questionId, value));
+        }
+        return normalized;
     }
 
     private static void writeOutcomes(Path outputPath, List<Object[]> outcomes) throws Exception {
@@ -126,6 +164,7 @@ public final class RandomizedStudentRunner {
     }
 
     private static boolean isSupportedValue(Object value) {
+        if (value instanceof List<?> values) return values.stream().allMatch(RandomizedStudentRunner::isSupportedValue);
         Class<?> type = value.getClass();
         return type == String.class || type == Integer.class || type == Boolean.class
                 || type == Long.class || type == Double.class || type == int[].class

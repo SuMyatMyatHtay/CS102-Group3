@@ -27,6 +27,11 @@ public final class QuestionRegistry {
         Map<String, Question> questions = new LinkedHashMap<>();
         register(questions, new Q1());
         register(questions, new Q2());
+        register(questions, new Q1a());
+        register(questions, new Q1b());
+        register(questions, new Q2a());
+        register(questions, new Q2b());
+        register(questions, new Q3());
         return Collections.unmodifiableMap(new LinkedHashMap<>(questions));
     }
 

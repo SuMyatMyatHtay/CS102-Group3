@@ -2,7 +2,17 @@
 
 This is an optional second grading mode inside the existing application. The original CS102 lab-test mode remains the default: it still uses the fixed adapters and the existing feature 4 DynamicTestCaseProvider/DynamicRunner. The randomized question mode is selected with its own CLI command and does not replace those cases or change their scores.
 
-The mode provides a reusable question definition that can generate student files and run hidden seeded tests against an instructor reference implementation. Q1 (is-even) and Q2 (array sum) are small examples based on the proposal. They are not a replacement for the actual questions of a second assessment; add that assessment's question classes to the registry when its specifications are available.
+The mode provides reusable question definitions that can generate student files and run seeded tests against instructor reference implementations. Q1 (is-even) and Q2 (array sum) remain small API examples. The current lab-test questions are also registered with their original method names and Java signatures:
+
+| ID | Method signature | Behavior and inputs |
+| --- | --- | --- |
+| Q1a | `ArrayList<String> getIsogramWords(ArrayList<String>)` | Preserve input order and duplicates; keep words without repeated letters, ignoring case and non-letters |
+| Q1b | `int getSumOfEvenIntegers(ArrayList<Object>)` | Sum even `Integer` values and ignore values of other types |
+| Q2a | `double getAverageAge(String, String)` | Read the named people file and average matching first or last name tokens; return `0` for no matches and `-1` when the file is unavailable |
+| Q2b | `String getTopStudent(String, String)` | Read the named student file and return the highest-GPA matching student as `Name-GPA`; throw `DataException` if the file/course has no matching record |
+| Q3 | `List<Shape> sortShapes(List<Shape>)` | Keep shapes with area at most 1000 and sort by descending area, then descending perimeter |
+
+Generated resources include the lab's text fixtures, `DataException`, the `Shape` support types, and the `ShapeComparator.java` starter companion needed to compile the examples. Supplied `Project` files remain untouched. Q1 and Q2 proposal examples are still available under their own IDs.
 
 ## Commands
 
@@ -22,13 +32,30 @@ java -jar target/auto-grading-system-1.0-SNAPSHOT.jar --randomized-grade Q1 stud
 
 The seed is optional. If omitted, the app chooses and prints one. Use the same seed to reproduce the same generated inputs. The result goes to randomized.results.directory (default grading/results) and is named <submission-folder>-<class-name>.txt. A completed grading operation returns process exit code 0 even when the student receives FAIL; invalid configuration, missing files, or grader infrastructure errors return a nonzero exit code.
 
+For a lab-test demo, generate all five question packs into the configured resource folder:
+
+~~~powershell
+@("Q1a", "Q1b", "Q2a", "Q2b", "Q3") | ForEach-Object {
+    java -jar target/auto-grading-system-1.0-SNAPSHOT.jar --randomized-resources $_ config.properties
+}
+~~~
+
+Then put one student's answer in a separate submission folder and select a question ID, for example:
+
+~~~text
+java -jar target/auto-grading-system-1.0-SNAPSHOT.jar --randomized-grade Q2a students/submissions/alice config.properties 482910374651
+java -jar target/auto-grading-system-1.0-SNAPSHOT.jar --randomized-grade Q3 students/submissions/alice config.properties 482910374651
+~~~
+
+The Q3 submission folder must include both `Q3.java` and `ShapeComparator.java`. The grader compiles the companion source with the answer and supplies the same Shape support API used by the generated tester.
+
 The first result line is exactly PASS or FAIL. The remaining lines contain the pass count, seed, and up to the configured number of failing inputs. Compile errors, timeouts, crashes, and student exceptions are reported as failures with a reason.
 
 ## Student workflow
 
-1. Put the generated Q1.java and Q1Tester.java in the same folder.
+1. Put the generated question stub and its `*Tester.java` in the same folder. For Q3, keep the generated `ShapeComparator.java` and supplied shape support files alongside them.
 2. Implement the declared public method without changing its class name, method name, parameter types, or return type.
-3. Run javac Q1.java Q1Tester.java followed by java Q1Tester to check the fixed examples.
+3. Run `javac <Question>.java <Question>Tester.java` followed by `java <Question>Tester` to check the fixed examples.
 4. Submit the implemented question source file. The tester is for practice; grading uses additional generated inputs.
 
 ## Adding an instructor question
@@ -58,9 +85,9 @@ public final class Q1 extends Question {
 }
 ~~~
 
-Available built-in generators are RandomInt(minimum, maximum) and RandomIntArray(minimumLength, maximumLength, minimumValue, maximumValue). The runner currently supports int, boolean, long, double, String, int[], and String[] parameters/returns, including their boxed primitive types where applicable. It rejects mismatched generated values, invalid Java identifiers, duplicate test-case IDs, missing signatures, unsupported values, and questions without test cases before grading.
+Available built-in generators are RandomInt(minimum, maximum) and RandomIntArray(minimumLength, maximumLength, minimumValue, maximumValue). Questions can also generate serializable lists, including heterogeneous `ArrayList<Object>` values, and may include explicitly declared fixture files, support sources/classes, and companion sources. The runner supports int, boolean, long, double, String, int[], String[], `ArrayList`, and `List` parameters/returns, including boxed primitive values where applicable. Q3 shape descriptors are converted to Shape objects inside the student process and its returned shapes are compared by their recorded representation. The authoring API rejects mismatched generated values, invalid Java identifiers, duplicate test-case IDs, missing signatures, unsupported values, and questions without test cases before grading.
 
-Generated testers use a few fixed examples per test case. Expected values are computed when the tester is generated; the reference implementation itself is not written to the tester. Grading generates the configured number of inputs for every case from one Random(seed), computes expected values in the parent process, invokes the student's public method in a separate JVM, and compares results with Objects.deepEquals. Array inputs are serialized to the child process; the answer key receives a separate copy in the parent, so student mutations cannot change the reference calculation.
+Generated testers use a few fixed examples per test case. Expected values are computed when the tester is generated; the reference implementation itself is not written to the tester. Grading generates the configured number of inputs for every case from one Random(seed), computes expected values in the parent process, invokes the student's public method in a separate JVM, and compares results with deep equality or a question's declared textual comparison. Array and list inputs are serialized to the child process; the answer key receives a separate copy in the parent, so student mutations cannot change the reference calculation.
 
 ## Configuration
 
@@ -84,13 +111,15 @@ The values are range-checked. A grading run is limited to 10,000 trials total an
 
 | Component | Responsibility |
 | --- | --- |
-| Question | Holds one question's public signature, parameter definitions, generators, and answer-key contract |
+| Question | Holds one question's public signature, generic source types, parameter definitions, generators, artifacts, and answer-key contract |
 | RandomInt, RandomIntArray | Produce values from the seeded Random supplied by the caller |
 | ResourceGenerator | Writes the student stub and fixed-example tester |
 | RandomizedGrader | Generates the seeded trials, compiles the submission, runs the child JVM, compares outputs, and writes structured result data |
-| RandomizedStudentRunner.java | Standalone child-process entry point; it only sees generated inputs, the student's classes, and the runner |
+| RandomizedStudentRunner.java | Standalone child-process entry point; it sees generated inputs, declared fixtures/support classes, the student's classes, and the runner |
 | RandomizedConfig | Reads and validates the mode's external settings |
 | QuestionRegistry | Maps question IDs to instructor-authored definitions |
+
+For the lab demo, `Shape`, `Circle`, `Rectangle`, and `DataException` support sources are packaged under `src/main/resources/autograder/autotester/labtest/`. They reproduce the small public contracts used by the supplied lab artifacts; the supplied `Project` files and compiled classes are not rewritten.
 
 The result file is intentionally separate from scorereport.csv: the new mode grades one selected question/submission at a time and reports PASS/FAIL plus evidence. It does not currently add these results to the existing assessment's batch score sheet. The regular configured batch pipeline remains unchanged.
 
