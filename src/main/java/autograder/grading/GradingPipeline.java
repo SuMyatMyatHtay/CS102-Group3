@@ -1,6 +1,7 @@
 package autograder.grading;
 
 import autograder.api.PlagiarismDetector;
+import autograder.api.ProgressListener;
 import autograder.api.TestCaseProvider;
 import autograder.config.AppConfig;
 import autograder.config.ExecutionConfig;
@@ -25,6 +26,7 @@ public final class GradingPipeline {
     private final ExecutionConfig execution;
     private final List<TestCaseDefinition> cases;
     private final PlagiarismDetector plagiarismDetector;
+    private final ProgressListener progressListener;
 
     public GradingPipeline(AppConfig app, ExecutionConfig execution) throws IOException {
         this(app, execution, (submissions, assessment) -> List.of());
@@ -32,9 +34,17 @@ public final class GradingPipeline {
 
     public GradingPipeline(AppConfig app, ExecutionConfig execution,
                            PlagiarismDetector plagiarismDetector) throws IOException {
+        this(app, execution, plagiarismDetector, null);
+    }
+
+    // a null listener keeps the console-only behaviour of the other constructors
+    public GradingPipeline(AppConfig app, ExecutionConfig execution,
+                           PlagiarismDetector plagiarismDetector,
+                           ProgressListener progressListener) throws IOException {
         this.app = app;
         this.execution = execution;
         this.plagiarismDetector = plagiarismDetector;
+        this.progressListener = progressListener;
         TestCaseProvider fixedProvider = new InstructorTestCaseProvider();
         TestCaseProvider dynamicProvider = new DynamicTestCaseProvider();
         TestCaseProvider combinedProvider = new CombinedTestCaseProvider(fixedProvider, dynamicProvider);
@@ -72,13 +82,28 @@ public final class GradingPipeline {
         int index = 0;
         for (SubmissionResult submission : submissions) {
             index++;
+            String item = submission.getArchivePath().getFileName().toString();
+            notifyProgress(item, index - 1, submissions.size());
             grades.add(gradeSubmission(submission, identities, run, index, submissions.size(), withheld));
+            notifyProgress(item, index, submissions.size());
         }
         BatchResult batch = new BatchResult(app.getAssessment(), grades, List.of(),
                 compareSimilarity(submissions));
         GradingRun result = new GradingRun(batch, run, withheld);
         new GradingDiagnosticsWriter(app, execution).write(result);
         return result;
+    }
+
+    // a failing listener must not stop grading
+    private void notifyProgress(String item, int completed, int total) {
+        if (progressListener == null) {
+            return;
+        }
+        try {
+            progressListener.onProgress("grading", item, completed, total);
+        } catch (RuntimeException exception) {
+            System.err.println("progress update failed: " + exception.getMessage());
+        }
     }
 
     // similarity is advisory, so a detector failure must not block score export

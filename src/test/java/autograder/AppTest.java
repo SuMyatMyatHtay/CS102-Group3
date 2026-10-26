@@ -240,6 +240,11 @@ class AppTest {
         assertFalse(Files.exists(temporaryDirectory.resolve("starter-analysis.csv")));
     }
 
+    @Test
+    void missingConfigurationFileReturnsOneWithoutThrowing() {
+        assertEquals(1, App.run(new String[] {temporaryDirectory.resolve("absent.properties").toString()}));
+    }
+
     private StudentGrade grade(String archive) {
         StudentIdentity identity = new StudentIdentity("", "", "", List.of(), List.of(), List.of(),
                 null, "test fixture", List.of());

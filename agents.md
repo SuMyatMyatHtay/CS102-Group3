@@ -28,6 +28,7 @@ Before proposing any new implementation, review the relevant brief sections and 
 | 4: Dynamic parameterized test ingestion | William (locked) | REVIEW |
 | 5: Markdown student feedback | Gabriel | REVIEW |
 | 6: ANSI terminal dashboard | Unclaimed | TODO |
+| Additional: Java Swing instructor GUI (not a numbered bonus) | Boey | DONE |
 
 Allowed statuses: TODO, IN_PROGRESS, REVIEW, DONE.
 
