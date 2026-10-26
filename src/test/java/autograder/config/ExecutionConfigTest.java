@@ -47,7 +47,7 @@ class ExecutionConfigTest {
         for (String name : new String[] {"starter-analysis.csv", "Starter-Analysis.csv",
                 "STARTER-ANALYSIS.csv", "sTaRtEr-AnAlYsIs.csv", "Cases.csv", "CASES.csv",
                 "Submissions.csv", "SUBMISSIONS.csv", "Similarity.csv",
-                "SIMILARITY.csv"}) {
+                "SIMILARITY.csv", "sanity-checks.csv", "Sanity-Checks.CSV"}) {
             properties.setProperty("grading.report.file", name);
             assertThrows(IllegalArgumentException.class, () -> load(properties, app), name);
         }

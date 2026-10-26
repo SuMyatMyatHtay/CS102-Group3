@@ -8,6 +8,7 @@ import autograder.config.FeedbackConfig;
 import autograder.config.HtmlReportConfig;
 import autograder.config.RunSettings;
 import autograder.config.RuntimePathOverrides;
+import autograder.config.SanityConfig;
 import autograder.grading.GradingRun;
 import autograder.model.GradingReportContext;
 import autograder.model.StudentGrade;
@@ -61,10 +62,18 @@ public final class App {
     static int generateReports(GradingRun run, BoilerplateConfig boilerplate, BoilerplateDetector detector,
                                HtmlReportConfig html, HtmlReportGenerator htmlGenerator,
                                FeedbackConfig feedback, FeedbackGenerator feedbackGenerator) {
+        return generateReports(run, boilerplate, detector, SanityConfig.disabled(), html, htmlGenerator,
+                feedback, feedbackGenerator);
+    }
+
+    static int generateReports(GradingRun run, BoilerplateConfig boilerplate, BoilerplateDetector detector,
+                               SanityConfig sanity, HtmlReportConfig html, HtmlReportGenerator htmlGenerator,
+                               FeedbackConfig feedback, FeedbackGenerator feedbackGenerator) {
         StarterAnalysis.Result analysis = StarterAnalysis.analyze(run, boilerplate, detector);
+        int sanityExit = SanityAnalysis.analyze(analysis.run(), sanity).exitCode();
         int htmlExit = generateHtmlReport(analysis.run(), html, htmlGenerator);
         int feedbackExit = generateFeedback(analysis.run(), feedback, feedbackGenerator);
-        return Math.max(analysis.exitCode(), Math.max(htmlExit, feedbackExit));
+        return Math.max(Math.max(analysis.exitCode(), sanityExit), Math.max(htmlExit, feedbackExit));
     }
 
     static int generateFeedback(GradingRun run, FeedbackConfig config, FeedbackGenerator generator) {

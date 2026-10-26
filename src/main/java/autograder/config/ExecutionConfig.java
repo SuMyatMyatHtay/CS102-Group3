@@ -14,7 +14,8 @@ public record ExecutionConfig(Path directory, String reportFile, String javaExec
                               long caseTimeoutMillis, int maxOutputBytes) {
     // compared ignoring case because macos and windows filesystems treat Cases.csv as cases.csv
     private static final List<String> RESERVED_REPORT_FILES = List.of(
-            "cases.csv", "submissions.csv", "similarity.csv", "starter-analysis.csv");
+            "cases.csv", "submissions.csv", "similarity.csv", "starter-analysis.csv",
+            "sanity-checks.csv");
 
     public static ExecutionConfig load(Path file, AppConfig app) throws IOException {
         Properties properties = new Properties();
