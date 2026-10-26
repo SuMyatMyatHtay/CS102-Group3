@@ -49,16 +49,17 @@ After implementation and the appropriate checks, commit/push the reviewed featur
 
 ### Optional randomized question mode
 
-The original assessment pipeline remains the default. The new mode can generate reusable student resources and grade one selected question with seeded inputs:
+The original assessment pipeline remains the default. The optional randomized mode can generate reusable student resources, grade one extracted submission, or grade one question across a folder of ZIPs:
 
 ~~~sh
 java -jar target/auto-grading-system-1.0-SNAPSHOT.jar --randomized-resources Q1 config.properties
 java -jar target/auto-grading-system-1.0-SNAPSHOT.jar --randomized-grade Q1 students/submissions/alice config.properties 482910374651
+java -jar target/auto-grading-system-1.0-SNAPSHOT.jar --randomized-grade-batch Q1a C:/courses/CS102/submissions config.properties 482910374651
 ~~~
 
 The current lab-test question set (Q1a, Q1b, Q2a, Q2b, Q3) is also available through this mode; for example, substitute `Q1a` in either command. Omit the final seed argument to let the app choose one; the result records it for replay. See [RANDOMIZED_AUTOGRADER.md](RANDOMIZED_AUTOGRADER.md) for signatures, generated fixtures, demo steps, configuration, and process-isolation limits.
 
-Instructors can follow the [randomized lab-test user guide](docs/INSTRUCTOR_USER_GUIDE.md) to generate the full `studentResources` folder and distinguish one-question randomized grading from the existing ZIP batch workflow.
+Instructors can follow the [randomized lab-test user guide](docs/INSTRUCTOR_USER_GUIDE.md) for step-by-step resource generation and randomized ZIP batch grading. The original ZIP batch grader remains a separate workflow.
 
 ### 1. Install the prerequisites
 

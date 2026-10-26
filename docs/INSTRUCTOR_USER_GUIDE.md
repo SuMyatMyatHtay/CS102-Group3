@@ -76,7 +76,39 @@ The seed is optional. Save the printed seed to reproduce the same randomized inp
 
 By default, the grader generates 50 inputs for each declared test case. You can change this with `randomized.runs.per.case`; the total is capped at 10,000 trials per run. The timeout applies to the complete student run. Compilation has its own 60-second minimum deadline.
 
-The randomized result is separate from `scorereport.csv`. This mode currently grades one question and one extracted submission folder at a time; it does not combine these results into the class score sheet.
+The randomized result is separate from `scorereport.csv`. Single-submission mode takes one extracted folder; batch mode below accepts a ZIP directory. Neither mode combines randomized results into the class score sheet.
+
+## Randomized grading for many ZIP submissions
+
+Use the batch command to grade one question across ZIPs in an instructor-selected folder:
+
+~~~powershell
+java -jar target/auto-grading-system-1.0-SNAPSHOT.jar --randomized-grade-batch Q1a C:/courses/CS102/submissions config.properties 482910374651
+~~~
+
+The seed is optional. If omitted, the application selects and prints one. The same seed is used for every archive in that batch, so students receive the same generated inputs for the selected question. The input directory is the second argument; the configured `archive.file.regex` determines which files count as submissions.
+
+### What happens during a batch run
+
+1. The application validates the question ID and checks that the ZIP folder exists and does not overlap the randomized results folder.
+2. It lists matching ZIPs in name order, making the report sequence repeatable.
+3. Each archive is unpacked into a temporary directory with the existing bounded safe extractor. Corrupt archives, unsafe paths, and configured size or entry-count limit violations become failures for that archive.
+4. It searches the extracted files for exactly one `<Question>.java`, such as `Q1a.java`. Missing or duplicate matches become clear failures. Required companion files, including `ShapeComparator.java` for Q3, must be beside the answer source.
+5. The existing randomized grader compiles and runs the answer in its child JVM using that question's generated trials and the shared seed.
+6. It writes one text report per archive and a `summary.csv` in a new batch folder under `randomized.results.directory` (default `grading/results`), then removes temporary extracted and staged files.
+
+The output will look similar to this:
+
+~~~text
+grading/results/randomized-batch-Q1a-482910374651-a1b2c3/
+  0001-alice-Q1a.txt
+  0002-bob-Q1a.txt
+  summary.csv
+~~~
+
+The summary includes each archive name, report filename, PASS/FAIL status, passed and total trials, seed, and any error. A compile error or invalid ZIP marks that archive FAIL; processing continues for later archives. A completed batch exits successfully even if some submissions fail, so review the summary and individual reports. No matching ZIP files is a command error. Run the command once per question to randomized-grade a full lab set.
+
+Randomized batch results remain separate from `scorereport.csv`; this command does not change the standard score-sheet workflow.
 
 ## Processing ZIP submissions in a batch
 
@@ -92,9 +124,9 @@ Then run the ordinary batch command:
 java -jar target/auto-grading-system-1.0-SNAPSHOT.jar config.properties
 ~~~
 
-The configured archive pattern defaults to ZIP files. The batch pipeline validates and extracts each archive, prepares the configured lab questions, runs the fixed and existing dynamic test cases, and writes the normal score and diagnostics reports. Keep the supplied assessment layout, roster, score sheet, and other configured paths available.
+The configured archive pattern defaults to ZIP files. The normal batch pipeline validates and extracts each archive, prepares the configured lab questions, runs the fixed and existing dynamic test cases, and writes the normal score and diagnostics reports. Keep the supplied assessment layout, roster, score sheet, and other configured paths available.
 
-This ZIP workflow belongs to the original batch grader. The randomized mode does not currently scan a ZIP directory or batch-grade many archives. To use randomized grading today, extract a student's files into a submission folder and invoke `--randomized-grade` for each question. Automating that ZIP-to-randomized-batch workflow would require a separate feature.
+This is the original fixed/dynamic grading workflow. The randomized ZIP command above is separate and produces its own per-question reports.
 
 ## Results, boundaries, and safe use
 

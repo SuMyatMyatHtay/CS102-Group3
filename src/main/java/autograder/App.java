@@ -3,6 +3,7 @@ package autograder;
 import autograder.analysis.boilerplate.StarterCodeDetector;
 import autograder.autotester.Question;
 import autograder.autotester.QuestionRegistry;
+import autograder.autotester.RandomizedBatchGrader;
 import autograder.autotester.RandomizedConfig;
 import autograder.autotester.RandomizedGrader;
 import autograder.autotester.RandomizedResult;
@@ -114,6 +115,7 @@ public final class App {
             return switch (args[0]) {
                 case "--randomized-resources" -> generateRandomizedResources(args);
                 case "--randomized-grade" -> gradeRandomizedSubmission(args);
+                case "--randomized-grade-batch" -> gradeRandomizedBatch(args);
                 default -> {
                     printUsage();
                     yield 1;
@@ -155,6 +157,33 @@ public final class App {
         System.out.println((result.passed() ? "PASS" : "FAIL") + " | " + result.passedCount()
                 + "/" + result.totalCount() + " tests | seed=" + result.seed());
         System.out.println("Result: " + report);
+        return 0;
+    }
+
+    private static int gradeRandomizedBatch(String[] args) throws Exception {
+        if (args.length < 4 || args.length > 5) {
+            printUsage();
+            return 1;
+        }
+        Question question = QuestionRegistry.find(args[1]);
+        Path zipDirectory = Path.of(args[2]);
+        Path configFile = Path.of(args[3]);
+        AppConfig appConfig = AppConfig.load(configFile);
+        RandomizedConfig config = RandomizedConfig.load(configFile);
+        long seed = args.length == 5 ? Long.parseLong(args[4]) : new SecureRandom().nextLong();
+        RandomizedBatchGrader.BatchResult batch = new RandomizedBatchGrader().grade(question, zipDirectory,
+                appConfig, config, seed);
+        for (RandomizedBatchGrader.SubmissionResult submission : batch.submissions()) {
+            RandomizedResult result = submission.result();
+            System.out.println(submission.archive() + " | " + (result.passed() ? "PASS" : "FAIL")
+                    + " | " + result.passedCount() + "/" + result.totalCount()
+                    + " tests | seed=" + result.seed()
+                    + (result.errorReason().isBlank() ? "" : " | " + result.errorReason()));
+        }
+        System.out.println("Randomized batch: " + batch.passedCount() + " passed; "
+                + batch.failedCount() + " failed of " + batch.submissions().size());
+        System.out.println("Summary: " + batch.summaryFile());
+        System.out.println("Per-submission reports: " + batch.outputDirectory());
         return 0;
     }
 
@@ -262,6 +291,8 @@ public final class App {
         System.out.println("Usage: java -jar <application.jar> --randomized-resources <question-id> <configuration.properties>");
         System.out.println("Usage: java -jar <application.jar> --randomized-grade <question-id> <submission-folder> "
                 + "<configuration.properties> [seed]");
+        System.out.println("Usage: java -jar <application.jar> --randomized-grade-batch <question-id> "
+                + "<zip-directory> <configuration.properties> [seed]");
         System.out.println("Registered randomized questions: " + String.join(", ", QuestionRegistry.questionIds()));
     }
 }

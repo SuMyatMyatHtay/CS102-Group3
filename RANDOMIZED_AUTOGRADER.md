@@ -30,6 +30,16 @@ Grade a folder containing the student's Q1.java:
 java -jar target/auto-grading-system-1.0-SNAPSHOT.jar --randomized-grade Q1 students/submissions/alice config.properties 482910374651
 ~~~
 
+Grade one question for every matching ZIP in a selected directory:
+
+~~~text
+java -jar target/auto-grading-system-1.0-SNAPSHOT.jar --randomized-grade-batch Q1a C:/courses/CS102/submissions config.properties 482910374651
+~~~
+
+The optional seed is shared by all archives in this batch. The directory argument selects where the ZIPs are stored; `archive.file.regex` from the configuration controls which filenames are processed. Archives are ordered by filename. Each is extracted using the existing bounded `SafeZipExtractor`; the batch then requires exactly one source file named for the selected question and copies it, plus required companion files, into a temporary staging directory before calling the existing `RandomizedGrader`. Extraction and staging files are removed after the batch.
+
+Each archive gets an individual text result and the batch gets a `summary.csv` in a unique subdirectory under `randomized.results.directory`. Missing/ambiguous sources, corrupt ZIPs, extraction limit violations, and student compile/runtime failures are recorded as FAIL for that archive; later submissions still run. A completed batch returns success even if some archives fail, while a missing input directory or no matching archives returns an error. The shared seed makes each student face the same generated trials. To grade the whole lab, invoke the command separately for each desired question ID.
+
 The seed is optional. If omitted, the app chooses and prints one. Use the same seed to reproduce the same generated inputs. The result goes to randomized.results.directory (default grading/results) and is named <submission-folder>-<class-name>.txt. A completed grading operation returns process exit code 0 even when the student receives FAIL; invalid configuration, missing files, or grader infrastructure errors return a nonzero exit code.
 
 For a lab-test demo, generate all five question packs into the configured resource folder:
@@ -115,12 +125,13 @@ The values are range-checked. A grading run is limited to 10,000 trials total an
 | RandomInt, RandomIntArray | Produce values from the seeded Random supplied by the caller |
 | ResourceGenerator | Writes the student stub and fixed-example tester |
 | RandomizedGrader | Generates the seeded trials, compiles the submission, runs the child JVM, compares outputs, and writes structured result data |
+| RandomizedBatchGrader | Finds configured ZIP files, safely extracts and stages one answer at a time, continues across per-archive failures, and writes per-archive reports plus a CSV summary |
 | RandomizedStudentRunner.java | Standalone child-process entry point; it sees generated inputs, declared fixtures/support classes, the student's classes, and the runner |
 | RandomizedConfig | Reads and validates the mode's external settings |
 | QuestionRegistry | Maps question IDs to instructor-authored definitions |
 
 For the lab demo, `Shape`, `Circle`, `Rectangle`, and `DataException` support sources are packaged under `src/main/resources/autograder/autotester/labtest/`. They reproduce the small public contracts used by the supplied lab artifacts; the supplied `Project` files and compiled classes are not rewritten.
 
-The result file is intentionally separate from scorereport.csv: the new mode grades one selected question/submission at a time and reports PASS/FAIL plus evidence. It does not currently add these results to the existing assessment's batch score sheet. The regular configured batch pipeline remains unchanged.
+Randomized results are intentionally separate from scorereport.csv. The single-submission and ZIP-batch commands report PASS/FAIL plus evidence but do not add randomized outcomes to the existing assessment's score sheet. The regular configured batch pipeline remains unchanged.
 
 The child JVM protects the main application from ordinary student exceptions, System.exit, and non-terminating code by running separately with one deadline for the complete run. A loop in one call therefore times out the question's run as a whole. Temporary compilation and protocol files are removed after grading, and the submitted source is copied before compilation. This is not a security sandbox: student code has the grading user's file, network, and process permissions and may tamper with files or launch processes. Use only trusted course submissions unless the child process is additionally restricted by an external container or account policy.
