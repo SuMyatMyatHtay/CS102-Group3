@@ -1,5 +1,126 @@
 # Starter-code comparison (Sera, feature 3)
 
+## Method comparison and visual report (2026-10-26 revision)
+
+Sera approved this revision on branch `sera-method-comparison`. Feature 3 remains
+REVIEW until her clean-build/run and display/interaction acceptance. The report
+is generated automatically when `grading.boilerplate.enabled=true`; the existing
+grading command needs no additional argument:
+
+```powershell
+mvn clean verify
+java -jar target/auto-grading-system-1.0-SNAPSHOT.jar config.properties
+```
+
+For this Windows checkout, the available Maven fallback is:
+
+```powershell
+& "$env:TEMP\cs102-sera-tools\apache-maven-3.9.9\bin\mvn.cmd" "-Dmaven.repo.local=C:\Users\SU MYAT MYAT HTAY\.m2\repository" clean verify
+```
+
+Open the **Method comparison report** path printed at the end of the run:
+`build/grading/run-*/starter-comparison/index.html`. This folder is separate from
+the configurable feature-2 dashboard, so the two reports cannot share a filename.
+The report embeds all CSS and JavaScript and works offline without a server.
+
+1. Search by archive/student username, question filename or method signature.
+2. Choose **Changed methods**, **Unchanged methods** or **Unavailable comparisons**.
+3. Press **Expand visible** or open a method individually to see starter/student
+   source with original line numbers. **Collapse all** closes method details.
+4. Read the method status and token-edit explanation. Red `−` and green `+`
+   lines show original text changes, including formatting. Code status ignores
+   comments/formatting; a reformatted method can therefore remain UNCHANGED.
+
+Method matching uses enclosing top-level/member-class path, method name and
+parameter types, independently of declaration order. Explicit constructors are
+included. Overloads and array/varargs parameters are distinguished. A renamed
+method, changed parameter type, or changed containing class is reported as a
+removal plus addition; rename inference and type-resolution equivalence are not
+claimed. Parameter-name or return-type edits are declaration modifications.
+
+The parser uses the JDK compiler tree API in parse-only Java 17 mode with
+annotation processing disabled. It does not compile, resolve dependencies, run
+student code or invoke external libraries. A full JDK is required. Syntax errors,
+ambiguous signatures, Unicode escapes, missing/unsafe files and configured
+source/token limits produce an explicit unavailable entry; other files continue.
+The in-memory source adapter specializes `SimpleJavaFileObject` to supply source
+text to the parser, providing a concrete use of inheritance alongside the
+composition used by the comparison and reporting collaborators.
+
+Each matched method is UNCHANGED or MODIFIED according to its declaration/body
+code tokens. Explanations identify unchanged versus changed body tokens and
+count token insertion, deletion and replacement along one minimum-edit alignment.
+An unchanged body is not a claim of correct implementation. Fields, imports,
+initializers, implicit constructors and independent entries for local/anonymous
+classes are outside method comparison. Such source still participates in the
+existing whole-file analysis; local-class text inside a method remains in that
+method's body comparison. Files without explicit methods have a separate notice.
+
+Detailed token alignment is capped at 1,000,000 matrix cells per method; above
+that budget the MODIFIED status remains but counts are explicitly unavailable.
+Original-line alignment is capped at 250,000 cells; above that budget complete
+method source is displayed without change highlighting and with an explicit
+notice. These bounds supplement the existing source-byte/token limits.
+
+The original `starter-analysis.csv` schema and whole-file warning threshold are
+unchanged. The method report includes all compared methods regardless of the
+whole-file warning threshold. It neither changes grades nor export eligibility.
+Both CSV and method-report writes are attempted independently; a write failure
+returns nonzero while subsequent feature-2 HTML and feature-5 Markdown reports
+are still attempted. Existing comparison output is never overwritten.
+
+Focused verification command:
+
+```powershell
+mvn "-Dtest=MethodComparisonTest,StarterComparisonReportTest,StarterCodeDetectorTest,BoilerplateConfigTest,AppTest" test
+```
+
+`ComparisonSourceReader` shares the original bounded UTF-8/path checks;
+`JavaMethods` extracts source ranges; `MethodComparison` matches methods and
+explains token edits; `MethodDiffHtml` aligns/escapes original lines;
+`StarterComparisonReport` streams the completed comparison report. The small
+`StarterAnalysis` hook coordinates output failures. Shared public domain models,
+bonus interfaces, grading policy and other bonus implementations are unchanged.
+These focused responsibilities and use of composition support the brief's page 6
+code/design criteria; explicit failures, batch operation and review controls
+support page 7 robustness/usability criteria. Human method attribution and the
+presentation AI Use appendix remain the team's release obligations.
+
+### Verification evidence for the method revision
+
+- Clean Maven verification passed 139 tests with zero failures/errors/skips on
+  Windows, Temurin JDK 25 and Maven 3.9.9, targeting Java 17. After the final
+  line-wrapping-only cleanup, the focused command passed 33 tests with zero
+  failures/errors/skips. An actual Java 17 runtime was not tested.
+- Packaged sample exited 0 at `build/grading/run-7730138310631506160`, retaining
+  totals 12,10,10,0,20,1 and 120 case records. It wrote all existing reports,
+  11 whole-file starter findings, six Markdown files, and the new method report.
+  The report contains 22 MODIFIED, 38 UNCHANGED and 4 ADDED methods, plus three
+  NO_METHODS entries. All 67 supplied Project file hashes match the initial
+  snapshot, including file-set membership.
+- Headless Chrome loaded the final report directly from its local file path.
+  Eight interaction checks covered initial visibility, changed/unchanged filters,
+  expand/collapse, search/empty state and unavailable filtering. No JavaScript
+  errors or external HTTP(S) report requests were observed. Desktop 1440x1000
+  and narrow 390x844 screenshots were inspected; the narrow page does not
+  overflow horizontally (the comparison table scrolls within its container).
+  These are automated browser checks, not Sera's human acceptance.
+- Local evidence commands were `node build/sera-method-browser-check.cjs
+  build/grading/run-7730138310631506160/starter-comparison/index.html` and
+  `python build/sera-method-evidence.py build/grading/run-7730138310631506160`.
+  These helpers/screenshots/logs are ignored local build artifacts. Browser
+  screenshots are `build/sera-method-report.png` and
+  `build/sera-method-report-narrow.png`.
+- Responsibility review: all new production classes are below 300 physical
+  lines and new methods are at most 40 nonblank/noncomment lines. No size
+  exception is required. `git diff --check` passed. Existing shared contracts,
+  pipeline, other bonus implementations and dependencies were preserved.
+
+Please run the clean build and packaged command above, then open the report and
+confirm the method explanations, filters and side-by-side differences are useful.
+Feature 3 remains REVIEW. No commit, push or PR was made for this revision,
+honoring Sera's existing local-review restriction.
+
 The implementation compares configured answer files and student-written companions against the starter directory. It reports warnings in the terminal, `starter-analysis.csv` and the HTML dashboard's **Analysis findings** section. It does not change scores, preparation status or export eligibility.
 
 On the PR #6 follow-up, a failed starter CSV write returns a nonzero process status while keeping in-memory findings available to HTML and still attempting Markdown feedback. The completed grading and similarity CSVs are preserved. `AppTest` blocks the CSV destination with a directory to verify this failure path portably, and also tests combined starter/HTML failures. Normal output still uses the same starter CSV schema.

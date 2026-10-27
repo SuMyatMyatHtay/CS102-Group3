@@ -41,6 +41,21 @@ The generator still embeds the same CSS and JavaScript. Report classes render co
 
 ## Bonus connections
 
+Sera approved the feature-3 method comparison revision on 2026-10-26. Within
+`analysis.boilerplate`, `ComparisonSourceReader` shares the existing bounded
+UTF-8/path checks, `JavaMethods` uses the JDK's parse-only Java 17 compiler tree
+API, `MethodComparison` matches class/signature and explains token edits,
+`MethodDiffHtml` aligns escaped source lines, and `StarterComparisonReport`
+streams a separate offline report to `starter-comparison/index.html` in the run
+directory. The `StarterAnalysis` hook attempts this report independently of its
+existing CSV and retains nonzero failure reporting while later reports continue.
+Whole-file findings and CSV schema remain unchanged. No other bonus renderer,
+shared domain model/interface, grading decision or runtime dependency changes.
+The method report distinguishes unavailable files and files with no explicit
+methods, bounds alignment work, and never claims correctness or misconduct.
+See [the feature-3 testing guide](STARTER_CODE_TESTING.md) for matching semantics,
+coverage boundaries and human acceptance steps. Feature 3 remains REVIEW.
+
 Feature 3 implements `BoilerplateDetector` with `StarterCodeDetector` in `autograder.analysis.boilerplate`. It compares only configured answer sources and student-written companions, reading bounded UTF-8 inputs and reporting per-file failures without stopping other comparisons. `JavaSourceTokens` ignores comments/formatting outside literals and computes token edit distance. `BoilerplateConfig` validates external enablement, starter path, similarity threshold and resource limits. After grading/CSV export, the App hook attaches immutable findings to a new `BatchResult`, writes `starter-analysis.csv` and supplies those findings to the existing HTML renderer. Grades, withholding, shared interfaces and the grading pipeline are unchanged. High whole-file similarity is a review heuristic; Unicode escapes and unsupported/malformed input require manual comparison. Feature 3 is REVIEW pending Sera's acceptance; see [testing instructions](STARTER_CODE_TESTING.md).
 
 | Contract | Input | Output |
