@@ -166,3 +166,58 @@ The tests cover:
 Similarity is `1 - token edit distance / max(starter token count, answer token count)`. Insertion, deletion and substitution each cost one. Comparisons ignore comments and whitespace outside literals, but preserve names, literals and operator boundaries. This is a conservative lexical comparison, not a complete Java parser: Unicode escape syntax requires manual comparison. Whole-file similarity can be high because of supplied demo code; warnings require human review and do not establish correctness or misconduct. A low similarity does not prove a complete answer.
 
 The implementation uses the unchanged `BoilerplateDetector` interface and immutable shared findings; a separate package owns comparison logic and external properties own operational settings. These support the brief's page 6 modularity/configuration and anomaly-warning criteria. Edge-case tests and the CLI/report demonstration support page 7 robustness/usability criteria. No runtime library was added. Human review, clean-build acceptance, submission documentation and AI declarations remain team responsibilities.
+
+## Overview and View why revision (2026-10-28)
+
+Sera approved this scope in chat. The report now starts with one overview row per
+submission/file, method-status counts, comparison availability and a View why
+link. Counts are not whole-file similarity percentages. Each link uses a unique
+ordinal ID, jumps to its file, clears detail filters, expands the matching
+methods and focuses the file heading. The overview stays visible during detail
+filtering. Without JavaScript, native links still reach the file; users expand
+methods manually. Unavailable rows retain their reason, and no-method rows do
+not imply unchanged files.
+
+Implementation stays within feature 3. ComparisonOverview owns overview markup;
+StarterComparisonReport streams detail HTML through a temporary file (removed
+in finally) so sources are parsed only once without retaining full-batch diffs.
+Existing comparison limits, grading decisions, CSV schemas and other bonus
+renderers remain unchanged. Current production files remain under 300 lines and
+methods under 40 nonblank lines; no new size exception is needed.
+
+Verification:
+
+- Clean verification: 140 tests, zero failures/errors/skips, including 5 report
+  tests. Checks cover all method statuses, unique targets across submissions,
+  counts matching detail evidence, escaped labels/source, unavailable/no-method
+  rows, input preservation, temporary-file cleanup and existing destinations.
+- Headless Chrome on the sample: 36 unique overview links resolve to file
+  sections; 15 browser assertions pass plus Enter-key activation and narrow
+  viewport checks. Filtering, repeated navigation, expansion and heading focus
+  passed, with no JavaScript errors or external report requests.
+- Supplied Project hashes: all 67 preserved. Sample has 120 case records and
+  six Markdown reports; scores remain 12,10,10,0,20,1.
+- Restricted Maven/Chrome runs encountered cache access / connection problems;
+  approved unrestricted verification succeeded. Maven used the existing cache.
+
+Commands used for clean verification and sample generation:
+
+```powershell
+& "$env:TEMP\cs102-sera-tools\apache-maven-3.9.9\bin\mvn.cmd" '-Dmaven.repo.local=C:/Users/SU MYAT MYAT HTAY/.m2/repository' clean verify
+java -jar target/auto-grading-system-1.0-SNAPSHOT.jar config.properties
+```
+
+For a normal configured Maven installation, use `mvn clean verify` then the
+same Java command. Open the newly printed starter-comparison/index.html, select
+a detail filter that hides a destination, and activate its overview View why
+link by mouse and keyboard. Confirm the correct student/file is revealed and
+its token edit explanation and source comparison are expanded. Human clean-build
+and display/interaction acceptance remain pending; feature 3 stays REVIEW.
+Changes remain local and uncommitted under Sera's publication restriction.
+Human method attribution and the presentation AI Use appendix remain release
+checklist items under the existing team policy (brief page 3).
+
+Confirmed sample Java process exit: 0 (captured with Python subprocess to avoid
+PowerShell treating expected stderr name warnings as command failure).
+Fresh report: `build/grading/run-15601521570881370854/starter-comparison/index.html`.
+Browser checks used the identical-code report in `build/grading/run-40253895348628908`.

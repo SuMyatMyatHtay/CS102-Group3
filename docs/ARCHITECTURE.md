@@ -112,3 +112,18 @@ Externalize settings the instructor or team may change: paths, assessment identi
 ## Dependency choices
 
 Java 17 standard library provides file/ZIP/process primitives. JUnit Jupiter is a test-only dependency; there are no third-party application runtime libraries in the current foundation. Maven compiler, test, and JAR plugins build the application. JUnit is EPL-2.0 and the selected Apache Maven plugins use Apache-2.0; the final team release must verify the complete dependency/license inventory if libraries change.
+
+### Feature-3 overview navigation (2026-10-28)
+
+`ComparisonOverview` renders one escaped summary row per submission/file from
+exactly the same method results used for the detailed report. Ordinal fragment
+IDs distinguish identical filenames across submissions. `StarterComparisonReport`
+spools detailed HTML to a temporary file, then writes the compact overview before
+copying the detail stream into the final report; source files are parsed once and
+full-batch source/diff HTML is not retained in memory. The temporary file is
+removed in a finally block. Summary rows remain visible during detail filtering.
+The View why fragment links work as native navigation without JavaScript; with
+JavaScript they also clear detail filters, expand destination methods and focus
+the destination heading, including repeated clicks and initial fragment URLs.
+Counts describe methods, not similarity percentages. Unavailable/no-method
+comparisons remain distinct and do not imply a whole-file match.

@@ -57,6 +57,8 @@ class StarterComparisonReportTest {
         String html = Files.readString(StarterComparisonReport.generate(batch, config(), directory));
         assertEquals(2, html.split("data-status=UNAVAILABLE", -1).length - 1);
         assertTrue(html.contains("data-status=NO_METHODS"));
+        assertTrue(html.contains("<td>No explicit methods</td>"));
+        assertTrue(html.contains("<td>Unavailable: "));
         assertTrue(html.contains("C#f()"));
         assertTrue(html.contains("data-status=\"UNCHANGED\""));
     }
@@ -86,6 +88,32 @@ class StarterComparisonReportTest {
         String html = Files.readString(StarterComparisonReport.generate(mixed, config(), directory));
         assertTrue(html.contains("No working copy is available"));
         assertTrue(html.contains("data-status=\"UNCHANGED\""));
+    }
+
+    @Test
+    void overviewLinksAreUniqueAcrossStudentsAndCountsMatchMethodEvidence() throws Exception {
+        prepare("A.java", "class A { void same() {} int f() { return 0; } }",
+                "class A { void same() {} int f() { return 1; } }");
+        BatchResult original = batch(List.of("A.java"));
+        var first = original.getGrades().get(0).getSubmission();
+        var second = new SubmissionResult(Path.of("other.zip"), first.getWorkingRoot(),
+                first.getWorkingRoot(), first.getWorkingRoot(), null, List.of(), List.of(),
+                List.of(), SubmissionStatus.READY, true);
+        var mixed = new BatchResult(original.getAssessment(),
+                List.of(original.getGrades().get(0), new StudentGrade(second, List.of())),
+                List.of(), List.of());
+        String html = Files.readString(StarterComparisonReport.generate(mixed, config(), directory));
+        assertTrue(html.indexOf("id=overview") < html.indexOf("<main>"));
+        for (int i = 1; i <= 2; i++) {
+            assertTrue(html.contains("href=\"#comparison-" + i + "\""));
+            assertEquals(1, html.split("id=\"comparison-" + i + "\"", -1).length - 1);
+        }
+        assertEquals(2, html.split("<td>Compared</td><td>1</td><td>1</td><td>0</td><td>0</td>", -1).length - 1);
+        assertTrue(html.contains("aria-label=\"View why: student&amp;one.zip"));
+        assertTrue(html.contains("token(s) inserted"));
+        try (var entries = Files.list(directory.resolve("starter-comparison"))) {
+            assertEquals(List.of("index.html"), entries.map(path -> path.getFileName().toString()).toList());
+        }
     }
 
     private void prepare(String name, String starter, String answer) throws IOException {

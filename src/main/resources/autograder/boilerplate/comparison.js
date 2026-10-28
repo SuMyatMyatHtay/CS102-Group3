@@ -34,5 +34,25 @@
     document.getElementById('collapse').addEventListener('click', () => {
         methods.forEach(method => { if (method.tagName === 'DETAILS') method.open = false; });
     });
+    function revealTarget() {
+        const target = document.getElementById(window.location.hash.slice(1));
+        if (!target || !target.matches('section.file')) return;
+        search.value = '';
+        status.value = 'ALL';
+        filter();
+        target.querySelectorAll('details.method').forEach(method => { method.open = true; });
+        target.querySelector('h2').focus({ preventScroll: true });
+        target.scrollIntoView({ block: 'start' });
+    }
+    document.querySelectorAll('a.why').forEach(link => {
+        link.addEventListener('click', event => {
+            if (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+            event.preventDefault();
+            window.location.hash = link.hash;
+            revealTarget();
+        });
+    });
+    window.addEventListener('hashchange', revealTarget);
     filter();
+    revealTarget();
 })();
