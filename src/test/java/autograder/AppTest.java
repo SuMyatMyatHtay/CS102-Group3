@@ -39,6 +39,24 @@ class AppTest {
     }
 
     @Test
+    void workersFlagRejectsBadValuesAndWrongArgumentCounts() {
+        String config = temporaryDirectory.resolve("missing.properties").toString();
+        for (String value : new String[] {"0", "33", "-1", "abc", ""}) {
+            assertEquals(1, App.run(new String[] {"--workers", value, config}), value);
+        }
+        assertEquals(1, App.run(new String[] {"--workers"}));
+        assertEquals(1, App.run(new String[] {"--workers", "2"}));
+        assertEquals(1, App.run(new String[] {"--workers", "2", config, "extra"}));
+    }
+
+    @Test
+    void workersFlagWithValidValueStillFailsCleanlyOnMissingConfig() {
+        String config = temporaryDirectory.resolve("missing.properties").toString();
+        assertEquals(1, App.run(new String[] {"--workers", "2", config}));
+        assertEquals(1, App.run(new String[] {"--workers", "AUTO", config}));
+    }
+
+    @Test
     void missingArgumentsAndMissingConfigFailCleanly() {
         assertEquals(1, App.run(new String[] {}));
         assertEquals(1, App.run(new String[] {
@@ -189,6 +207,40 @@ class AppTest {
     }
 
     @Test
+    void sanityCsvFailureStillWritesHtmlAndMarkdownAndReturnsNonzero() throws Exception {
+        GradingRun original = run(List.of(grade("first.zip")));
+        Files.createDirectory(temporaryDirectory.resolve("sanity-checks.csv"));
+        ByteArrayOutputStream errors = new ByteArrayOutputStream();
+        PrintStream previous = System.err;
+        try (PrintStream capture = new PrintStream(errors, true, StandardCharsets.UTF_8)) {
+            System.setErr(capture);
+            int exit = App.generateReports(original,
+                    new autograder.config.BoilerplateConfig(false, temporaryDirectory, 0.98, 1024, 100),
+                    (submission, starter) -> List.of(),
+                    new autograder.config.SanityConfig(true, 1, 90, 80, 50, 40),
+                    new HtmlReportConfig(true, "dashboard.html"),
+                    new autograder.report.html.OfflineHtmlReportGenerator("dashboard.html"),
+                    new FeedbackConfig(true, "feedback", 10),
+                    new autograder.report.feedback.MarkdownFeedbackGenerator(
+                            original.batch().getAssessment(), 2000, 10, "#", "_"));
+            assertEquals(1, exit);
+        } finally {
+            System.setErr(previous);
+        }
+        assertTrue(errors.toString(StandardCharsets.UTF_8).contains("could not write sanity checks"));
+        assertTrue(Files.exists(temporaryDirectory.resolve("dashboard.html")));
+        assertTrue(Files.exists(temporaryDirectory.resolve("feedback/first.md")));
+    }
+
+    @Test
+    void disabledSanityChecksWriteNoFile() {
+        SanityAnalysis.Result result = SanityAnalysis.analyze(run(List.of(grade("first.zip"))),
+                autograder.config.SanityConfig.disabled());
+        assertEquals(0, result.exitCode());
+        assertFalse(Files.exists(temporaryDirectory.resolve("sanity-checks.csv")));
+    }
+
+    @Test
     void starterAndHtmlFailuresStillAttemptMarkdown() throws Exception {
         GradingRun original = run(List.of(grade("first.zip")));
         Files.createDirectory(temporaryDirectory.resolve("starter-analysis.csv"));
@@ -263,6 +315,11 @@ class AppTest {
         assertEquals("keep this file", Files.readString(temporaryDirectory.resolve("starter-comparison")));
         assertTrue(Files.isRegularFile(temporaryDirectory.resolve("starter-analysis.csv")));
         assertEquals(1, original.batch().getGrades().get(0).getTotalScore());
+    }
+
+    @Test
+    void missingConfigurationFileReturnsOneWithoutThrowing() {
+        assertEquals(1, App.run(new String[] {temporaryDirectory.resolve("absent.properties").toString()}));
     }
 
     private StudentGrade grade(String archive) {

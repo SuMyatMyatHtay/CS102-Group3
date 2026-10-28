@@ -7,6 +7,8 @@ import autograder.model.GradingReportContext;
 import autograder.model.SimilarityFinding;
 import autograder.model.StudentIdentity;
 import autograder.model.StudentRecord;
+import autograder.model.StudentGrade;
+import autograder.model.TestCaseResult;
 import autograder.model.SubmissionResult;
 import autograder.model.SubmissionStatus;
 import autograder.model.TestStatus;
@@ -16,10 +18,12 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -109,29 +113,43 @@ class GradingPipelineTest {
         assertEquals(TestStatus.PASSED, loopingCases.get("Q1a-3"));
         var loopingGrade = run.batch().getGrades().stream()
                 .filter(grade -> grade.getSubmission() == looping).findFirst().orElseThrow();
-        assertEquals(2.0, loopingGrade.getQuestionScore("Q1a"));
+        // Q1a's three marks are shared evenly across its fixed and dynamic cases.
+        assertEquals(0.75, fixedQuestionScore(loopingGrade, "Q1a"));
+        assertEquals(3.0, questionMaximum(loopingGrade, "Q1a"));
+        assertEquals(3.0, questionMaximum(loopingGrade, "Q1b"));
+        assertEquals(5.0, questionMaximum(loopingGrade, "Q2a"));
+        assertEquals(5.0, questionMaximum(loopingGrade, "Q2b"));
+        assertEquals(4.0, questionMaximum(loopingGrade, "Q3"));
+        assertEquals(20.0, totalMaximum(loopingGrade));
+        assertTrue(loopingGrade.getTotalScore() <= 20.0);
+        // Dynamic cases now run (previously they all errored before this fix).
+        assertTrue(loopingCases.get("Q1a-dynamic-1") != TestStatus.NOT_RUN);
+        assertTrue(loopingCases.get("Q1a-dynamic-1") != TestStatus.COMPILE_ERROR);
         assertEquals(TestStatus.PASSED, loopingCases.get("Q1b-1"));
         Map<String, TestStatus> brokenCases = statuses(run, "broken");
         assertEquals(TestStatus.COMPILE_ERROR, brokenCases.get("Q1a-1"));
         assertEquals(TestStatus.COMPILE_ERROR, brokenCases.get("Q1a-3"));
         assertEquals(TestStatus.PASSED, brokenCases.get("Q1b-1"));
-        assertEquals(20, run.batch().getGrades().get(0).getTestResults().size());
-        assertEquals(20, run.batch().getGrades().get(1).getTestResults().size());
+        // Each submission has 45 results, but the original 20-point maximum is preserved.
+        assertEquals(45, run.batch().getGrades().get(0).getTestResults().size());
+        assertEquals(45, run.batch().getGrades().get(1).getTestResults().size());
 
         List<List<String>> submissionRows = CsvCodec.parse(
                 Files.readString(run.directory().resolve("submissions.csv")));
         assertEquals(3, submissionRows.size());
         List<List<String>> similarityRows = CsvCodec.parse(
                 Files.readString(run.directory().resolve(GradingPipeline.SIMILARITY_REPORT)));
-        assertEquals(List.of("FirstArchive", "FirstUsername", "SecondArchive", "SecondUsername",
-                "Similarity", "Evidence"), similarityRows.get(0));
+        assertEquals(List.of("Question", "Algorithm", "FirstArchive", "FirstUsername", "SecondArchive",
+                "SecondUsername", "Similarity", "Evidence"), similarityRows.get(0));
         List<List<String>> reportRows = CsvCodec.parse(
                 Files.readString(run.directory().resolve("grade-report.csv")));
         int idColumn = reportRows.get(0).indexOf("OrgDefinedId");
         int scoreColumn = reportRows.get(0).indexOf("Calculated Final Grade Numerator");
         List<String> exportedLooping = reportRows.stream().filter(row -> row.get(idColumn).equals("#01400001"))
                 .findFirst().orElseThrow();
-        assertEquals(Double.toString(loopingGrade.getTotalScore()), exportedLooping.get(scoreColumn));
+        assertEquals(BigDecimal.valueOf(loopingGrade.getTotalScore())
+                .setScale(2, java.math.RoundingMode.HALF_UP).toPlainString(),
+                exportedLooping.get(scoreColumn));
         assertEquals("", protectedScore(reportRows, "#01400005"));
         assertProtectedInputsUnchanged(protectedInputs);
     }
@@ -180,7 +198,7 @@ class GradingPipelineTest {
         assertTrue(run.withheld().containsKey(duplicateB));
         assertTrue(run.withheld().containsKey(unresolved));
         for (var grade : run.batch().getGrades()) {
-            assertEquals(20, grade.getTestResults().size());
+            assertEquals(45, grade.getTestResults().size());
         }
         assertEquals(TestStatus.NOT_RUN, statuses(run, "duplicate-a").get("Q1a-1"));
         assertEquals(TestStatus.COMPILE_ERROR, statuses(run, "missing").get("Q1a-1"));
@@ -203,7 +221,7 @@ class GradingPipelineTest {
         SubmissionResult second = submission("similar-second", null, false, null);
         List<SubmissionResult> submissions = List.of(first, second);
         SimilarityFinding finding = new SimilarityFinding(first.getArchivePath(), second.getArchivePath(),
-                0.87654, List.of("Q1a.java:4-8 <shared>"));
+                0.87654, List.of("Q1a.java:4-8 <shared>"), "Q1a", "test-algorithm");
 
         GradingRun run = new GradingPipeline(app, execution(), (actualSubmissions, assessment) -> {
             assertEquals(submissions, actualSubmissions);
@@ -215,9 +233,9 @@ class GradingPipelineTest {
         assertEquals(2, run.withheld().size());
         List<List<String>> similarityRows = CsvCodec.parse(
                 Files.readString(run.directory().resolve(GradingPipeline.SIMILARITY_REPORT)));
-        assertEquals(List.of("FirstArchive", "FirstUsername", "SecondArchive", "SecondUsername",
-                "Similarity", "Evidence"), similarityRows.get(0));
-        assertEquals(List.of("similar-first.zip", "", "similar-second.zip", "", "0.877",
+        assertEquals(List.of("Question", "Algorithm", "FirstArchive", "FirstUsername", "SecondArchive",
+                "SecondUsername", "Similarity", "Evidence"), similarityRows.get(0));
+        assertEquals(List.of("Q1a", "test-algorithm", "similar-first.zip", "", "similar-second.zip", "", "0.877",
                 "Q1a.java:4-8 <shared>"), similarityRows.get(1));
 
         Path html = new OfflineHtmlReportGenerator("dashboard.html").generate(
@@ -268,11 +286,50 @@ class GradingPipelineTest {
     }
 
     private ExecutionConfig execution() throws Exception {
-        Path output = temporaryDirectory.resolve("grading");
+        return execution(1);
+    }
+
+    @Test
+    void parallelGradingMatchesSequentialOutputsExceptDurations() throws Exception {
+        AppConfig app = AppConfig.load(PROJECT_ROOT.resolve("config.properties"));
+        List<SubmissionResult> submissions = List.of(
+                submission("par-a", student("#01400001", "par-a"), true, null),
+                submission("par-b", student("#01400002", "par-b"), true, "public class Q1a { broken }"),
+                submission("par-c", null, false, null),
+                submission("par-d", student("#01400005", "par-d"), true, null),
+                submission("par-e", student("#01400005", "par-e"), true, null));
+        GradingRun sequential = new GradingPipeline(app, execution(1)).grade(submissions);
+        GradingRun parallel = new GradingPipeline(app, execution(2)).grade(submissions);
+        for (String file : List.of("grade-report.csv", "submissions.csv")) {
+            assertEquals(Files.readString(sequential.directory().resolve(file)),
+                    Files.readString(parallel.directory().resolve(file)), file);
+        }
+        assertEquals(withoutDurations(sequential), withoutDurations(parallel));
+        assertEquals(List.copyOf(sequential.withheld().values()),
+                List.copyOf(parallel.withheld().values()));
+        assertEquals(sequential.withheld().keySet().stream().map(SubmissionResult::getArchivePath).toList(),
+                parallel.withheld().keySet().stream().map(SubmissionResult::getArchivePath).toList());
+    }
+
+    private static List<List<String>> withoutDurations(GradingRun run) throws Exception {
+        List<List<String>> rows = CsvCodec.parse(Files.readString(run.directory().resolve("cases.csv")));
+        int column = rows.get(0).indexOf("DurationMillis");
+        return rows.stream().map(row -> {
+            List<String> copy = new ArrayList<>();
+            for (String cell : row) {
+                copy.add(cell.replace(run.directory().toString(), "RUN"));
+            }
+            copy.set(column, "");
+            return copy;
+        }).toList();
+    }
+
+    private ExecutionConfig execution(int workers) throws Exception {
+        Path output = temporaryDirectory.resolve("grading-w" + workers);
         return new ExecutionConfig(output, "grade-report.csv",
                 Path.of(System.getProperty("java.home"), "bin", "java").toString(),
                 Path.of(System.getProperty("java.home"), "bin", "javac").toString(),
-                15000, 1000, 512);
+                15000, 1000, 512, workers);
     }
 
     private SubmissionResult submission(String archiveName, StudentRecord student,
@@ -343,6 +400,35 @@ class GradingPipelineTest {
         int scoreColumn = rows.get(0).indexOf("Calculated Final Grade Numerator");
         return rows.stream().filter(row -> row.get(idColumn).equals(studentId))
                 .findFirst().orElseThrow().get(scoreColumn);
+    }
+
+    private static double fixedQuestionScore(StudentGrade grade, String questionId) {
+        double total = 0;
+        for (TestCaseResult result : grade.getTestResults()) {
+            String id = result.getTestCase().getId();
+            if (id.startsWith(questionId + "-") && !id.contains("dynamic")) {
+                total += result.getScore();
+            }
+        }
+        return total;
+    }
+
+    private static double questionMaximum(StudentGrade grade, String questionId) {
+        BigDecimal total = BigDecimal.ZERO;
+        for (TestCaseResult result : grade.getTestResults()) {
+            if (result.getTestCase().getQuestionId().equals(questionId)) {
+                total = total.add(BigDecimal.valueOf(result.getTestCase().getMaximumScore()));
+            }
+        }
+        return total.doubleValue();
+    }
+
+    private static double totalMaximum(StudentGrade grade) {
+        BigDecimal total = BigDecimal.ZERO;
+        for (TestCaseResult result : grade.getTestResults()) {
+            total = total.add(BigDecimal.valueOf(result.getTestCase().getMaximumScore()));
+        }
+        return total.doubleValue();
     }
 
     private static Map<String, TestStatus> statuses(GradingRun run, String username) {

@@ -3,7 +3,9 @@ target/
 output/
 .DS_Store
 build/
-# Personal continuation notes (keep local)
+.workbuddy-ai/
 /HANDOFF.md
 /BOEY_FEATURE2_HANDOFF.local.md
 agents.md
+build-out/
+scratch/

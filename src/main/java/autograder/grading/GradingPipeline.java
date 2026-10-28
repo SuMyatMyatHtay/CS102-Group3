@@ -1,22 +1,15 @@
 package autograder.grading;
 
 import autograder.api.PlagiarismDetector;
+import autograder.api.ProgressListener;
+import autograder.api.TestCaseProvider;
 import autograder.config.AppConfig;
 import autograder.config.ExecutionConfig;
 import autograder.execution.CaseExecutor;
 import autograder.execution.ProcessResult;
 import autograder.execution.ProcessRunner;
 import autograder.execution.StudentCompiler;
-import autograder.model.BatchResult;
-import autograder.model.QuestionDefinition;
-import autograder.model.SimilarityFinding;
-import autograder.model.StudentGrade;
-import autograder.model.StudentRecord;
-import autograder.model.SubmissionResult;
-import autograder.model.SubmissionStatus;
-import autograder.model.TestCaseDefinition;
-import autograder.model.TestCaseResult;
-import autograder.model.TestStatus;
+import autograder.model.*;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -25,6 +18,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public final class GradingPipeline {
     public static final String SIMILARITY_REPORT = "similarity.csv";
@@ -33,6 +27,7 @@ public final class GradingPipeline {
     private final ExecutionConfig execution;
     private final List<TestCaseDefinition> cases;
     private final PlagiarismDetector plagiarismDetector;
+    private final ProgressListener progressListener;
 
     public GradingPipeline(AppConfig app, ExecutionConfig execution) throws IOException {
         this(app, execution, (submissions, assessment) -> List.of());
@@ -40,10 +35,21 @@ public final class GradingPipeline {
 
     public GradingPipeline(AppConfig app, ExecutionConfig execution,
                            PlagiarismDetector plagiarismDetector) throws IOException {
+        this(app, execution, plagiarismDetector, null);
+    }
+
+    // a null listener keeps the console-only behaviour of the other constructors
+    public GradingPipeline(AppConfig app, ExecutionConfig execution,
+                           PlagiarismDetector plagiarismDetector,
+                           ProgressListener progressListener) throws IOException {
         this.app = app;
         this.execution = execution;
         this.plagiarismDetector = plagiarismDetector;
-        this.cases = new InstructorTestCaseProvider().load(app.getAssessment());
+        this.progressListener = progressListener;
+        TestCaseProvider fixedProvider = new InstructorTestCaseProvider();
+        TestCaseProvider dynamicProvider = new DynamicTestCaseProvider();
+        TestCaseProvider combinedProvider = new CombinedTestCaseProvider(fixedProvider, dynamicProvider);
+        this.cases = combinedProvider.load(app.getAssessment());
     }
 
     public void validateEnvironment() throws IOException, InterruptedException {
@@ -74,16 +80,46 @@ public final class GradingPipeline {
         Map<String, Integer> identities = identityCounts(submissions);
         Map<SubmissionResult, String> withheld = new LinkedHashMap<>();
         List<StudentGrade> grades = new ArrayList<>();
-        int index = 0;
-        for (SubmissionResult submission : submissions) {
-            index++;
-            grades.add(gradeSubmission(submission, identities, run, index, submissions.size(), withheld));
+        int total = submissions.size();
+        AtomicInteger finished = new AtomicInteger();
+        List<GradedSubmission> graded = new SubmissionScheduler(execution.workers()).run(total, index -> {
+            SubmissionResult submission = submissions.get(index);
+            String item = submission.getArchivePath().getFileName().toString();
+            notifyCount(item, finished, 0, total);
+            Map<SubmissionResult, String> local = new LinkedHashMap<>();
+            StudentGrade grade = gradeSubmission(submission, identities, run, index + 1, total, local);
+            notifyCount(item, finished, 1, total);
+            return new GradedSubmission(grade, local);
+        });
+        for (GradedSubmission item : graded) {
+            grades.add(item.grade());
+            withheld.putAll(item.withheld());
         }
         BatchResult batch = new BatchResult(app.getAssessment(), grades, List.of(),
                 compareSimilarity(submissions));
         GradingRun result = new GradingRun(batch, run, withheld);
         new GradingDiagnosticsWriter(app, execution).write(result);
         return result;
+    }
+
+    private record GradedSubmission(StudentGrade grade, Map<SubmissionResult, String> withheld) {
+    }
+
+    // the count is read under the listener lock so parallel events never go backwards
+    private synchronized void notifyCount(String item, AtomicInteger finished, int step, int total) {
+        notifyProgress(item, finished.addAndGet(step), total);
+    }
+
+    // a failing listener must not stop grading
+    private synchronized void notifyProgress(String item, int completed, int total) {
+        if (progressListener == null) {
+            return;
+        }
+        try {
+            progressListener.onProgress("grading", item, completed, total);
+        } catch (RuntimeException exception) {
+            System.err.println("progress update failed: " + exception.getMessage());
+        }
     }
 
     // similarity is advisory, so a detector failure must not block score export
